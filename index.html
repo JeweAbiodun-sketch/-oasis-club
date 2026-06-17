@@ -183,17 +183,24 @@ tr:hover td{background:var(--cream);}
 ::-webkit-scrollbar{width:7px;height:7px;}
 ::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px;}
 
+#mobile-nav-toggle{display:none;position:fixed;top:14px;left:14px;z-index:600;width:40px;height:40px;border-radius:10px;background:var(--teal-dark);color:#fff;border:none;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.2);}
+#mobile-nav-toggle svg{width:20px;height:20px;}
+#nav-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:550;}
+#nav-backdrop.show{display:block;}
+
 @media(max-width:820px){
-  #shell{display:flex;flex-direction:column;min-height:auto;}
-  #nav{flex-direction:row;align-items:center;overflow-x:auto;padding:14px 12px;gap:6px;white-space:nowrap;}
-  #nav::-webkit-scrollbar{display:none;}
-  .brand{margin-bottom:0;padding:0 6px;flex-shrink:0;}
-  .brand-text .place{display:none;}
-  .navlink{width:auto;padding:9px 11px;}
-  .navlink span,.navlink{font-size:12.5px;}
-  .nav-divider{display:none;}
-  .nav-foot{display:none;}
-  #main{padding:18px 16px;max-width:100%;}
+  #mobile-nav-toggle{display:flex;}
+  #shell{display:block;min-height:auto;}
+  #nav{
+    position:fixed;top:0;left:0;height:100vh;width:260px;
+    flex-direction:column;
+    transform:translateX(-100%);
+    transition:transform .22s ease;
+    z-index:560;
+    overflow-y:auto;
+  }
+  #nav.show{transform:translateX(0);}
+  #main{padding:64px 16px 24px;max-width:100%;}
   .page-head{flex-wrap:wrap;gap:12px;align-items:flex-start;}
   .page-head h1{font-size:21px;}
   .stats{grid-template-columns:repeat(2,1fr);}
@@ -251,13 +258,17 @@ tr:hover td{background:var(--cream);}
   <button class="navlink" data-page="committee"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l3 6 6.5.6-5 4.4 1.5 6.4L12 16l-6 3.4L7.5 13l-5-4.4L9 8z"/></svg>Committee &amp; quorum</button>
 
   <div class="nav-divider"></div>
-  <button class="navlink" onclick="exportBackup()" style="font-size:12.5px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg>Download backup</button>
-  <button class="navlink" onclick="document.getElementById('import-file').click()" style="font-size:12.5px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21V9m0 0l-4 4m4-4l4 4M4 7V4a1 1 0 011-1h14a1 1 0 011 1v3"/></svg>Restore backup</button>
+  <button class="navlink" onclick="exportBackup();closeMobileNav();" style="font-size:12.5px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg>Download backup</button>
+  <button class="navlink" onclick="document.getElementById('import-file').click();closeMobileNav();" style="font-size:12.5px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21V9m0 0l-4 4m4-4l4 4M4 7V4a1 1 0 011-1h14a1 1 0 011 1v3"/></svg>Restore backup</button>
   <input type="file" id="import-file" accept=".json" style="display:none" onchange="if(this.files[0])importBackup(this.files[0])"/>
   <div class="nav-divider"></div>
   <button class="navlink" onclick="lockApp()" style="font-size:12.5px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>Lock</button>
   <div class="nav-foot">Data is saved in this browser only.<br/>Download a backup and share the file with committee members to sync records.</div>
 </nav>
+<div id="nav-backdrop" onclick="closeMobileNav()"></div>
+<button id="mobile-nav-toggle" onclick="toggleMobileNav()" aria-label="Menu">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+</button>
 
 <main id="main"></main>
 </div>
@@ -273,7 +284,7 @@ tr:hover td{background:var(--cream);}
 <script>
 /* Bump this string every time you publish changes to GitHub.
    This is what tells everyone's app that a newer version exists. */
-const APP_VERSION='2026-06-17-4';
+const APP_VERSION='2026-06-17-5';
 const STORE_KEY='oasis-club-data-v1';
 let DATA={members:[
   {
@@ -700,12 +711,29 @@ async function saveData(){
     localStorage.setItem(STORE_KEY,JSON.stringify(DATA));
   }catch(e){console.error('save failed',e);showToast('Could not save \u2014 storage may be full');}
 }
+const SYNC_KEY='oasis-club-last-sync-v1';
+function recordSyncEvent(kind){
+  try{localStorage.setItem(SYNC_KEY,JSON.stringify({kind,at:new Date().toISOString()}));}catch(e){}
+}
+function getSyncStatus(){
+  let info=null;
+  try{const raw=localStorage.getItem(SYNC_KEY);if(raw)info=JSON.parse(raw);}catch(e){}
+  if(!info){
+    return{stale:true,message:'No backup has been downloaded or restored on this device yet. Since this app doesn\u2019t sync automatically between phones and computers, download a backup now and share it with other officers to keep everyone\u2019s records aligned.'};
+  }
+  const hours=(Date.now()-new Date(info.at).getTime())/36e5;
+  const verb=info.kind==='export'?'Backup downloaded':'Backup restored';
+  const when=hours<1?'less than an hour ago':hours<24?Math.round(hours)+' hour'+(Math.round(hours)===1?'':'s')+' ago':Math.round(hours/24)+' day'+(Math.round(hours/24)===1?'':'s')+' ago';
+  const stale=hours>168; // over a week
+  return{stale,message:`${verb} on this device ${when}.${stale?' That\u2019s a while \u2014 worth checking if anyone else has newer changes to bring in.':' This device may still be out of sync with others until you exchange backups.'}`};
+}
 function exportBackup(){
   const blob=new Blob([JSON.stringify(DATA,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
   a.href=url;a.download='oasis-club-backup-'+new Date().toISOString().slice(0,10)+'.json';
   a.click();URL.revokeObjectURL(url);
+  recordSyncEvent('export');
   showToast('Backup downloaded');
 }
 function importBackup(file){
@@ -715,7 +743,7 @@ function importBackup(file){
       const parsed=JSON.parse(e.target.result);
       if(!parsed.members)throw new Error('not a valid backup file');
       DATA=parsed;
-      await saveData();render();showToast('Backup restored');
+      await saveData();recordSyncEvent('import');render();showToast('Backup restored');
     }catch(err){alert('Could not read this file as a valid Oasis Club backup.');}
   };
   reader.readAsText(file);
@@ -725,8 +753,18 @@ function navigate(page){
   currentPage=page;
   document.querySelectorAll('.navlink').forEach(b=>b.classList.toggle('active',b.dataset.page===page));
   render();
+  closeMobileNav();
 }
 document.querySelectorAll('.navlink').forEach(b=>b.addEventListener('click',()=>navigate(b.dataset.page)));
+
+function toggleMobileNav(){
+  document.getElementById('nav').classList.toggle('show');
+  document.getElementById('nav-backdrop').classList.toggle('show');
+}
+function closeMobileNav(){
+  document.getElementById('nav').classList.remove('show');
+  document.getElementById('nav-backdrop').classList.remove('show');
+}
 
 function closeModal(){document.getElementById('modal-bg').classList.remove('show');document.getElementById('modal-content').innerHTML='';}
 function openModal(html){document.getElementById('modal-content').innerHTML=html;document.getElementById('modal-bg').classList.add('show');}
@@ -872,10 +910,27 @@ function pageOverview(){
   const recentMinutes=[...DATA.minutes].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,3);
   const agmWarning=getAgmWarning(DATA.meta.nextAgmDate);
 
+  const syncInfo=getSyncStatus();
+
   return `
   <div class="page-head">
     <div><h1>Overview</h1><div class="sub">Club snapshot &middot; ${todayLong()}</div></div>
   </div>
+
+  <div class="card" style="border-color:${syncInfo.stale?'var(--gold)':'var(--line)'};margin-bottom:20px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;">
+      <div>
+        <div class="card-head" style="margin-bottom:4px;"><h2 style="font-size:14.5px;">Sync status</h2></div>
+        <div class="cell-muted">${syncInfo.message}</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-shrink:0;">
+        <button class="btn" style="font-size:12.5px;padding:7px 14px;" onclick="exportBackup()">Download backup</button>
+        <button class="btn btn-primary" style="font-size:12.5px;padding:7px 14px;" onclick="document.getElementById('import-file').click()">Restore backup</button>
+      </div>
+    </div>
+    ${syncInfo.stale?`<p class="cell-muted" style="color:var(--gold);margin-top:10px;margin-bottom:0;">This app doesn't sync automatically between devices. If anyone else has made changes on their phone or computer, download their backup and restore it here \u2014 and remember to share yours back.</p>`:''}
+  </div>
+
   <div class="stats">
     <div class="stat"><div class="label">Members</div><div class="value">${total}<span style="font-size:14px;color:var(--ink-faint);font-weight:400;"> / 25</span></div><div class="note">${active} active</div></div>
     <div class="stat"><div class="label">Paid this year</div><div class="value teal">${paidThisMonth}</div><div class="note">of ${active} active members</div></div>
