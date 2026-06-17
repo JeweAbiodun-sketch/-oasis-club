@@ -110,6 +110,18 @@ tr:hover td{background:var(--cream);}
 .badge-suspended{background:var(--gold-light);color:#7a5800;}
 .badge-dismissed{background:var(--red-light);color:var(--red);}
 
+.avatar{width:34px;height:34px;border-radius:50%;object-fit:cover;background:var(--teal-light);display:inline-block;vertical-align:middle;}
+.avatar-placeholder{width:34px;height:34px;border-radius:50%;background:var(--teal-light);color:var(--teal-dark);display:inline-flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:600;vertical-align:middle;}
+.photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:16px;}
+.photo-card{text-align:center;}
+.photo-card .avatar-large,.photo-card .avatar-placeholder-large{width:100%;aspect-ratio:1/1;border-radius:12px;object-fit:cover;display:block;}
+.photo-card .avatar-placeholder-large{background:var(--teal-light);color:var(--teal-dark);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:600;}
+.photo-card .pc-name{margin-top:8px;font-size:13px;font-weight:500;color:var(--ink);}
+.photo-card .pc-role{font-size:11.5px;color:var(--ink-faint);}
+.photo-upload-row{display:flex;align-items:center;gap:14px;margin-bottom:14px;}
+.photo-upload-row .avatar-large{width:64px;height:64px;border-radius:50%;object-fit:cover;}
+.photo-upload-row .avatar-placeholder-large{width:64px;height:64px;border-radius:50%;aspect-ratio:unset;font-size:22px;}
+
 /* empty state */
 .empty{text-align:center;padding:48px 20px;color:var(--ink-faint);}
 .empty svg{width:40px;height:40px;opacity:.3;margin-bottom:12px;}
@@ -139,6 +151,15 @@ tr:hover td{background:var(--cream);}
 
 .toast{position:fixed;bottom:24px;right:24px;background:var(--ink);color:#fff;padding:11px 18px;border-radius:8px;font-size:13px;font-weight:500;box-shadow:0 4px 16px rgba(0,0,0,.18);z-index:200;opacity:0;transform:translateY(8px);transition:all .2s;pointer-events:none;}
 .toast.show{opacity:1;transform:translateY(0);}
+
+#update-banner{position:fixed;top:0;left:0;right:0;background:var(--teal-dark);color:#fff;padding:10px 16px;display:none;align-items:center;justify-content:center;gap:14px;font-size:13.5px;font-weight:500;z-index:500;box-shadow:0 2px 10px rgba(0,0,0,.15);}
+#update-banner.show{display:flex;}
+#update-banner button{cursor:pointer;border-radius:6px;border:none;font-size:13px;font-weight:600;}
+#update-confirm-btn{background:#fff;color:var(--teal-dark);padding:6px 14px;}
+#update-confirm-btn:hover{background:var(--teal-light);}
+#update-dismiss-btn{background:transparent;color:#fff;opacity:.75;font-size:18px;line-height:1;padding:0 4px;}
+#update-dismiss-btn:hover{opacity:1;}
+@media(max-width:600px){#update-banner{font-size:12.5px;padding:8px 10px;flex-wrap:wrap;}}
 
 .icon-btn{background:transparent;border:none;cursor:pointer;color:var(--ink-faint);padding:5px;border-radius:6px;display:inline-flex;}
 .icon-btn:hover{background:var(--cream);color:var(--ink);}
@@ -206,6 +227,7 @@ tr:hover td{background:var(--cream);}
 
   <button class="navlink active" data-page="overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Overview</button>
   <button class="navlink" data-page="members"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.5 2.7-6 6-6s6 2.5 6 6"/><circle cx="17" cy="9" r="2.6"/><path d="M15.5 14c2.5.3 4.5 2.3 4.5 5"/></svg>Members</button>
+  <button class="navlink" data-page="photos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="15" rx="2"/><circle cx="8.5" cy="10" r="2"/><path d="M21 16l-5-5-4.5 4.5L9 13l-6 6"/></svg>Photos</button>
   <button class="navlink" data-page="dues"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 9.5c0-1.4 1.3-2.5 3-2.5s3 .9 3 2.2c0 3-6 1.5-6 4.6 0 1.4 1.3 2.5 3 2.5s3-1 3-2.4"/></svg>Dues &amp; subscriptions</button>
   <button class="navlink" data-page="minutes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Meeting minutes</button>
   <button class="navlink" data-page="finance"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 17l5-5 4 4 8-8"/><path d="M14 7h6v6"/></svg>Financial year</button>
@@ -225,8 +247,16 @@ tr:hover td{background:var(--cream);}
 
 <div class="modal-bg" id="modal-bg"><div class="modal" id="modal-content"></div></div>
 <div class="toast" id="toast"></div>
+<div id="update-banner">
+  <span>A new version of the app is available.</span>
+  <button id="update-confirm-btn" onclick="confirmAppUpdate()">Update now</button>
+  <button id="update-dismiss-btn" onclick="dismissUpdateBanner()" aria-label="Dismiss">&times;</button>
+</div>
 
 <script>
+/* Bump this string every time you publish changes to GitHub.
+   This is what tells everyone's app that a newer version exists. */
+const APP_VERSION='2026-06-17-2';
 const STORE_KEY='oasis-club-data-v1';
 let DATA={members:[
   {
@@ -783,8 +813,9 @@ function pageMembers(){
   </div>`;
 }
 function renderActiveTable(m){
-  return m.length?`<table><thead><tr><th>Name</th><th>Role</th><th>Joined</th><th>Contact</th><th>Status</th><th>PIN</th><th></th></tr></thead><tbody>
+  return m.length?`<table><thead><tr><th></th><th>Name</th><th>Role</th><th>Joined</th><th>Contact</th><th>Status</th><th>PIN</th><th></th></tr></thead><tbody>
       ${m.map(mem=>`<tr>
+        <td>${mem.photo?`<img class="avatar" src="${mem.photo}"/>`:`<span class="avatar-placeholder">${initials(mem.name)}</span>`}</td>
         <td class="cell-name">${escHtml(mem.name)}</td>
         <td class="cell-muted">${escHtml(mem.role||'Member')}</td>
         <td class="cell-muted">${fmtDate(mem.joined)}</td>
@@ -815,6 +846,28 @@ function renderArchiveTable(archived){
 }
 let currentMembersView='active';
 function setMembersView(v){currentMembersView=v;render();}
+
+/* ============ PHOTOS ============ */
+function pagePhotos(){
+  const all=DATA.members.filter(m=>m.status!=='dismissed');
+  const withPhoto=all.filter(m=>m.photo).length;
+  return `
+  <div class="page-head">
+    <div><h1>Photos</h1><div class="sub">${withPhoto} of ${all.length} members have uploaded a photo</div></div>
+  </div>
+  <div class="card">
+    <p class="cell-muted" style="margin-bottom:16px;">Each member can upload their own photo from their profile on the Members page. Tap a member here to open their record.</p>
+    <div class="photo-grid">
+      ${all.map(mem=>`
+        <div class="photo-card" style="cursor:pointer;" onclick="openMemberForm('${mem.id}')">
+          ${mem.photo?`<img class="avatar-large" src="${mem.photo}"/>`:`<div class="avatar-placeholder-large">${initials(mem.name)}</div>`}
+          <div class="pc-name">${escHtml(mem.name)}</div>
+          <div class="pc-role">${escHtml(mem.role||'Member')}${mem.status==='suspended'?' &middot; Suspended':''}</div>
+        </div>
+      `).join('')}
+    </div>
+  </div>`;
+}
 async function restoreMember(id){
   const mem=DATA.members.find(x=>x.id===id);
   if(!mem)return;
@@ -824,9 +877,28 @@ async function restoreMember(id){
 
 function openMemberForm(id){
   const existing=id?DATA.members.find(x=>x.id===id):null;
+  const session=sessionStorage.getItem(SESSION_KEY)||'';
+  const isOfficerSession=session.startsWith('role:');
+  const isOwnRecord=existing&&session==='member:'+existing.id;
+  const canEditPhoto=isOfficerSession||isOwnRecord||!existing; // officers, the member themself, or a brand-new record
+  let pendingPhoto=null; // holds a newly-chosen photo (base64) until save
   openModal(`
     <h3>${existing?'Edit member':'Add member'}</h3>
     <form id="member-form">
+      ${canEditPhoto?`
+      <div class="photo-upload-row">
+        <div id="photo-preview">${existing&&existing.photo?`<img class="avatar-large" src="${existing.photo}"/>`:`<div class="avatar-placeholder-large">${initials(existing?existing.name:'')}</div>`}</div>
+        <div>
+          <input type="file" id="f-photo" accept="image/*" style="display:none"/>
+          <button type="button" class="btn" style="font-size:12.5px;padding:6px 12px;" onclick="document.getElementById('f-photo').click()">Choose photo</button>
+          ${existing&&existing.photo?`<button type="button" class="btn" style="font-size:12.5px;padding:6px 12px;margin-left:6px;" onclick="clearPendingPhoto()">Remove</button>`:''}
+          <div class="cell-muted" style="margin-top:4px;">JPG or PNG, under 2MB</div>
+        </div>
+      </div>`:`
+      <div class="photo-upload-row">
+        ${existing&&existing.photo?`<img class="avatar-large" src="${existing.photo}"/>`:`<div class="avatar-placeholder-large">${initials(existing?existing.name:'')}</div>`}
+        <div class="cell-muted">Only ${escHtml(existing.name)} can change their own photo.</div>
+      </div>`}
       <div class="field"><label>Full name</label><input type="text" id="f-name" value="${existing?escHtml(existing.name):''}" required/></div>
       <div class="field-row">
         <div class="field"><label>Role / office</label>
@@ -855,23 +927,72 @@ function openMemberForm(id){
       </div>
     </form>
   `);
+  window.__pendingPhotoRemoved=false;
+  window.__pendingPhotoData=null;
+  if(canEditPhoto){
+    document.getElementById('f-photo').addEventListener('change',e=>{
+      const file=e.target.files[0];
+      if(!file)return;
+      if(!file.type.startsWith('image/')){showToast('Please choose an image file');return;}
+      if(file.size>2*1024*1024){showToast('Photo is too large \u2014 please choose one under 2MB');return;}
+      const reader=new FileReader();
+      reader.onload=ev=>{
+        compressImage(ev.target.result,400,0.82).then(dataUrl=>{
+          window.__pendingPhotoData=dataUrl;
+          window.__pendingPhotoRemoved=false;
+          document.getElementById('photo-preview').innerHTML=`<img class="avatar-large" src="${dataUrl}"/>`;
+        });
+      };
+      reader.readAsDataURL(file);
+    });
+  }
   document.getElementById('member-form').addEventListener('submit',async e=>{
     e.preventDefault();
     const name=document.getElementById('f-name').value.trim();
     if(!name)return;
     const newStatus=document.getElementById('f-status').value;
+    const photoUpdate=window.__pendingPhotoRemoved?'':(window.__pendingPhotoData!==null?window.__pendingPhotoData:undefined);
     if(existing){
       const wasBlocked=existing.status==='suspended'||existing.status==='dismissed';
       const nowBlocked=newStatus==='suspended'||newStatus==='dismissed';
       existing.name=name;existing.role=document.getElementById('f-role').value;
       existing.status=newStatus;existing.phone=document.getElementById('f-phone').value;
       existing.joined=document.getElementById('f-joined').value;existing.email=document.getElementById('f-email').value;
+      if(canEditPhoto&&photoUpdate!==undefined)existing.photo=photoUpdate;
       if(!wasBlocked&&nowBlocked)forceLogoutIfCurrentUser(existing.id);
     }else{
       DATA.members.push({id:uid(),name,role:document.getElementById('f-role').value,status:newStatus,
-        phone:document.getElementById('f-phone').value,joined:document.getElementById('f-joined').value,email:document.getElementById('f-email').value,pin:genUniquePin(),dues:{}});
+        phone:document.getElementById('f-phone').value,joined:document.getElementById('f-joined').value,email:document.getElementById('f-email').value,
+        pin:genUniquePin(),dues:{},photo:window.__pendingPhotoData||''});
     }
     await saveData();closeModal();render();showToast(existing?'Member updated':'Member added');
+  });
+}
+function clearPendingPhoto(){
+  window.__pendingPhotoRemoved=true;
+  window.__pendingPhotoData=null;
+  const nameInput=document.getElementById('f-name');
+  document.getElementById('photo-preview').innerHTML=`<div class="avatar-placeholder-large">${initials(nameInput?nameInput.value:'')}</div>`;
+}
+function initials(name){
+  if(!name)return'?';
+  return name.trim().split(/\s+/).slice(0,2).map(p=>p[0].toUpperCase()).join('');
+}
+function compressImage(dataUrl,maxDim,quality){
+  return new Promise(resolve=>{
+    const img=new Image();
+    img.onload=()=>{
+      let w=img.width,h=img.height;
+      if(w>h&&w>maxDim){h=Math.round(h*maxDim/w);w=maxDim;}
+      else if(h>=w&&h>maxDim){w=Math.round(w*maxDim/h);h=maxDim;}
+      const canvas=document.createElement('canvas');
+      canvas.width=w;canvas.height=h;
+      const ctx=canvas.getContext('2d');
+      ctx.drawImage(img,0,0,w,h);
+      resolve(canvas.toDataURL('image/jpeg',quality));
+    };
+    img.onerror=()=>resolve(dataUrl);
+    img.src=dataUrl;
   });
 }
 function forceLogoutIfCurrentUser(memberId){
@@ -1246,15 +1367,74 @@ function render(){
   const main=document.getElementById('main');
   if(currentPage==='overview')main.innerHTML=pageOverview();
   else if(currentPage==='members')main.innerHTML=pageMembers();
+  else if(currentPage==='photos')main.innerHTML=pagePhotos();
   else if(currentPage==='dues')main.innerHTML=pageDues();
   else if(currentPage==='minutes')main.innerHTML=pageMinutes();
   else if(currentPage==='finance')main.innerHTML=pageFinance();
   else if(currentPage==='committee')main.innerHTML=pageCommittee();
 }
 
+/* ============ APP UPDATE HANDLING ============ */
+let pendingWorker=null;
+
+function showUpdateBanner(){
+  document.getElementById('update-banner').classList.add('show');
+}
+function dismissUpdateBanner(){
+  document.getElementById('update-banner').classList.remove('show');
+}
+function confirmAppUpdate(){
+  const btn=document.getElementById('update-confirm-btn');
+  btn.textContent='Updating…';
+  btn.disabled=true;
+  if(pendingWorker){
+    // Tell the waiting service worker to take over immediately, then reload once it has.
+    pendingWorker.postMessage({type:'SKIP_WAITING'});
+    pendingWorker=null;
+  }else{
+    // No service worker waiting (e.g. first load, or SW unsupported) — a hard reload
+    // bypassing the cache is the safest fallback to pick up the latest file.
+    window.location.reload();
+  }
+}
+
+function setupServiceWorker(){
+  if(!('serviceWorker' in window.navigator)||!window.isSecureContext)return;
+
+  navigator.serviceWorker.register('./service-worker.js').then(reg=>{
+    // Case 1: an update was already found and is waiting before this page even loaded.
+    if(reg.waiting){
+      pendingWorker=reg.waiting;
+      showUpdateBanner();
+    }
+    // Case 2: a new service worker starts installing while this tab is open.
+    reg.addEventListener('updatefound',()=>{
+      const newWorker=reg.installing;
+      if(!newWorker)return;
+      newWorker.addEventListener('statechange',()=>{
+        if(newWorker.state==='installed'&&reg.active){
+          pendingWorker=newWorker;
+          showUpdateBanner();
+        }
+      });
+    });
+    // Periodically ask the browser to re-check for a newer service-worker.js on the server.
+    setInterval(()=>{reg.update().catch(()=>{});},60*1000);
+  }).catch(()=>{/* service worker registration failed; app still works without offline support */});
+
+  // Once the new worker takes control, reload so the page itself loads fresh from cache v-next.
+  let refreshed=false;
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{
+    if(refreshed)return;
+    refreshed=true;
+    window.location.reload();
+  });
+}
+
 (async function init(){
   await loadData();
   populatePinSelect();
+  setupServiceWorker();
   document.getElementById('load-overlay').style.display='none';
   document.getElementById('shell').style.display='grid';
   if(!checkSession()){
@@ -1262,13 +1442,6 @@ function render(){
   }
   render();
 })();
-</script>
-<script>
-if('serviceWorker' in navigator){
-  window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('./service-worker.js').catch(()=>{});
-  });
-}
 </script>
 </body>
 </html>

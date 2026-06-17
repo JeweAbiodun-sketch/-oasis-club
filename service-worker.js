@@ -1,23 +1,52 @@
-﻿const CACHE_NAME = 'oasis-club-v1';
-const ASSETS = ['/', '/index.html', '/manifest.webmanifest', '/service-worker.js'];
+// Bump this to match APP_VERSION in index.html every time you publish an update.
+// Changing this string is what makes the browser treat this as a "new" service worker.
+const APP_VERSION = '2026-06-17-2';
+const CACHE_NAME = 'oasis-club-cache-' + APP_VERSION;
 
-self.addEventListener('install', event => {
-  event.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(ASSETS)));
-  self.skipWaiting();
-});
+const PRECACHE_URLS = [
+  './',
+  './index.html'
+];
 
-self.addEventListener('activate', event => {
+self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
-    )
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_URLS))
   );
-  self.clients.claim();
+  // Don't auto-activate yet — wait for the page to confirm via the Update button,
+  // unless the page sends SKIP_WAITING (see message listener below).
 });
 
-self.addEventListener('fetch', event => {
-  if (event.request.method !== 'GET') return;
-  event.respondWith(
-    caches.match(event.request).then(cached => cached || fetch(event.request))
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(
+        keys
+          .filter((key) => key !== CACHE_NAME)
+          .map((key) => caches.delete(key))
+      )
+    ).then(() => self.clients.claim())
   );
+});
+
+// Network-first for the HTML shell so updates are detected quickly;
+// cache-first fallback so the app still opens offline.
+self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET') return;
+
+  event.respondWith(
+    fetch(event.request)
+      .then((networkResponse) => {
+        const copy = networkResponse.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy)).catch(() => {});
+        return networkResponse;
+      })
+      .catch(() => caches.match(event.request))
+  );
+});
+
+// Lets index.html tell this worker "the user confirmed the update, take over now."
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
