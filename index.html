@@ -257,6 +257,7 @@ tr:hover td{background:var(--cream);}
   <button class="navlink" data-page="minutes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Meeting minutes</button>
   <button class="navlink" data-page="finance"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 17l5-5 4 4 8-8"/><path d="M14 7h6v6"/></svg>Financial year</button>
   <button class="navlink" data-page="committee"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l3 6 6.5.6-5 4.4 1.5 6.4L12 16l-6 3.4L7.5 13l-5-4.4L9 8z"/></svg>Committee &amp; quorum</button>
+  <button class="navlink" data-page="constitution"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2h9l5 5v15H6z"/><path d="M15 2v5h5"/><path d="M9 13h6M9 17h6M9 9h2"/></svg>Constitution</button>
 
   <div class="nav-divider"></div>
   <button class="navlink" onclick="exportBackup();closeMobileNav();" style="font-size:12.5px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg>Export snapshot</button>
@@ -283,7 +284,7 @@ tr:hover td{background:var(--cream);}
 <script>
 /* Bump this string every time you publish changes to GitHub.
    This is what tells everyone's app that a newer version exists. */
-const APP_VERSION='2026-06-17-6';
+const APP_VERSION='2026-06-17-7';
 const STORE_KEY='oasis-club-data-v1';
 let DATA={members:[
   {
@@ -714,14 +715,16 @@ function rowsToTransactions(rows){
   return rows.map(r=>({id:r.id,desc:r.desc_text,type:r.type,amount:Number(r.amount),date:r.date}));
 }
 function rowToMeta(r){
-  if(!r)return{financialYearStart:'2025-10-01',annualDueAmount:50000,duesYearLabel:'2025/2026',quorumNote:'',nextAgmDate:'2026-12-26',termStart:''};
+  if(!r)return{financialYearStart:'2025-10-01',annualDueAmount:50000,duesYearLabel:'2025/2026',quorumNote:'',nextAgmDate:'2026-12-26',termStart:'',constitutionUrl:'',constitutionUploadedAt:''};
   return{
     financialYearStart:r.financial_year_start||'2025-10-01',
     annualDueAmount:Number(r.annual_due_amount||50000),
     duesYearLabel:r.dues_year_label||'2025/2026',
     quorumNote:r.quorum_note||'',
     nextAgmDate:r.next_agm_date||'2026-12-26',
-    termStart:r.term_start||''
+    termStart:r.term_start||'',
+    constitutionUrl:r.constitution_url||'',
+    constitutionUploadedAt:r.constitution_uploaded_at||''
   };
 }
 
@@ -1606,6 +1609,188 @@ function pageCommittee(){
 function addYears(dateStr,years){
   const d=new Date(dateStr+'T00:00:00');d.setFullYear(d.getFullYear()+years);return d.toISOString().slice(0,10);
 }
+
+/* ============ CONSTITUTION ============ */
+const CONSTITUTION_ARTICLES=[
+  {title:'Preamble',body:[
+    'This Constitution sets out the name, objectives, governance structure, and operating rules of the Association. It shall be binding on all members and shall govern the conduct of the Association\u2019s affairs until lawfully amended in accordance with the procedure set out herein.'
+  ]},
+  {title:'Article 1 \u2014 Name',body:[
+    '1. The name of the Social Club shall be OASIS CLUB OF OTUN EKITI, hereinafter referred to as \u201cthe Association\u201d.'
+  ]},
+  {title:'Article 2 \u2014 Objectives',body:[
+    'The objectives of the Association shall be:',
+    '(a) to promote and offer members a wide range of social benefits and services, including but not limited to the collective promotion of each member\'s interests, collective attendance of family events, happy hours, an annual Christmas family picnic, an annual dinner dance and concert, sporting events, and community development;',
+    '(b) to promote the Association as a social and friendly organisation that provides value for money to all those eligible for membership, and to encourage them to join and remain in the Association;',
+    '(c) to co-operate with any other club having objectives similar to those of the Association, and formed for the purpose of fostering and promoting activities similar to those of the Association;',
+    '(d) to raise, collect, hold, and expend monies for the furtherance of any of the Association\'s objectives.'
+  ]},
+  {title:'Article 3 \u2014 Powers',body:[
+    '2. The Association shall have all the powers conferred by Part C of the Companies and Allied Matters Act 1990, as amended (\u201cthe Act\u201d).'
+  ]},
+  {title:'Article 4 \u2014 Membership',body:[
+    '3. Membership of the Association shall not exceed twenty-five (25) members and shall be open to any person who wishes to further the interests of the club, except indigenes of Moba Local Government Area.',
+    'Every person admitted to membership shall:',
+    '(a) be bound by this Constitution;',
+    '(b) become liable for such fees and subscriptions as may be fixed by the Association;',
+    '(c) be entitled to all the advantages and privileges of membership; and',
+    '(d) be eligible for election to any office in the Association.'
+  ]},
+  {title:'Article 5 \u2014 Subscription',body:[
+    '4. Subscription fees shall be paid monthly, quarterly, or annually, at the member\'s election. The payment period shall run from October to September, and each member must ensure full payment before the subsequent General Meeting.',
+    '5. Subscription fees shall be determined by members from time to time at a General Meeting. All such payments shall be receipted by the Treasurer, who shall issue a notice of payment due to all members at every monthly meeting.'
+  ]},
+  {title:'Article 6 \u2014 Resignation',body:[
+    '6. A member may resign from the Association by giving written notice to the Treasurer, copied to the President.',
+    '(a) A resigning member shall remain liable for any outstanding subscriptions, which shall be recoverable as a debt due to the Association.',
+    '(b) A member who submits a resignation letter but subsequently changes their mind shall, at the discretion of the Committee, be required to pay a re-joining fee of \u20a620,000 (Twenty Thousand Naira).'
+  ]},
+  {title:'Article 7 \u2014 Expulsion of a Member',body:[
+    '7. Subject to giving a member the opportunity to be heard or to make a written submission, the Committee may resolve to expel a member upon a charge of misconduct detrimental to the interest of the Association.',
+    '(a) Particulars of the charge shall be communicated to the member at least fifteen (15) working days before the Committee meeting at which the matter will be determined.',
+    '(b) The Committee\'s determination shall be communicated to the member. Where the determination is adverse to the member, the member\'s rights and privileges shall be suspended for a period of six (6) calendar months.'
+  ]},
+  {title:'Article 8 \u2014 The Committee',body:[
+    '8.1 Composition',
+    '8. The management of the assets and affairs of the Association shall be under the control of a Committee, which shall consist of the following officers:',
+    '(a) President',
+    '(b) Vice-President',
+    '(c) Secretary',
+    '(d) Assistant Secretary',
+    '(e) Treasurer',
+    '(f) Financial Secretary',
+    '(g) Public Relations Officer (PRO)',
+    '8.2 Collective Functions of the Committee',
+    '9. The Committee shall have power to deal with any matter not specifically covered by this Constitution.',
+    '10. The Committee shall be elected once every two (2) years by the bona-fide members present at the Annual General Meeting. Members so elected shall take office from the conclusion of the Annual General Meeting at which they are elected and shall hold office until the conclusion of their tenure.',
+    '11. Election shall be by the votes of bona-fide members present at the meeting. In the event of a tie, the President, or the person presiding over the meeting, shall have a second or casting vote.',
+    '12. The Committee shall have power to fill any casual vacancy arising between Annual General Meetings. A member appointed to such vacancy shall hold office only until the conclusion of the next Annual General Meeting, save that the Committee shall have power to remove such a member before that time and appoint another in their place.',
+    '13. The Committee shall meet at such times and places as the President shall direct. Questions arising at any Committee meeting shall be determined by a majority of the votes of members present, and in the case of a tie, the President shall have a second or casting vote. The Committee may adjourn and otherwise regulate the proceedings of its meetings as it thinks fit. Committee meetings shall be held at least once every month, and an additional meeting shall be held whenever requested by at least seven (7) bona-fide members.',
+    '8.3 Functions of the President and Vice-President',
+    '14. The President, or in their absence the Vice-President, shall chair all meetings of the Association. In the absence of both the President and the Vice-President, the Committee members present shall choose one of their number to act as Chairperson.',
+    '15. All acts or decisions made at a meeting by any member shall be as valid and effective as if made in ordinary circumstances, unless it is proved that the relevant appointment was made in fraud or bad faith.',
+    '16. The President shall perform the duties usually incumbent on the president of a society of this nature and shall preside at all meetings of the Association.',
+    '17. The Vice-President shall perform the duties of the President in the President\'s absence, and the two officers shall agree between themselves the order of precedence for this purpose.',
+    '8.4 Functions of the Secretary and Assistant Secretary',
+    '18. The Secretary, or in their absence the Assistant Secretary, shall attend all meetings of the Association and of the Committee and shall have custody of all books and records of the Association, except those ordinarily kept by the Treasurer. The Secretary shall, subject to the directions of the Committee, carry out all secretarial duties of the Association, including the summoning of all meetings.',
+    '8.5 Functions of the Treasurer',
+    '19. The Treasurer shall attend to the payment of all accounts approved for payment by the Committee, prepare the annual statement of receipts and expenditure, assets and liabilities for presentation at the Annual General Meeting, and shall be responsible for ensuring that the Association\'s books are audited each year by the auditor. The Treasurer shall keep proper records of all receipts, expenditure, assets, and liabilities of the Association and of its members, and shall present a short summary of amounts received and expended since the preceding meeting at every monthly Committee meeting.',
+    '8.6 Functions of the Public Relations Officer',
+    '20. The Public Relations Officer shall be responsible for the Association\'s public image and external communications, and shall in particular:',
+    '(a) publicise the activities, programmes, and achievements of the Association to members and to the wider public;',
+    '(b) serve as the principal point of contact between the Association and external bodies, sister clubs, the media, and the host community;',
+    '(c) coordinate publicity and media arrangements for the Association\'s events, including the annual dinner dance, concerts, and community development activities;',
+    '(d) promote a positive public image of the Association and safeguard its reputation; and',
+    '(e) perform such other public relations duties as the Committee may from time to time direct.'
+  ]},
+  {title:'Article 9 \u2014 Disqualification of Committee Members',body:[
+    '21. The office of a Committee member shall become vacant if that member:',
+    '(a) is disqualified by a general decision of bona-fide members;',
+    '(b) is expelled under this Constitution;',
+    '(c) is permanently incapacitated by ill health;',
+    '(d) is absent without apology for more than three (3) consecutive meetings, or for more than three (3) Committee meetings in a financial year; or',
+    '(e) ceases to be a bona-fide member of the Association.'
+  ]},
+  {title:'Article 10 \u2014 Meetings of the Association',body:[
+    '22. An Annual General Meeting of the Association shall be held on the 26th day of December each year, at such time and place as the Committee shall determine.',
+    '23. Notice of the Annual General Meeting shall be given to every member in such manner as the Committee shall direct, and such notice shall be given at least twenty-one (21) days before the date fixed for the meeting and shall specify the date, time, and place of the meeting.',
+    '24. A Special General Meeting may be held at any time and for any purpose, whenever directed by the President or requested in writing by at least seven (7) bona-fide members, who shall specify the purpose for which the meeting is requested. A Special General Meeting shall be called on twenty-one (21) days\' notice to members, specifying the date, time, and place of the meeting.',
+    '25. The accidental omission to give notice of a meeting to any member, or the non-receipt of such notice by any member, shall not invalidate or affect any proceedings or election at that meeting.',
+    '26. No business shall be transacted at any meeting of the Association or of the Committee unless a quorum is present. The quorum for a Committee meeting shall be one (1) more than half the number of Committee members. The quorum for a General Meeting shall be two-thirds (2/3) of bona-fide members.',
+    '27. Monthly meetings shall be held on the last Sunday of every month. If, within one hour of the time fixed for a meeting, a quorum is not present, the meeting shall stand adjourned to such time and place as the Chairperson of the meeting shall decide, save that in the case of a Special General Meeting called upon requisition, the meeting shall lapse.'
+  ]},
+  {title:'Article 11 \u2014 Minutes',body:[
+    '28. Proper minutes of all meetings of the Association and of the Committee shall be kept, duly authenticated by the Chairperson of the meeting, and publicly displayed within twenty-one (21) days of the meeting.'
+  ]},
+  {title:'Article 12 \u2014 Finance and the Financial Year',body:[
+    '29. The financial year of the Association shall commence on 1 October each year and end on 30 September of the following year.',
+    '30. The Association shall open a bank account in its name with a bank as the Committee shall from time to time determine. All payments from such account shall be made either by cheque signed by any two signatories or by electronic funds transfer authorised by any two signatories. The signatories to the account shall be the President, the Secretary, and the Treasurer.'
+  ]},
+  {title:'Article 13 \u2014 Accounts and Audit',body:[
+    '31. The Association shall keep such accounting records as are necessary to correctly record and explain its financial transactions and financial position.',
+    '32. A statement of receipts and expenditure for the preceding twelve (12) months, together with a balance sheet of the assets and liabilities of the Association, shall be presented at the Annual General Meeting each year.',
+    '33. All offices in the Association shall be held on an honorary (unpaid) basis.',
+    '34. No surplus made by the Association, and no money on hand or received by it in excess of expenditure, shall at any time be returned or paid, directly or indirectly, as profit or dividend to members or any class of members. All such surplus shall be applied for the benefit of the Association and in furtherance of its objectives, in such manner as the Committee shall from time to time decide.',
+    '35. The Association may invite and accept contributions from Oasis Club members or other well-wishers in support of its objectives.',
+    '36. The Association shall appoint an Auditor, who shall be a Certified Accountant, for the purpose of auditing the Association\'s records before each Annual General Meeting.'
+  ]},
+  {title:'Article 14 \u2014 Amendment of Rules',body:[
+    '37. This Constitution may be amended by a resolution passed by a two-thirds (2/3) majority of bona-fide members present and voting at any Annual or Special General Meeting of the Association.'
+  ]},
+  {title:'Article 15 \u2014 Winding Up',body:[
+    '38. The Association may be wound up in the manner provided for in Part C of the Companies and Allied Matters Act 1990, as amended.',
+    '39. If, after winding up, there remain surplus assets as defined in the Act, such surplus assets shall be sold, and the proceeds of sale shall be donated to a charitable organisation determined by the Committee at the time notice of dissolution is given.'
+  ]},
+  {title:'Article 16 \u2014 Solicitors',body:[
+    '40. The Solicitors for the Association shall be appointed by the Committee, or by members in a General Meeting.'
+  ]},
+  {title:'Adoption',body:[
+    'This Constitution was adopted by resolution of the members of OASIS CLUB OF OTUN EKITI at a General Meeting held on the date indicated below, and shall take effect immediately.',
+    'President: ______________________________ Date: ___________________',
+    'Secretary: ______________________________ Date: ___________________'
+  ]}
+];
+
+function pageConstitution(){
+  const canManage=canManageConstitution();
+  const meta=DATA.meta;
+  const hasFile=!!meta.constitutionUrl;
+  return `
+  <div class="page-head">
+    <div><h1>Constitution</h1><div class="sub">Oasis Club of Otun Ekiti &middot; Revised Edition 2026</div></div>
+  </div>
+  <div class="card" style="margin-bottom:20px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;">
+      <div>
+        <div class="card-head" style="margin-bottom:4px;"><h2 style="font-size:14.5px;">Original document</h2></div>
+        <div class="cell-muted">${hasFile?'Download the full formatted PDF as adopted.'+(meta.constitutionUploadedAt?' Last updated '+fmtDate(meta.constitutionUploadedAt.slice(0,10))+'.':''):'No PDF has been uploaded yet \u2014 the text below is still the full constitution.'}</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-shrink:0;">
+        ${hasFile?`<a class="btn btn-primary" style="font-size:12.5px;padding:7px 14px;text-decoration:none;" href="${meta.constitutionUrl}" target="_blank" rel="noopener">Download PDF</a>`:''}
+        ${canManage?`<button class="btn" style="font-size:12.5px;padding:7px 14px;" onclick="document.getElementById('constitution-file').click()">${hasFile?'Replace PDF':'Upload PDF'}</button>
+        <input type="file" id="constitution-file" accept="application/pdf" style="display:none"/>`:''}
+      </div>
+    </div>
+    ${canManage?'<p class="cell-muted" style="margin-top:10px;margin-bottom:0;">As a club officer, you can upload or replace the official PDF here. This updates the download link for everyone.</p>':''}
+  </div>
+  ${CONSTITUTION_ARTICLES.map(a=>`
+  <div class="card" style="margin-bottom:14px;">
+    <div class="card-head"><h2 style="font-size:15px;">${escHtml(a.title)}</h2></div>
+    ${a.body.map(p=>{
+      const isLettered=/^\([a-z]\)/.test(p.trim());
+      return isLettered
+        ?`<p class="cell-muted" style="margin:6px 0 6px 18px;color:var(--ink);">${escHtml(p)}</p>`
+        :`<p style="margin:8px 0;color:var(--ink);${/^\d+\.\d+\s/.test(p)?'font-weight:600;margin-top:14px;':''}">${escHtml(p)}</p>`;
+    }).join('')}
+  </div>`).join('')}
+  `;
+}
+
+function setupConstitutionPage(){
+  const fileInput=document.getElementById('constitution-file');
+  if(!fileInput)return;
+  fileInput.addEventListener('change',async e=>{
+    const file=e.target.files[0];
+    if(!file)return;
+    if(file.type!=='application/pdf'){showToast('Please choose a PDF file');return;}
+    if(file.size>10*1024*1024){showToast('PDF is too large \u2014 please choose one under 10MB');return;}
+    showToast('Uploading\u2026');
+    try{
+      const path='oasis-club-constitution.pdf';
+      const{error:uploadError}=await sb.storage.from('constitution').upload(path,file,{upsert:true,contentType:'application/pdf'});
+      if(uploadError)throw uploadError;
+      const{data:urlData}=sb.storage.from('constitution').getPublicUrl(path);
+      const cacheBustedUrl=urlData.publicUrl+'?v='+Date.now();
+      const pin=getCurrentAuthPin();
+      const{error:rpcError}=await sb.rpc('officer_update_constitution_url',{p_pin:pin,p_url:cacheBustedUrl});
+      if(rpcError)throw rpcError;
+      showToast('Constitution PDF updated');
+    }catch(err){
+      showToast('Upload failed: '+(err.message||'unknown error'));
+    }
+  });
+}
+
 function openOfficerForm(office){
   const current=DATA.members.find(m=>m.role===office);
   const activeMembers=DATA.members.filter(isActiveMember);
@@ -1710,6 +1895,14 @@ function getCurrentAuthPin(){
 }
 function isOfficerSessionNow(){
   return (sessionStorage.getItem(SESSION_KEY)||'').startsWith('role:');
+}
+const OFFICE_ROLES=['President','Vice-President','Secretary','Assistant Secretary','Treasurer','Financial Secretary','PRO'];
+function canManageConstitution(){
+  if(isOfficerSessionNow())return true;
+  const memberId=getCurrentMemberId();
+  if(!memberId)return false;
+  const mem=DATA.members.find(m=>m.id===memberId);
+  return mem?OFFICE_ROLES.includes(mem.role):false;
 }
 
 function populatePinSelect(){
@@ -1825,6 +2018,7 @@ function render(){
   else if(currentPage==='minutes')main.innerHTML=pageMinutes();
   else if(currentPage==='finance')main.innerHTML=pageFinance();
   else if(currentPage==='committee')main.innerHTML=pageCommittee();
+  else if(currentPage==='constitution'){main.innerHTML=pageConstitution();setupConstitutionPage();}
 }
 
 /* ============ APP UPDATE HANDLING ============ */
