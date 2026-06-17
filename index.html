@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="manifest" href="manifest.webmanifest"/>
 <link rel="apple-touch-icon" href="icons/icon-192.png"/>
 <meta name="theme-color" content="#0F6E56"/>
@@ -258,12 +259,10 @@ tr:hover td{background:var(--cream);}
   <button class="navlink" data-page="committee"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l3 6 6.5.6-5 4.4 1.5 6.4L12 16l-6 3.4L7.5 13l-5-4.4L9 8z"/></svg>Committee &amp; quorum</button>
 
   <div class="nav-divider"></div>
-  <button class="navlink" onclick="exportBackup();closeMobileNav();" style="font-size:12.5px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg>Download backup</button>
-  <button class="navlink" onclick="document.getElementById('import-file').click();closeMobileNav();" style="font-size:12.5px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21V9m0 0l-4 4m4-4l4 4M4 7V4a1 1 0 011-1h14a1 1 0 011 1v3"/></svg>Restore backup</button>
-  <input type="file" id="import-file" accept=".json" style="display:none" onchange="if(this.files[0])importBackup(this.files[0])"/>
+  <button class="navlink" onclick="exportBackup();closeMobileNav();" style="font-size:12.5px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg>Export snapshot</button>
   <div class="nav-divider"></div>
   <button class="navlink" onclick="lockApp()" style="font-size:12.5px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>Lock</button>
-  <div class="nav-foot">Data is saved in this browser only.<br/>Download a backup and share the file with committee members to sync records.</div>
+  <div class="nav-foot">Records sync live across every device.<br/>Export snapshot saves a local copy for your own records.</div>
 </nav>
 <div id="nav-backdrop" onclick="closeMobileNav()"></div>
 <button id="mobile-nav-toggle" onclick="toggleMobileNav()" aria-label="Menu">
@@ -284,7 +283,7 @@ tr:hover td{background:var(--cream);}
 <script>
 /* Bump this string every time you publish changes to GitHub.
    This is what tells everyone's app that a newer version exists. */
-const APP_VERSION='2026-06-17-5';
+const APP_VERSION='2026-06-17-6';
 const STORE_KEY='oasis-club-data-v1';
 let DATA={members:[
   {
@@ -695,58 +694,112 @@ function fmtDate(d){if(!d)return'&mdash;';const dt=new Date(d+'T00:00:00');retur
 function fmtMoney(n){return '\u20a6'+Number(n||0).toLocaleString('en-NG');}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(window._toastT);window._toastT=setTimeout(()=>t.classList.remove('show'),2400);}
 
+/* ============ SUPABASE CONNECTION ============ */
+const SUPABASE_URL='https://qowhysikdxlhbntimdgr.supabase.co';
+const SUPABASE_ANON_KEY='sb_publishable_4lQSGojYd_XlU-WFJGELhQ_n8DCj9wx';
+let sb=null;
+let connectionStatus='connecting'; // 'connecting' | 'connected' | 'offline'
+let realtimeChannel=null;
+
+function rowsToMembers(rows){
+  return rows.map(r=>({
+    id:r.id,name:r.name,role:r.role,status:r.status,phone:r.phone||'',email:r.email||'',
+    joined:r.joined||'',duesPaid:Number(r.dues_paid||0),pin:r.pin,photo:r.photo||''
+  }));
+}
+function rowsToMinutes(rows){
+  return rows.map(r=>({id:r.id,title:r.title,date:r.date,type:r.type,notes:r.notes||''}));
+}
+function rowsToTransactions(rows){
+  return rows.map(r=>({id:r.id,desc:r.desc_text,type:r.type,amount:Number(r.amount),date:r.date}));
+}
+function rowToMeta(r){
+  if(!r)return{financialYearStart:'2025-10-01',annualDueAmount:50000,duesYearLabel:'2025/2026',quorumNote:'',nextAgmDate:'2026-12-26',termStart:''};
+  return{
+    financialYearStart:r.financial_year_start||'2025-10-01',
+    annualDueAmount:Number(r.annual_due_amount||50000),
+    duesYearLabel:r.dues_year_label||'2025/2026',
+    quorumNote:r.quorum_note||'',
+    nextAgmDate:r.next_agm_date||'2026-12-26',
+    termStart:r.term_start||''
+  };
+}
+
 async function loadData(){
-  try{
-    const raw=localStorage.getItem(STORE_KEY);
-    if(raw)DATA=JSON.parse(raw);
-  }catch(e){ /* first run, no data yet */ }
-  if(!DATA.members)DATA.members=[];
-  if(!DATA.minutes)DATA.minutes=[];
-  if(!DATA.transactions)DATA.transactions=[];
-  if(!DATA.meta)DATA.meta={financialYearStart:'2025-10-01',quorumNote:'',nextAgmDate:'2026-12-26'};
-  if(!DATA.meta.nextAgmDate)DATA.meta.nextAgmDate='2026-12-26';
-}
-async function saveData(){
-  try{
-    localStorage.setItem(STORE_KEY,JSON.stringify(DATA));
-  }catch(e){console.error('save failed',e);showToast('Could not save \u2014 storage may be full');}
-}
-const SYNC_KEY='oasis-club-last-sync-v1';
-function recordSyncEvent(kind){
-  try{localStorage.setItem(SYNC_KEY,JSON.stringify({kind,at:new Date().toISOString()}));}catch(e){}
-}
-function getSyncStatus(){
-  let info=null;
-  try{const raw=localStorage.getItem(SYNC_KEY);if(raw)info=JSON.parse(raw);}catch(e){}
-  if(!info){
-    return{stale:true,message:'No backup has been downloaded or restored on this device yet. Since this app doesn\u2019t sync automatically between phones and computers, download a backup now and share it with other officers to keep everyone\u2019s records aligned.'};
+  if(typeof window.supabase==='undefined'){
+    console.error('Supabase library failed to load \u2014 check internet connection.');
+    connectionStatus='offline';
+    DATA={members:[],minutes:[],transactions:[],meta:rowToMeta(null)};
+    return;
   }
-  const hours=(Date.now()-new Date(info.at).getTime())/36e5;
-  const verb=info.kind==='export'?'Backup downloaded':'Backup restored';
-  const when=hours<1?'less than an hour ago':hours<24?Math.round(hours)+' hour'+(Math.round(hours)===1?'':'s')+' ago':Math.round(hours/24)+' day'+(Math.round(hours/24)===1?'':'s')+' ago';
-  const stale=hours>168; // over a week
-  return{stale,message:`${verb} on this device ${when}.${stale?' That\u2019s a while \u2014 worth checking if anyone else has newer changes to bring in.':' This device may still be out of sync with others until you exchange backups.'}`};
+  sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+  await fetchAllData();
+  subscribeToRealtime();
 }
+
+async function fetchAllData(){
+  try{
+    const[membersRes,minutesRes,txRes,metaRes]=await Promise.all([
+      sb.from('members').select('*'),
+      sb.from('minutes').select('*'),
+      sb.from('transactions').select('*'),
+      sb.from('club_meta').select('*').eq('id',1).maybeSingle()
+    ]);
+    if(membersRes.error||minutesRes.error||txRes.error||metaRes.error){
+      throw membersRes.error||minutesRes.error||txRes.error||metaRes.error;
+    }
+    DATA={
+      members:rowsToMembers(membersRes.data||[]),
+      minutes:rowsToMinutes(minutesRes.data||[]),
+      transactions:rowsToTransactions(txRes.data||[]),
+      meta:rowToMeta(metaRes.data)
+    };
+    connectionStatus='connected';
+  }catch(e){
+    console.error('Failed to load from Supabase:',e);
+    connectionStatus='offline';
+    if(!DATA||!DATA.members)DATA={members:[],minutes:[],transactions:[],meta:rowToMeta(null)};
+  }
+}
+
+function subscribeToRealtime(){
+  if(realtimeChannel)sb.removeChannel(realtimeChannel);
+  realtimeChannel=sb.channel('club-data-changes')
+    .on('postgres_changes',{event:'*',schema:'public',table:'members'},handleRealtimeChange)
+    .on('postgres_changes',{event:'*',schema:'public',table:'minutes'},handleRealtimeChange)
+    .on('postgres_changes',{event:'*',schema:'public',table:'transactions'},handleRealtimeChange)
+    .on('postgres_changes',{event:'*',schema:'public',table:'club_meta'},handleRealtimeChange)
+    .subscribe(status=>{
+      if(status==='SUBSCRIBED'){connectionStatus='connected';render();}
+      else if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'||status==='CLOSED'){connectionStatus='offline';render();}
+    });
+}
+let realtimeRefreshTimer=null;
+function handleRealtimeChange(){
+  // Refetch rather than patch in place: simplest way to stay correct
+  // given several tables can change together. Debounced so a burst of
+  // changes (e.g. restoring a backup) doesn't cause a render storm.
+  clearTimeout(realtimeRefreshTimer);
+  realtimeRefreshTimer=setTimeout(async()=>{
+    await fetchAllData();
+    render();
+  },150);
+}
+
+async function saveData(){
+  // Data is now written via the specific RPC calls at the point of change
+  // (see updateMemberRemote, addMinutesRemote, etc). This function is kept
+  // as a no-op so any code path that still calls it doesn't break, but it
+  // intentionally does not write DATA wholesale anywhere.
+}
+
 function exportBackup(){
   const blob=new Blob([JSON.stringify(DATA,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
-  a.href=url;a.download='oasis-club-backup-'+new Date().toISOString().slice(0,10)+'.json';
+  a.href=url;a.download='oasis-club-snapshot-'+new Date().toISOString().slice(0,10)+'.json';
   a.click();URL.revokeObjectURL(url);
-  recordSyncEvent('export');
-  showToast('Backup downloaded');
-}
-function importBackup(file){
-  const reader=new FileReader();
-  reader.onload=async e=>{
-    try{
-      const parsed=JSON.parse(e.target.result);
-      if(!parsed.members)throw new Error('not a valid backup file');
-      DATA=parsed;
-      await saveData();recordSyncEvent('import');render();showToast('Backup restored');
-    }catch(err){alert('Could not read this file as a valid Oasis Club backup.');}
-  };
-  reader.readAsText(file);
+  showToast('Snapshot downloaded');
 }
 
 function navigate(page){
@@ -859,13 +912,23 @@ function setupProfilePage(){
       if(!mem)return;
       const name=document.getElementById('pf-name').value.trim();
       if(!name)return;
-      mem.name=name;
-      mem.phone=document.getElementById('pf-phone').value;
-      mem.email=document.getElementById('pf-email').value;
-      if(window.__profilePhotoRemoved)mem.photo='';
-      else if(window.__profilePhotoData)mem.photo=window.__profilePhotoData;
-      window.__profilePhotoData=null;window.__profilePhotoRemoved=false;
-      await saveData();render();showToast('Profile updated');
+      const phone=document.getElementById('pf-phone').value;
+      const email=document.getElementById('pf-email').value;
+      const photoUpdate=window.__profilePhotoRemoved?'':(window.__profilePhotoData!==null?window.__profilePhotoData:null);
+      const submitBtn=e.target.querySelector('button[type=submit]');
+      submitBtn.disabled=true;submitBtn.textContent='Saving\u2026';
+      try{
+        const{error}=await sb.rpc('update_member_profile',{
+          p_member_id:mem.id,p_current_pin:mem.pin,
+          p_name:name,p_phone:phone,p_email:email,p_photo:photoUpdate
+        });
+        if(error)throw error;
+        window.__profilePhotoData=null;window.__profilePhotoRemoved=false;
+        showToast('Profile updated');
+      }catch(err){
+        submitBtn.disabled=false;submitBtn.textContent='Save changes';
+        showToast('Could not save: '+(err.message||'unknown error'));
+      }
     });
   }
   const pinForm=document.getElementById('pin-change-form');
@@ -879,20 +942,29 @@ function setupProfilePage(){
       const current=document.getElementById('pc-current').value.trim();
       const next=document.getElementById('pc-new').value.trim();
       const confirmPin=document.getElementById('pc-confirm').value.trim();
-      if(current!==mem.pin){errEl.textContent='Current PIN is incorrect.';return;}
       if(!/^\d{4}$/.test(next)){errEl.textContent='New PIN must be exactly 4 digits.';return;}
       if(next!==confirmPin){errEl.textContent='New PIN and confirmation do not match.';return;}
-      const clash=DATA.members.find(m=>m.id!==mem.id&&m.pin===next);
-      if(clash){errEl.textContent='That PIN is already in use by another member \u2014 please choose a different one.';return;}
-      mem.pin=next;
-      sessionStorage.setItem(SESSION_KEY,'member:'+mem.id);
-      await saveData();
-      errEl.textContent='';
-      document.getElementById('pc-current').value='';
-      document.getElementById('pc-new').value='';
-      document.getElementById('pc-confirm').value='';
-      showToast('PIN updated successfully');
-      populatePinSelect();
+      const submitBtn=e.target.querySelector('button[type=submit]');
+      submitBtn.disabled=true;submitBtn.textContent='Updating\u2026';
+      try{
+        const{error}=await sb.rpc('change_member_pin',{
+          p_member_id:mem.id,p_current_pin:current,p_new_pin:next
+        });
+        if(error)throw error;
+        sessionStorage.setItem(SESSION_KEY,'member:'+mem.id);
+        errEl.textContent='';
+        document.getElementById('pc-current').value='';
+        document.getElementById('pc-new').value='';
+        document.getElementById('pc-confirm').value='';
+        showToast('PIN updated successfully');
+        populatePinSelect();
+      }catch(err){
+        errEl.textContent=(err.message||'').includes('Incorrect PIN')?'Current PIN is incorrect.':
+          (err.message||'').includes('already in use')?'That PIN is already in use by another member \u2014 please choose a different one.':
+          (err.message||'Could not update PIN.');
+      }finally{
+        submitBtn.disabled=false;submitBtn.textContent='Update PIN';
+      }
     });
   }
 }
@@ -910,25 +982,16 @@ function pageOverview(){
   const recentMinutes=[...DATA.minutes].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,3);
   const agmWarning=getAgmWarning(DATA.meta.nextAgmDate);
 
-  const syncInfo=getSyncStatus();
-
   return `
   <div class="page-head">
     <div><h1>Overview</h1><div class="sub">Club snapshot &middot; ${todayLong()}</div></div>
   </div>
 
-  <div class="card" style="border-color:${syncInfo.stale?'var(--gold)':'var(--line)'};margin-bottom:20px;">
-    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;">
-      <div>
-        <div class="card-head" style="margin-bottom:4px;"><h2 style="font-size:14.5px;">Sync status</h2></div>
-        <div class="cell-muted">${syncInfo.message}</div>
-      </div>
-      <div style="display:flex;gap:8px;flex-shrink:0;">
-        <button class="btn" style="font-size:12.5px;padding:7px 14px;" onclick="exportBackup()">Download backup</button>
-        <button class="btn btn-primary" style="font-size:12.5px;padding:7px 14px;" onclick="document.getElementById('import-file').click()">Restore backup</button>
-      </div>
+  <div class="card" style="border-color:${connectionStatus==='connected'?'var(--line)':'var(--gold)'};margin-bottom:20px;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:${connectionStatus==='connected'?'#1a9d6b':connectionStatus==='connecting'?'var(--gold)':'var(--red)'};"></span>
+      <div class="cell-muted">${connectionStatus==='connected'?'Live \u2014 changes sync automatically across every device.':connectionStatus==='connecting'?'Connecting to the shared club database\u2026':'Offline \u2014 showing the last data this device received. Changes won\u2019t save until the connection is back.'}</div>
     </div>
-    ${syncInfo.stale?`<p class="cell-muted" style="color:var(--gold);margin-top:10px;margin-bottom:0;">This app doesn't sync automatically between devices. If anyone else has made changes on their phone or computer, download their backup and restore it here \u2014 and remember to share yours back.</p>`:''}
   </div>
 
   <div class="stats">
@@ -982,7 +1045,19 @@ function getAgmWarning(dateStr){
   return'';
 }
 async function updateAgmDate(val){
-  DATA.meta.nextAgmDate=val;await saveData();render();showToast('Next AGM date updated');
+  const pin=getCurrentAuthPin();
+  try{
+    const{error}=await sb.rpc('officer_update_meta',{
+      p_officer_pin:pin,
+      p_financial_year_start:DATA.meta.financialYearStart||null,
+      p_annual_due_amount:DATA.meta.annualDueAmount||null,
+      p_dues_year_label:DATA.meta.duesYearLabel||null,
+      p_quorum_note:DATA.meta.quorumNote||null,
+      p_next_agm_date:val||null
+    });
+    if(error)throw error;
+    showToast('Next AGM date updated');
+  }catch(e){showToast('Could not update: '+(e.message||'unknown error'));}
 }
 function emptyState(title,hint){
   return `<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M9 10h.01M15 10h.01M8 15c1 1 2.5 1.5 4 1.5s3-.5 4-1.5"/></svg><div class="title">${title}</div><div class="hint">${hint}</div></div>`;
@@ -1070,8 +1145,12 @@ function pagePhotos(){
 async function restoreMember(id){
   const mem=DATA.members.find(x=>x.id===id);
   if(!mem)return;
-  mem.status='active';
-  await saveData();render();showToast(mem.name+' restored \u2014 app access re-enabled');
+  const pin=getCurrentAuthPin();
+  try{
+    const{error}=await sb.rpc('officer_restore_member',{p_officer_pin:pin,p_member_id:id});
+    if(error)throw error;
+    showToast(mem.name+' restored \u2014 app access re-enabled');
+  }catch(e){showToast('Could not restore member: '+(e.message||'unknown error'));}
 }
 
 function openMemberForm(id){
@@ -1150,21 +1229,51 @@ function openMemberForm(id){
     const name=document.getElementById('f-name').value.trim();
     if(!name)return;
     const newStatus=document.getElementById('f-status').value;
-    const photoUpdate=window.__pendingPhotoRemoved?'':(window.__pendingPhotoData!==null?window.__pendingPhotoData:undefined);
-    if(existing){
-      const wasBlocked=existing.status==='suspended'||existing.status==='dismissed';
-      const nowBlocked=newStatus==='suspended'||newStatus==='dismissed';
-      existing.name=name;existing.role=document.getElementById('f-role').value;
-      existing.status=newStatus;existing.phone=document.getElementById('f-phone').value;
-      existing.joined=document.getElementById('f-joined').value;existing.email=document.getElementById('f-email').value;
-      if(canEditPhoto&&photoUpdate!==undefined)existing.photo=photoUpdate;
-      if(!wasBlocked&&nowBlocked)forceLogoutIfCurrentUser(existing.id);
-    }else{
-      DATA.members.push({id:uid(),name,role:document.getElementById('f-role').value,status:newStatus,
-        phone:document.getElementById('f-phone').value,joined:document.getElementById('f-joined').value,email:document.getElementById('f-email').value,
-        pin:genUniquePin(),dues:{},photo:window.__pendingPhotoData||''});
+    const role=document.getElementById('f-role').value;
+    const phone=document.getElementById('f-phone').value;
+    const email=document.getElementById('f-email').value;
+    const joined=document.getElementById('f-joined').value||null;
+    const photoUpdate=window.__pendingPhotoRemoved?'':(window.__pendingPhotoData!==null?window.__pendingPhotoData:null);
+    const submitBtn=e.target.querySelector('button[type=submit]');
+    submitBtn.disabled=true;submitBtn.textContent='Saving\u2026';
+    try{
+      if(existing){
+        if(isOwnRecord&&!isOfficerSession){
+          // A member editing their own record from here only ever touches
+          // name/phone/email/photo -- status/role changes are officer-only
+          // and this path doesn't expose those controls changing meaningfully
+          // without an officer PIN, so route through the self-service function.
+          const{error}=await sb.rpc('update_member_profile',{
+            p_member_id:existing.id,p_current_pin:existing.pin,
+            p_name:name,p_phone:phone,p_email:email,p_photo:photoUpdate
+          });
+          if(error)throw error;
+        }else{
+          const officerPin=getCurrentAuthPin();
+          const wasBlocked=existing.status==='suspended'||existing.status==='dismissed';
+          const nowBlocked=newStatus==='suspended'||newStatus==='dismissed';
+          const{error}=await sb.rpc('officer_upsert_member',{
+            p_officer_pin:officerPin,p_id:existing.id,p_name:name,p_role:role,p_status:newStatus,
+            p_phone:phone,p_email:email,p_joined:joined,p_photo:photoUpdate,p_pin:existing.pin
+          });
+          if(error)throw error;
+          if(!wasBlocked&&nowBlocked)forceLogoutIfCurrentUser(existing.id);
+        }
+      }else{
+        const officerPin=getCurrentAuthPin();
+        const newId=uid();
+        const newPin=genUniquePin();
+        const{error}=await sb.rpc('officer_upsert_member',{
+          p_officer_pin:officerPin,p_id:newId,p_name:name,p_role:role,p_status:newStatus,
+          p_phone:phone,p_email:email,p_joined:joined,p_photo:photoUpdate||null,p_pin:newPin
+        });
+        if(error)throw error;
+      }
+      closeModal();showToast(existing?'Member updated':'Member added');
+    }catch(err){
+      submitBtn.disabled=false;submitBtn.textContent=existing?'Save changes':'Add member';
+      showToast('Could not save: '+(err.message||'unknown error'));
     }
-    await saveData();closeModal();render();showToast(existing?'Member updated':'Member added');
   });
 }
 function clearPendingPhoto(){
@@ -1208,8 +1317,12 @@ function genUniquePin(){
 }
 async function deleteMember(id){
   if(!confirm('Permanently remove this member record? This cannot be undone.'))return;
-  DATA.members=DATA.members.filter(m=>m.id!==id);
-  await saveData();render();showToast('Member removed');
+  const pin=getCurrentAuthPin();
+  try{
+    const{error}=await sb.rpc('officer_delete_member',{p_officer_pin:pin,p_member_id:id});
+    if(error)throw error;
+    showToast('Member removed');
+  }catch(e){showToast('Could not remove member: '+(e.message||'unknown error'));}
 }
 
 /* ============ DUES ============ */
@@ -1255,16 +1368,39 @@ async function editDuesPaid(memberId){
   if(!mem)return;
   const val=prompt(`Amount paid by ${mem.name} (\u20a6):`, mem.duesPaid||0);
   if(val===null)return;
-  mem.duesPaid=Number(val)||0;
-  await saveData();render();
+  const pin=getCurrentAuthPin();
+  try{
+    const{error}=await sb.rpc('officer_set_dues_paid',{p_officer_pin:pin,p_member_id:memberId,p_amount:Number(val)||0});
+    if(error)throw error;
+  }catch(e){showToast('Could not update dues: '+(e.message||'unknown error'));}
 }
 async function updateDueAmount(val){
-  DATA.meta.annualDueAmount=Number(val)||50000;
-  await saveData();render();
+  const pin=getCurrentAuthPin();
+  try{
+    const{error}=await sb.rpc('officer_update_meta',{
+      p_officer_pin:pin,
+      p_financial_year_start:DATA.meta.financialYearStart||null,
+      p_annual_due_amount:Number(val)||50000,
+      p_dues_year_label:DATA.meta.duesYearLabel||null,
+      p_quorum_note:DATA.meta.quorumNote||null,
+      p_next_agm_date:DATA.meta.nextAgmDate||null
+    });
+    if(error)throw error;
+  }catch(e){showToast('Could not update: '+(e.message||'unknown error'));}
 }
 async function updateDuesYearLabel(val){
-  DATA.meta.duesYearLabel=val;
-  await saveData();render();
+  const pin=getCurrentAuthPin();
+  try{
+    const{error}=await sb.rpc('officer_update_meta',{
+      p_officer_pin:pin,
+      p_financial_year_start:DATA.meta.financialYearStart||null,
+      p_annual_due_amount:DATA.meta.annualDueAmount||null,
+      p_dues_year_label:val,
+      p_quorum_note:DATA.meta.quorumNote||null,
+      p_next_agm_date:DATA.meta.nextAgmDate||null
+    });
+    if(error)throw error;
+  }catch(e){showToast('Could not update: '+(e.message||'unknown error'));}
 }
 
 /* ============ MINUTES ============ */
@@ -1331,14 +1467,32 @@ function openMinutesForm(){
     e.preventDefault();
     const title=document.getElementById('m-title').value.trim();
     if(!title)return;
-    DATA.minutes.push({id:uid(),title,date:document.getElementById('m-date').value,type:document.getElementById('m-type').value,notes:document.getElementById('m-notes').value});
-    await saveData();closeModal();render();showToast('Minutes saved');
+    const pin=getCurrentAuthPin();
+    const submitBtn=e.target.querySelector('button[type=submit]');
+    submitBtn.disabled=true;submitBtn.textContent='Saving\u2026';
+    try{
+      const{error}=await sb.rpc('officer_add_minutes',{
+        p_officer_pin:pin,p_id:uid(),p_title:title,
+        p_date:document.getElementById('m-date').value,
+        p_type:document.getElementById('m-type').value,
+        p_notes:document.getElementById('m-notes').value
+      });
+      if(error)throw error;
+      closeModal();showToast('Minutes saved');
+    }catch(err){
+      submitBtn.disabled=false;submitBtn.textContent='Save minutes';
+      showToast('Could not save: '+(err.message||'unknown error'));
+    }
   });
 }
 async function deleteMinutes(id){
   if(!confirm('Delete these minutes?'))return;
-  DATA.minutes=DATA.minutes.filter(m=>m.id!==id);
-  await saveData();render();showToast('Minutes deleted');
+  const pin=getCurrentAuthPin();
+  try{
+    const{error}=await sb.rpc('officer_delete_minutes',{p_officer_pin:pin,p_id:id});
+    if(error)throw error;
+    showToast('Minutes deleted');
+  }catch(e){showToast('Could not delete: '+(e.message||'unknown error'));}
 }
 
 /* ============ FINANCE ============ */
@@ -1386,14 +1540,32 @@ function openTxForm(){
     const desc=document.getElementById('t-desc').value.trim();
     const amount=document.getElementById('t-amount').value;
     if(!desc||!amount)return;
-    DATA.transactions.push({id:uid(),desc,type:document.getElementById('t-type').value,amount,date:document.getElementById('t-date').value});
-    await saveData();closeModal();render();showToast('Entry added');
+    const pin=getCurrentAuthPin();
+    const submitBtn=e.target.querySelector('button[type=submit]');
+    submitBtn.disabled=true;submitBtn.textContent='Saving\u2026';
+    try{
+      const{error}=await sb.rpc('officer_add_transaction',{
+        p_officer_pin:pin,p_id:uid(),p_desc:desc,
+        p_type:document.getElementById('t-type').value,
+        p_amount:Number(amount),
+        p_date:document.getElementById('t-date').value
+      });
+      if(error)throw error;
+      closeModal();showToast('Entry added');
+    }catch(err){
+      submitBtn.disabled=false;submitBtn.textContent='Add entry';
+      showToast('Could not save: '+(err.message||'unknown error'));
+    }
   });
 }
 async function deleteTx(id){
   if(!confirm('Delete this entry?'))return;
-  DATA.transactions=DATA.transactions.filter(t=>t.id!==id);
-  await saveData();render();showToast('Entry deleted');
+  const pin=getCurrentAuthPin();
+  try{
+    const{error}=await sb.rpc('officer_delete_transaction',{p_officer_pin:pin,p_id:id});
+    if(error)throw error;
+    showToast('Entry deleted');
+  }catch(e){showToast('Could not delete: '+(e.message||'unknown error'));}
 }
 
 /* ============ COMMITTEE ============ */
@@ -1464,22 +1636,57 @@ function openOfficerForm(office){
     const existingId=document.getElementById('o-existing').value;
     const typedName=document.getElementById('o-name').value.trim();
     if(!typedName&&!existingId){showToast('Enter a name or choose a member');return;}
-    // Clear this office from anyone currently holding it
-    DATA.members.forEach(m=>{if(m.role===office)m.role='Member';});
-    if(existingId){
-      const sel=DATA.members.find(m=>m.id===existingId);
-      if(sel){sel.role=office;if(typedName)sel.name=typedName;}
-    }else if(current){
-      // Renaming the existing holder without picking from dropdown
-      current.role=office;current.name=typedName;
-    }else{
-      DATA.members.push({id:uid(),name:typedName,role:office,status:'active',phone:'',email:'',joined:new Date().toISOString().slice(0,10),pin:genUniquePin(),duesPaid:0});
+    const pin=getCurrentAuthPin();
+    const submitBtn=e.target.querySelector('button[type=submit]');
+    submitBtn.disabled=true;submitBtn.textContent='Saving\u2026';
+    try{
+      const newHolderId=existingId||(current?current.id:null);
+      // Clear this office from anyone currently holding it, except the
+      // person who's about to hold it again (avoids a pointless extra write).
+      const previousHolders=DATA.members.filter(m=>m.role===office&&m.id!==newHolderId);
+      for(const prev of previousHolders){
+        const{error}=await sb.rpc('officer_upsert_member',{
+          p_officer_pin:pin,p_id:prev.id,p_name:prev.name,p_role:'Member',p_status:prev.status,
+          p_phone:prev.phone,p_email:prev.email,p_joined:prev.joined||null,p_photo:null,p_pin:prev.pin
+        });
+        if(error)throw error;
+      }
+      if(existingId){
+        const sel=DATA.members.find(m=>m.id===existingId);
+        if(sel){
+          const{error}=await sb.rpc('officer_upsert_member',{
+            p_officer_pin:pin,p_id:sel.id,p_name:typedName||sel.name,p_role:office,p_status:sel.status,
+            p_phone:sel.phone,p_email:sel.email,p_joined:sel.joined||null,p_photo:null,p_pin:sel.pin
+          });
+          if(error)throw error;
+        }
+      }else if(current){
+        const{error}=await sb.rpc('officer_upsert_member',{
+          p_officer_pin:pin,p_id:current.id,p_name:typedName,p_role:office,p_status:current.status,
+          p_phone:current.phone,p_email:current.email,p_joined:current.joined||null,p_photo:null,p_pin:current.pin
+        });
+        if(error)throw error;
+      }else{
+        const newId=uid();
+        const{error}=await sb.rpc('officer_upsert_member',{
+          p_officer_pin:pin,p_id:newId,p_name:typedName,p_role:office,p_status:'active',
+          p_phone:'',p_email:'',p_joined:new Date().toISOString().slice(0,10),p_photo:null,p_pin:genUniquePin()
+        });
+        if(error)throw error;
+      }
+      closeModal();showToast('Officer updated');
+    }catch(err){
+      submitBtn.disabled=false;submitBtn.textContent='Save';
+      showToast('Could not save: '+(err.message||'unknown error'));
     }
-    await saveData();closeModal();render();showToast('Officer updated');
   });
 }
 async function updateTermStart(val){
-  DATA.meta.termStart=val;await saveData();render();
+  const pin=getCurrentAuthPin();
+  try{
+    const{error}=await sb.rpc('officer_update_term_start',{p_officer_pin:pin,p_term_start:val||null});
+    if(error)throw error;
+  }catch(e){showToast('Could not update: '+(e.message||'unknown error'));}
 }
 
 /* ============ PIN GATE ============ */
@@ -1489,6 +1696,21 @@ const EDITOR_PINS={
   financial_secretary:'1064'
 };
 const SESSION_KEY='oasis-club-session-v1';
+
+function getCurrentAuthPin(){
+  const value=sessionStorage.getItem(SESSION_KEY)||'';
+  if(value.startsWith('role:')){
+    return EDITOR_PINS[value.slice(5)]||null;
+  }
+  if(value.startsWith('member:')){
+    const mem=DATA.members.find(m=>m.id===value.slice(7));
+    return mem?mem.pin:null;
+  }
+  return null;
+}
+function isOfficerSessionNow(){
+  return (sessionStorage.getItem(SESSION_KEY)||'').startsWith('role:');
+}
 
 function populatePinSelect(){
   const sel=document.getElementById('pin-role');
