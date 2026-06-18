@@ -2570,10 +2570,9 @@ function setupServiceWorker(){
   <div id="asst-settings-panel">
     <div class="aset-title">Enable AI intelligence</div>
     <div class="aset-body">
-      Add a free <strong>Google Gemini API key</strong> to unlock full AI — meeting summaries, complex questions, anything about the club.<br/>
-      <a class="aset-link" href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">Get a free key at aistudio.google.com →</a>
+      Paste an <strong>Anthropic</strong> (<code>sk-ant-…</code>) or <strong>Google Gemini</strong> API key to unlock full AI — meeting summaries, complex questions, anything about the club.
     </div>
-    <input type="password" id="asst-api-key" class="aset-input" placeholder="Paste Gemini API key here…" autocomplete="off"/>
+    <input type="password" id="asst-api-key" class="aset-input" placeholder="sk-ant-… or Gemini key…" autocomplete="off"/>
     <div class="aset-actions">
       <button type="button" class="aset-save" onclick="saveAsstKey()">Save &amp; enable AI</button>
       <button type="button" class="aset-clear" onclick="clearAsstKey()">Remove key</button>
@@ -2660,7 +2659,7 @@ function toggleAsstSettings(){
 
 function saveAsstKey(){
   const key=(document.getElementById('asst-api-key').value||'').trim();
-  if(key){ localStorage.setItem(ASST_KEY_STORE,key); showToast('AI enabled — Gemini key saved.'); }
+  if(key){ localStorage.setItem(ASST_KEY_STORE,key); showToast(key.startsWith('sk-ant-')?'AI enabled — Claude (Anthropic) key saved.':'AI enabled — Gemini key saved.'); }
   else { localStorage.removeItem(ASST_KEY_STORE); showToast('AI key removed.'); }
   document.getElementById('asst-settings-panel').classList.remove('show');
   asstHistory=[]; document.getElementById('asst-body').innerHTML='';
@@ -2678,13 +2677,29 @@ function clearAsstKey(){
 async function callGemini(apiKey,systemPrompt,messages){
   const contents=messages.map(m=>({role:m.role==='assistant'?'model':'user',parts:[{text:m.content}]}));
   const resp=await fetch(
-    'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key='+encodeURIComponent(apiKey),
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key='+encodeURIComponent(apiKey),
     {method:'POST',headers:{'Content-Type':'application/json'},
      body:JSON.stringify({systemInstruction:{parts:[{text:systemPrompt}]},contents,generationConfig:{maxOutputTokens:1024,temperature:0.3}})}
   );
   if(!resp.ok){ const err=await resp.json().catch(()=>({})); throw new Error(err.error?.message||'Gemini error '+resp.status); }
   const data=await resp.json();
   return data.candidates?.[0]?.content?.parts?.[0]?.text||'';
+}
+
+async function callAnthropic(apiKey,systemPrompt,messages){
+  const resp=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'x-api-key':apiKey,
+      'anthropic-version':'2023-06-01',
+      'anthropic-dangerous-direct-browser-access':'true'
+    },
+    body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:1024,system:systemPrompt,messages})
+  });
+  if(!resp.ok){ const err=await resp.json().catch(()=>({})); throw new Error(err.error?.message||'Anthropic error '+resp.status); }
+  const data=await resp.json();
+  return data.content?.[0]?.text||'';
 }
 
 function localAsstAnswer(messages){
@@ -2754,7 +2769,9 @@ function localAsstAnswer(messages){
 
 async function asstCall(system,messages){
   const key=(localStorage.getItem(ASST_KEY_STORE)||'').trim();
-  if(key) return await callGemini(key,system,messages);
+  if(key) return key.startsWith('sk-ant-')
+    ? await callAnthropic(key,system,messages)
+    : await callGemini(key,system,messages);
   return localAsstAnswer(messages);
 }
 function toggleAsst(){
