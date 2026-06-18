@@ -422,6 +422,74 @@ body.dark .asst-chip{color:#a7e6d0;}
   .officer-card--featured .oc-name{font-size:17px;}
   .officer-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));}
 }
+
+/* ── Attendance tracker ── */
+.attend-bar{flex:1;height:8px;background:var(--line-soft);border-radius:99px;overflow:hidden;}
+.attend-bar-fill{height:100%;border-radius:99px;background:var(--teal);transition:width .4s;}
+
+/* ── Birthday board ── */
+.birthday-row{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--line-soft);}
+.birthday-row:last-child{border-bottom:none;}
+.birthday-today-banner{background:var(--gold-light);border-radius:10px;padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;font-size:14px;font-weight:500;color:#7a5800;}
+
+/* ── Welfare register ── */
+.welfare-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius-lg);padding:18px 20px;margin-bottom:12px;}
+.welfare-card-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:12px;}
+.welfare-title{font-size:15px;font-weight:600;font-family:'Source Serif 4',serif;color:var(--ink);}
+.welfare-meta{font-size:12px;color:var(--ink-faint);margin-top:3px;}
+.welfare-type{display:inline-flex;align-items:center;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;}
+.welfare-type-bereavement{background:#fde8e8;color:#c0392b;}
+.welfare-type-baby{background:#e8f5e9;color:#2e7d32;}
+.welfare-type-illness{background:#fff3e0;color:#e65100;}
+.welfare-type-levy{background:#e3f2fd;color:#1565c0;}
+.welfare-type-other{background:var(--line-soft);color:var(--ink-faint);}
+.welfare-member-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line-soft);}
+.welfare-member-row:last-child{border-bottom:none;}
+.welfare-paid{color:var(--teal-dark);font-weight:600;font-size:13px;}
+.welfare-owed{color:var(--ink-faint);font-size:13px;}
+
+/* ── Fines log ── */
+.fine-row{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid var(--line-soft);}
+.fine-row:last-child{border-bottom:none;}
+.fine-reason{flex:1;font-size:13.5px;color:var(--ink);}
+.fine-amount{font-size:14px;font-weight:600;color:var(--red);white-space:nowrap;}
+.fine-waived .fine-amount{color:var(--ink-faint);text-decoration:line-through;}
+.fine-waived-badge{display:inline-flex;font-size:10px;background:#e8f5e9;color:#2e7d32;border-radius:99px;padding:1px 7px;font-weight:600;}
+
+/* ── Projects tracker ── */
+.project-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius-lg);padding:18px 20px;margin-bottom:12px;}
+.project-card-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:12px;}
+.project-title{font-size:16px;font-weight:600;font-family:'Source Serif 4',serif;color:var(--ink);}
+.project-meta{font-size:12px;color:var(--ink-faint);margin-top:2px;}
+.project-prog-label{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-faint);margin-bottom:5px;margin-top:12px;}
+.project-prog-bar{background:var(--line-soft);border-radius:99px;height:10px;overflow:hidden;}
+.project-prog-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--teal),var(--teal-dark));transition:width .5s;}
+.project-milestone{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line-soft);font-size:13px;}
+.project-milestone:last-child{border-bottom:none;}
+.project-milestone input[type=checkbox]{width:16px;height:16px;accent-color:var(--teal);flex-shrink:0;}
+.milestone-done{text-decoration:line-through;color:var(--ink-faint);}
+
+/* ── WhatsApp share button ── */
+.wa-btn{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:5px 11px;border-radius:20px;background:#25D366;color:#fff;border:none;cursor:pointer;font-weight:500;transition:opacity .15s;line-height:1;}
+.wa-btn:hover{opacity:.85;}
+
+/* ── Member ID Card ── */
+.id-card{background:linear-gradient(135deg,#0F6E56 0%,#156b53 100%);border-radius:16px;padding:28px 24px;color:#fff;max-width:320px;margin:0 auto;position:relative;overflow:hidden;}
+.id-card::before{content:'';position:absolute;top:-40px;right:-40px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.07);}
+.id-card::after{content:'';position:absolute;bottom:-30px;left:-30px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.05);}
+.id-card-logo{width:44px;height:44px;border-radius:10px;margin-bottom:16px;display:block;}
+.id-card-club{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.65);margin-bottom:4px;}
+.id-card-member{font-size:11px;color:rgba(255,255,255,.5);margin-bottom:14px;}
+.id-card-avatar{width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid rgba(255,255,255,.4);margin-bottom:14px;display:block;}
+.id-card-avatar-ph{width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,.15);border:3px solid rgba(255,255,255,.4);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;color:#fff;margin-bottom:14px;}
+.id-card-name{font-size:20px;font-weight:700;font-family:'Source Serif 4',serif;margin-bottom:4px;}
+.id-card-role{font-size:13px;color:rgba(255,255,255,.75);margin-bottom:14px;}
+.id-card-detail-row{display:flex;gap:20px;margin-bottom:8px;flex-wrap:wrap;}
+.id-card-detail{font-size:11px;color:rgba(255,255,255,.6);}
+.id-card-detail strong{display:block;color:#fff;font-size:13px;margin-bottom:1px;}
+.id-card-motto{margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,.15);font-style:italic;color:rgba(255,255,255,.55);font-size:12px;}
+.id-card-print-btn{display:block;width:100%;margin-top:14px;padding:10px;background:var(--teal);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;transition:background .15s;}
+.id-card-print-btn:hover{background:var(--teal-dark);}
 </style>
 </head>
 <body>
@@ -524,6 +592,8 @@ body.dark .asst-chip{color:#a7e6d0;}
   <button type="button" class="navlink" data-page="events"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>Upcoming events<span class="nav-dot hidden" id="dot-events"></span></button>
   <button type="button" class="navlink" data-page="news"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h16v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"/><path d="M8 8h8M8 12h5"/></svg>News &amp; notices<span class="nav-dot hidden" id="dot-news"></span></button>
   <button type="button" class="navlink" data-page="interactive"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Polls &amp; voting</button>
+  <button type="button" class="navlink" data-page="welfare"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>Welfare &amp; levies</button>
+  <button type="button" class="navlink" data-page="projects"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/><path d="M12 12v5M9.5 14.5l2.5-2.5 2.5 2.5"/></svg>Projects</button>
 
   <div class="nav-divider"></div>
   <button type="button" class="navlink navlink-sm" onclick="exportBackup();closeMobileNav();"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg>Export snapshot</button>
@@ -551,7 +621,7 @@ body.dark .asst-chip{color:#a7e6d0;}
 <script>
 /* Bump this string every time you publish changes to GitHub.
    This is what tells everyone's app that a newer version exists. */
-const APP_VERSION='2026-06-17-8';
+const APP_VERSION='2026-06-18-1';
 const STORE_KEY='oasis-club-data-v1';
 let DATA={members:[
   {
@@ -1181,7 +1251,120 @@ function pageProfile(){
       ?`<p style="color:var(--red);font-size:12.5px;background:var(--red-light);padding:10px 12px;border-radius:8px;">You have an outstanding balance of <strong>${fmtMoney(outstanding)}</strong>. Please settle at the next meeting.</p>`
       :`<p style="color:var(--teal-dark);font-size:12.5px;background:var(--teal-light);padding:10px 12px;border-radius:8px;">You are fully paid up for ${yearLabel}. Thank you!</p>`
     }
+  </div>
+
+  <div class="card" style="max-width:520px;margin-top:18px;">
+    <div class="card-head"><h2>Date of birth</h2></div>
+    <p class="cell-muted" style="margin-bottom:12px;">Used for the birthday board on the Overview dashboard.</p>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <input type="date" id="pf-dob" value="${escHtml(getExtra(memberId,'dob'))}" style="flex:1;max-width:200px;"/>
+      <button type="button" class="btn btn-primary" style="font-size:13px;" onclick="saveProfileDob('${memberId}')">Save</button>
+      ${getExtra(memberId,'dob')?`<button type="button" class="btn" style="font-size:13px;" onclick="clearProfileDob('${memberId}')">Clear</button>`:''}
+    </div>
+  </div>
+
+  ${(()=>{
+    const stats=getMemberAttendanceStats(memberId);
+    if(!stats.total)return '';
+    const barPct=stats.pct;
+    const color=barPct>=75?'var(--teal)':barPct>=50?'var(--gold)':'var(--red)';
+    return `<div class="card" style="max-width:520px;margin-top:18px;">
+      <div class="card-head"><h2>Attendance record</h2></div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+        <div class="attend-bar" style="flex:1;"><div class="attend-bar-fill" style="width:${barPct}%;background:${color};"></div></div>
+        <div style="font-size:22px;font-weight:700;font-family:'Source Serif 4',serif;color:${color};min-width:48px;text-align:right;">${barPct}%</div>
+      </div>
+      <div class="cell-muted">${stats.attended} of ${stats.total} recorded meetings attended</div>
+    </div>`;
+  })()}
+
+  ${(()=>{
+    const isOfc=isOfficerSessionNow();
+    const fines=getMemberFines(memberId);
+    const total=getMemberFineTotal(memberId);
+    if(!fines.length&&!isOfc)return '';
+    return `<div class="card" style="max-width:520px;margin-top:18px;${total>0?'border-color:var(--red);':''}">
+      <div class="card-head">
+        <h2>Fines</h2>
+        ${total>0?`<span class="badge badge-overdue">&#8358;${fmtMoney(total)} outstanding</span>`:`<span class="badge badge-paid">No outstanding fines</span>`}
+      </div>
+      ${fines.length?`<div>${fines.map(f=>`<div class="fine-row ${f.waived?'fine-waived':''}">
+        <div style="flex:1;min-width:0;">
+          <div class="fine-reason">${escHtml(f.reason)}</div>
+          <div style="font-size:11.5px;color:var(--ink-faint);margin-top:1px;">${fmtDate(f.date)}${f.waived?'<span class="fine-waived-badge" style="margin-left:6px;">Waived</span>':''}</div>
+        </div>
+        <span class="fine-amount">${fmtMoney(Number(f.amount))}</span>
+        ${isOfc?`<div style="display:flex;gap:4px;flex-shrink:0;">
+          <button type="button" class="btn" style="font-size:11px;padding:3px 7px;" onclick="waiveFine('${f.id}')">${f.waived?'Restore':'Waive'}</button>
+          <button type="button" class="icon-btn" onclick="deleteFine('${f.id}')" title="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="14" height="14"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button>
+        </div>`:''}
+      </div>`).join('')}</div>`:`<p class="cell-muted">No fines on record.</p>`}
+      ${isOfc?`<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--line-soft);"><button type="button" class="btn" style="font-size:13px;" onclick="openAddFine('${memberId}')">+ Add fine</button></div>`:''}
+    </div>`;
+  })()}
+
+  <div class="card" style="max-width:520px;margin-top:18px;">
+    <div class="card-head"><h2>Member ID Card</h2></div>
+    <p class="cell-muted" style="margin-bottom:14px;">Generate a printable identity card with your name, role, and membership details.</p>
+    <button type="button" class="btn btn-primary" onclick="openMemberIdCard('${memberId}')">&#128196; View ID Card</button>
   </div>`;
+}
+function saveProfileDob(memberId){
+  const val=document.getElementById('pf-dob').value;
+  setExtra(memberId,'dob',val);
+  showToast(val?'Date of birth saved.':'Date of birth cleared.');
+  render();
+}
+function clearProfileDob(memberId){
+  setExtra(memberId,'dob','');
+  showToast('Date of birth removed.');
+  render();
+}
+function openMemberFinesModal(memberId){
+  const mem=DATA.members.find(m=>m.id===memberId);if(!mem)return;
+  const fines=getMemberFines(memberId);
+  const total=getMemberFineTotal(memberId);
+  const stats=getMemberAttendanceStats(memberId);
+  const barPct=stats.pct;
+  const barColor=barPct>=75?'var(--teal)':barPct>=50?'var(--gold)':'var(--red)';
+  openModal(`<h3>${escHtml(mem.name)}</h3>
+    <p class="cell-muted" style="margin-top:-6px;margin-bottom:14px;">Fines &amp; attendance overview</p>
+    ${stats.total?`<div style="margin-bottom:18px;">
+      <div style="font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:8px;">Attendance</div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div class="attend-bar" style="flex:1;"><div class="attend-bar-fill" style="width:${barPct}%;background:${barColor};"></div></div>
+        <span style="font-size:16px;font-weight:700;color:${barColor};">${barPct}%</span>
+      </div>
+      <div class="cell-muted" style="margin-top:4px;">${stats.attended} of ${stats.total} meetings</div>
+    </div>`:''}
+    <div>
+      <div style="font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:8px;">Fines ${total?`&mdash; <span style="color:var(--red);">${fmtMoney(total)} outstanding</span>`:''}</div>
+      ${fines.length?fines.map(f=>`<div class="fine-row ${f.waived?'fine-waived':''}">
+        <div style="flex:1;min-width:0;">
+          <div class="fine-reason">${escHtml(f.reason)}</div>
+          <div style="font-size:11.5px;color:var(--ink-faint);">${fmtDate(f.date)}${f.waived?'<span class="fine-waived-badge" style="margin-left:6px;">Waived</span>':''}</div>
+        </div>
+        <span class="fine-amount">${fmtMoney(Number(f.amount))}</span>
+        <div style="display:flex;gap:4px;flex-shrink:0;">
+          <button type="button" class="btn" style="font-size:11px;padding:3px 7px;" onclick="waiveFineRefresh('${f.id}','${memberId}')">${f.waived?'Restore':'Waive'}</button>
+          <button type="button" class="icon-btn" onclick="deleteFineRefresh('${f.id}','${memberId}')" title="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="14" height="14"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button>
+        </div>
+      </div>`).join(''):`<p class="cell-muted">No fines on record.</p>`}
+      <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--line-soft);">
+        <button type="button" class="btn" style="font-size:13px;" onclick="openAddFineFromModal('${memberId}')">+ Add fine</button>
+      </div>
+    </div>
+    <div class="modal-actions"><button type="button" class="btn" onclick="closeModal()">Close</button></div>`);
+}
+function waiveFineRefresh(fineId,memberId){waiveFine(fineId);openMemberFinesModal(memberId);}
+function deleteFineRefresh(fineId,memberId){
+  if(!confirm('Delete this fine?'))return;
+  saveFines(loadFines().filter(f=>f.id!==fineId));
+  openMemberFinesModal(memberId);
+}
+function openAddFineFromModal(memberId){
+  closeModal();
+  setTimeout(()=>openAddFine(memberId),150);
 }
 window.__profilePhotoData=null;
 window.__profilePhotoRemoved=false;
@@ -1326,7 +1509,29 @@ function pageOverview(){
     ${recentMinutes.length?`<table><tbody>${recentMinutes.map(m=>`
       <tr><td class="cell-name">${escHtml(m.title)}</td><td class="cell-muted">${fmtDate(m.date)}</td><td><span class="badge ${daysSince(m.date)>21?'badge-overdue':'badge-paid'}">${daysSince(m.date)>21?'publish overdue':'within 21 days'}</span></td></tr>
     `).join('')}</tbody></table>`:emptyState('No minutes recorded yet','Add your first meeting minutes from the Minutes page.')}
-  </div>`;
+  </div>
+
+  ${(()=>{
+    const bdays=upcomingBirthdays(30);
+    const todayBdays=todaysBirthdays();
+    if(!bdays.length)return '';
+    const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return `<div class="card">
+      <div class="card-head"><h2>&#127874; Birthdays</h2><span class="meta">Next 30 days</span></div>
+      ${todayBdays.map(m=>`<div class="birthday-today-banner">&#127881; Today is <strong style="margin:0 4px;">${escHtml(m.name)}</strong>'s birthday! Celebrate with them.</div>`).join('')}
+      ${bdays.filter(b=>b.diff>0).map(b=>{
+        const d=b.bday;
+        return `<div class="birthday-row">
+          <span style="font-size:24px;">&#127874;</span>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:14px;font-weight:500;">${escHtml(b.mem.name)}</div>
+            <div style="font-size:12px;color:var(--ink-faint);">${MONTHS[d.getMonth()]} ${d.getDate()} &mdash; in ${b.diff} day${b.diff!==1?'s':''}</div>
+          </div>
+          <span class="badge badge-active" style="font-size:11px;">${escHtml(b.mem.role||'Member')}</span>
+        </div>`;
+      }).join('')}
+    </div>`;
+  })()}`;
 }
 
 function currentMonthKey(){
@@ -1408,6 +1613,7 @@ function renderActiveTable(m,canEdit){
         ${showLogin?`<td class="cell-muted" style="font-size:12px;">${fmtLastLogin(logins[mem.id])}</td>`:''}
         ${canEdit?`<td class="cell-muted" style="font-family:'Inter',sans-serif;letter-spacing:1px;">${escHtml(mem.pin||'&mdash;')}</td>`:''}
         ${canEdit?`<td style="text-align:right;white-space:nowrap;">
+          <button class="icon-btn" onclick="openMemberFinesModal('${mem.id}')" title="Fines &amp; attendance" aria-label="Fines"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></button>
           <button class="icon-btn" onclick="openMemberForm('${mem.id}')" aria-label="Edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button>
           <button class="icon-btn" onclick="deleteMember('${mem.id}')" aria-label="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2m2 0v14a1 1 0 01-1 1H6a1 1 0 01-1-1V6z"/></svg></button>
         </td>`:''}
@@ -1758,6 +1964,7 @@ function pageMinutes(){
           </div>
           <div style="display:flex;align-items:center;gap:8px;">
             <span class="badge ${daysSince(m.date)>21?'badge-overdue':'badge-paid'}">${daysSince(m.date)>21?'overdue':'on time'}</span>
+            ${(()=>{const att=getMinuteAttendance(m.id);const cnt=att.present.length;const tot=DATA.members.filter(isActiveMember).length;if(canEdit)return`<button class="btn" style="font-size:11.5px;padding:4px 9px;" onclick="event.stopPropagation();openAttendanceModal('${m.id}')" title="Mark attendance">&#10003; ${cnt?cnt+'/'+tot+' present':'Attendance'}</button>`;return cnt?`<span class="badge badge-active" style="font-size:11px;">${cnt}/${tot}</span>`:'';})()}
             ${canEdit?`<button class="icon-btn" onclick="event.stopPropagation();deleteMinutes('${m.id}')" aria-label="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2m2 0v14a1 1 0 01-1 1H6a1 1 0 01-1-1V6z"/></svg></button>`:''}
           </div>
         </div>
@@ -2623,7 +2830,10 @@ function pageEvents(){
       +(ev.location?'<div class="ev-meta">&#128205; '+escHtml(ev.location)+'</div>':'')
       +(ev.description?'<div class="ev-desc">'+escHtml(ev.description)+'</div>':'')
       +'</div>'
-      +(isOfc?'<div class="ev-actions"><button type="button" class="icon-btn" onclick="deleteEvent(\''+ev.id+'\')" title="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button></div>':'')
+      +'<div class="ev-actions" style="gap:6px;">'
+      +'<button type="button" class="wa-btn" onclick="shareEvent(\''+ev.id+'\')">'+WA_SVG+' Share on WhatsApp</button>'
+      +(isOfc?'<button type="button" class="icon-btn" style="margin-left:4px;" onclick="deleteEvent(\''+ev.id+'\')" title="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>':'')
+      +'</div>'
       +'</div>';
   }
   let html='<div class="page-head"><div><h1>Upcoming Events</h1>'
@@ -2684,6 +2894,7 @@ function pageNews(){
       +'<div><div class="news-title">'+escHtml(item.title)+'</div>'
       +'<div class="news-meta">'+d.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})+' · '+escHtml(item.author||'Club Secretary')+'</div></div>'
       +(isOfc?'<button type="button" class="icon-btn" onclick="deleteNews(\''+item.id+'\')" title="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>':'')
+      +'<button type="button" class="wa-btn" style="margin-left:4px;" onclick="shareNewsItem(\''+item.id+'\')">'+WA_SVG+' Share</button>'
       +'</div>'
       +'<div class="news-body">'+escHtml(item.body).replace(/\n/g,'<br/>')+'</div>'
       +'</div>';
@@ -2816,6 +3027,398 @@ function deletePoll(id){
   render();
 }
 
+/* ====================== ATTENDANCE TRACKER ====================== */
+const ATTENDANCE_STORE='oasis-attendance-v1';
+function loadAttendance(){try{return JSON.parse(localStorage.getItem(ATTENDANCE_STORE)||'{}')}catch{return {};}}
+function saveAttendance(o){localStorage.setItem(ATTENDANCE_STORE,JSON.stringify(o));}
+function getMinuteAttendance(minuteId){const all=loadAttendance();return all[minuteId]||{present:[]};}
+function getMemberAttendanceStats(memberId){
+  const all=loadAttendance();
+  const mids=DATA.minutes.map(m=>m.id);
+  let attended=0;
+  for(const mid of mids){const a=all[mid]||{present:[]};if(a.present.includes(memberId))attended++;}
+  return {attended,total:mids.length,pct:mids.length?Math.round(attended/mids.length*100):0};
+}
+function openAttendanceModal(minuteId){
+  const m=DATA.minutes.find(x=>x.id===minuteId);
+  if(!m)return;
+  const att=getMinuteAttendance(minuteId);
+  const active=DATA.members.filter(isActiveMember);
+  const rows=active.map(mem=>`<label style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line-soft);cursor:pointer;">
+    <input type="checkbox" value="${mem.id}" ${att.present.includes(mem.id)?'checked':''} style="width:16px;height:16px;accent-color:var(--teal);"/>
+    <span style="font-size:14px;">${escHtml(mem.name)}</span>
+  </label>`).join('');
+  openModal(`<h3>Attendance — ${escHtml(m.title)}</h3>
+    <p class="cell-muted" style="margin-top:-6px;margin-bottom:14px;">${fmtDate(m.date)} &middot; Tick everyone who was present</p>
+    <div style="max-height:50vh;overflow-y:auto;">${rows}</div>
+    <div class="modal-actions">
+      <button type="button" class="btn" onclick="closeModal()">Cancel</button>
+      <button type="button" class="btn btn-primary" onclick="saveAttendanceModal('${minuteId}')">Save attendance</button>
+    </div>`);
+}
+function saveAttendanceModal(minuteId){
+  const boxes=document.querySelectorAll('#modal-content input[type=checkbox]');
+  const present=[];
+  boxes.forEach(b=>{if(b.checked)present.push(b.value);});
+  const all=loadAttendance();
+  all[minuteId]={present};
+  saveAttendance(all);
+  closeModal();render();showToast('Attendance saved.');
+}
+
+/* ====================== MEMBER EXTRAS (DOB etc.) ====================== */
+const MEMBER_EXTRAS_STORE='oasis-member-extras-v1';
+function loadExtras(){try{return JSON.parse(localStorage.getItem(MEMBER_EXTRAS_STORE)||'{}')}catch{return {};}}
+function saveExtras(o){localStorage.setItem(MEMBER_EXTRAS_STORE,JSON.stringify(o));}
+function getExtra(memberId,key){const e=loadExtras();return(e[memberId]||{})[key]||'';}
+function setExtra(memberId,key,val){const e=loadExtras();if(!e[memberId])e[memberId]={};e[memberId][key]=val;saveExtras(e);}
+function upcomingBirthdays(daysAhead){
+  const extras=loadExtras();
+  const today=new Date();today.setHours(0,0,0,0);
+  const results=[];
+  for(const mem of DATA.members.filter(isActiveMember)){
+    const dob=(extras[mem.id]||{}).dob;
+    if(!dob)continue;
+    const parts=dob.split('-');
+    const yr=today.getFullYear();
+    let bday=new Date(yr,Number(parts[1])-1,Number(parts[2]));
+    if(bday<today)bday=new Date(yr+1,Number(parts[1])-1,Number(parts[2]));
+    const diff=Math.round((bday-today)/(864e5));
+    if(diff<=daysAhead)results.push({mem,dob,bday,diff});
+  }
+  results.sort((a,b)=>a.diff-b.diff);
+  return results;
+}
+function todaysBirthdays(){
+  const extras=loadExtras();
+  const t=new Date();
+  const mm=String(t.getMonth()+1).padStart(2,'0');
+  const dd=String(t.getDate()).padStart(2,'0');
+  return DATA.members.filter(isActiveMember).filter(mem=>{
+    const dob=(extras[mem.id]||{}).dob;
+    if(!dob)return false;
+    const p=dob.split('-');
+    return p[1]===mm&&p[2]===dd;
+  });
+}
+
+/* ====================== WELFARE REGISTER ====================== */
+const WELFARE_STORE='oasis-welfare-v1';
+function loadWelfare(){try{return JSON.parse(localStorage.getItem(WELFARE_STORE)||'[]')}catch{return [];}}
+function saveWelfare(a){localStorage.setItem(WELFARE_STORE,JSON.stringify(a));}
+const WELFARE_LABELS={bereavement:'Bereavement',baby:'New baby',illness:'Illness',levy:'Club levy',other:'Other'};
+function pageWelfare(){
+  const isOfc=isOfficerSessionNow();
+  const welfare=loadWelfare().sort((a,b)=>b.date.localeCompare(a.date));
+  const active=DATA.members.filter(isActiveMember);
+  function typeClass(t){return'welfare-type welfare-type-'+(t||'other');}
+  function welfareCard(w){
+    const cmap={};(w.contributions||[]).forEach(c=>{cmap[c.memberId]=(cmap[c.memberId]||0)+Number(c.amount);});
+    const paidCount=Object.keys(cmap).length;
+    const total=Object.values(cmap).reduce((s,v)=>s+v,0);
+    return `<div class="welfare-card">
+      <div class="welfare-card-head">
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
+            <span class="${typeClass(w.type)}">${WELFARE_LABELS[w.type]||'Other'}</span>
+            <span class="welfare-title">${escHtml(w.title)}</span>
+          </div>
+          <div class="welfare-meta">${fmtDate(w.date)}${w.targetAmount?` &middot; Target: ${fmtMoney(Number(w.targetAmount))}`:''} &middot; ${paidCount}/${active.length} contributed &middot; Total: <strong>${fmtMoney(total)}</strong></div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0;">
+          ${isOfc?`<button type="button" class="btn" style="font-size:12px;padding:5px 10px;" onclick="openWelfareContrib('${w.id}')">+ Record</button>`:''}
+          ${isOfc?`<button type="button" class="icon-btn" onclick="deleteWelfare('${w.id}')" title="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>`:''}
+        </div>
+      </div>
+      <details>
+        <summary style="cursor:pointer;font-size:12.5px;color:var(--ink-faint);padding:4px 0;">Member contributions (${paidCount} paid)</summary>
+        <div style="margin-top:8px;">${active.map(mem=>{
+          const amt=cmap[mem.id];
+          return `<div class="welfare-member-row"><span style="flex:1;font-size:13px;">${escHtml(mem.name)}</span>${amt?`<span class="welfare-paid">${fmtMoney(amt)}</span><span class="badge badge-paid" style="font-size:10px;margin-left:4px;">Paid</span>`:`<span class="welfare-owed">Not yet</span>`}</div>`;
+        }).join('')}</div>
+      </details>
+    </div>`;
+  }
+  return `<div class="page-head">
+    <div><h1>Welfare &amp; Levies</h1><div class="sub">${welfare.length} event${welfare.length!==1?'s':''} on record</div></div>
+    ${isOfc?`<button type="button" class="btn btn-primary" onclick="openAddWelfare()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M12 5v14M5 12h14"/></svg>New entry</button>`:''}
+  </div>
+  ${welfare.length?welfare.map(welfareCard).join(''):emptyState('No welfare events recorded','Officers can log bereavement, new baby, illness levies and other special contributions.')}`;
+}
+function openAddWelfare(){
+  openModal(`<h3>New Welfare / Levy Entry</h3>
+    <div class="field"><label>Title</label><input type="text" id="wf-title" placeholder="e.g. Condolence for Bro. Adeyemi"/></div>
+    <div class="field-row">
+      <div class="field"><label>Type</label><select id="wf-type"><option value="bereavement">Bereavement</option><option value="baby">New baby</option><option value="illness">Illness</option><option value="levy">Club levy</option><option value="other">Other</option></select></div>
+      <div class="field"><label>Date</label><input type="date" id="wf-date" value="${new Date().toISOString().slice(0,10)}"/></div>
+    </div>
+    <div class="field"><label>Expected contribution per member (&#8358;, optional)</label><input type="number" id="wf-target" placeholder="e.g. 2000" min="0"/></div>
+    <div class="field"><label>Description (optional)</label><textarea id="wf-desc" rows="2"></textarea></div>
+    <div class="modal-actions"><button type="button" class="btn" onclick="closeModal()">Cancel</button><button type="button" class="btn btn-primary" onclick="submitAddWelfare()">Save</button></div>`);
+}
+function submitAddWelfare(){
+  const title=(document.getElementById('wf-title').value||'').trim();
+  const date=document.getElementById('wf-date').value;
+  if(!title||!date){showToast('Title and date are required.');return;}
+  const item={id:uid(),title,type:document.getElementById('wf-type').value,date,
+    targetAmount:document.getElementById('wf-target').value||'',
+    description:(document.getElementById('wf-desc').value||'').trim(),
+    contributions:[],createdAt:new Date().toISOString()};
+  const arr=loadWelfare();arr.unshift(item);saveWelfare(arr);
+  closeModal();render();showToast('Welfare entry created.');
+}
+function openWelfareContrib(welfareId){
+  const w=loadWelfare().find(x=>x.id===welfareId);
+  if(!w)return;
+  const active=DATA.members.filter(isActiveMember);
+  openModal(`<h3>Record Contribution</h3>
+    <p class="cell-muted" style="margin-top:-6px;margin-bottom:14px;">${escHtml(w.title)}</p>
+    <div class="field"><label>Member</label><select id="wc-member">${active.map(m=>`<option value="${m.id}">${escHtml(m.name)}</option>`).join('')}</select></div>
+    <div class="field-row">
+      <div class="field"><label>Amount (&#8358;)</label><input type="number" id="wc-amount" min="0" placeholder="e.g. 2000"/></div>
+      <div class="field"><label>Date paid</label><input type="date" id="wc-date" value="${new Date().toISOString().slice(0,10)}"/></div>
+    </div>
+    <div class="modal-actions"><button type="button" class="btn" onclick="closeModal()">Cancel</button><button type="button" class="btn btn-primary" onclick="submitWelfareContrib('${welfareId}')">Save</button></div>`);
+}
+function submitWelfareContrib(welfareId){
+  const memberId=document.getElementById('wc-member').value;
+  const amount=document.getElementById('wc-amount').value;
+  const date=document.getElementById('wc-date').value;
+  if(!amount||!date){showToast('Amount and date are required.');return;}
+  const arr=loadWelfare();
+  const w=arr.find(x=>x.id===welfareId);
+  if(!w)return;
+  if(!w.contributions)w.contributions=[];
+  w.contributions.push({id:uid(),memberId,amount:Number(amount),paidDate:date});
+  saveWelfare(arr);closeModal();render();showToast('Contribution recorded.');
+}
+function deleteWelfare(id){
+  if(!confirm('Delete this welfare entry and all contributions?'))return;
+  saveWelfare(loadWelfare().filter(w=>w.id!==id));render();
+}
+
+/* ====================== FINES LOG ====================== */
+const FINES_STORE='oasis-fines-v1';
+function loadFines(){try{return JSON.parse(localStorage.getItem(FINES_STORE)||'[]')}catch{return [];}}
+function saveFines(a){localStorage.setItem(FINES_STORE,JSON.stringify(a));}
+function getMemberFines(memberId){return loadFines().filter(f=>f.memberId===memberId).sort((a,b)=>b.date.localeCompare(a.date));}
+function getMemberFineTotal(memberId){return getMemberFines(memberId).filter(f=>!f.waived).reduce((s,f)=>s+Number(f.amount),0);}
+function openAddFine(memberId){
+  const mem=DATA.members.find(m=>m.id===memberId);if(!mem)return;
+  openModal(`<h3>Add Fine &mdash; ${escHtml(mem.name)}</h3>
+    <div class="field"><label>Reason</label><input type="text" id="fn-reason" placeholder="e.g. Lateness to meeting, Absence without apology"/></div>
+    <div class="field-row">
+      <div class="field"><label>Amount (&#8358;)</label><input type="number" id="fn-amount" min="0" placeholder="e.g. 500"/></div>
+      <div class="field"><label>Date</label><input type="date" id="fn-date" value="${new Date().toISOString().slice(0,10)}"/></div>
+    </div>
+    <div class="modal-actions"><button type="button" class="btn" onclick="closeModal()">Cancel</button><button type="button" class="btn btn-primary" onclick="submitAddFine('${memberId}')">Add fine</button></div>`);
+}
+function submitAddFine(memberId){
+  const reason=(document.getElementById('fn-reason').value||'').trim();
+  const amount=document.getElementById('fn-amount').value;
+  const date=document.getElementById('fn-date').value;
+  if(!reason||!amount||!date){showToast('All fields are required.');return;}
+  const arr=loadFines();
+  arr.push({id:uid(),memberId,reason,amount:Number(amount),date,waived:false,createdAt:new Date().toISOString()});
+  saveFines(arr);closeModal();render();showToast('Fine recorded.');
+}
+function waiveFine(fineId){
+  const arr=loadFines();
+  const f=arr.find(x=>x.id===fineId);
+  if(f)f.waived=!f.waived;
+  saveFines(arr);render();
+}
+function deleteFine(fineId){
+  if(!confirm('Delete this fine record?'))return;
+  saveFines(loadFines().filter(f=>f.id!==fineId));render();
+}
+
+/* ====================== PROJECTS TRACKER ====================== */
+const PROJECTS_STORE='oasis-projects-v1';
+function loadProjects(){try{return JSON.parse(localStorage.getItem(PROJECTS_STORE)||'[]')}catch{return [];}}
+function saveProjects(a){localStorage.setItem(PROJECTS_STORE,JSON.stringify(a));}
+function pageProjects(){
+  const isOfc=isOfficerSessionNow();
+  const projects=loadProjects().sort((a,b)=>(a.status==='completed'?1:0)-(b.status==='completed'?1:0)||(b.createdAt||'').localeCompare(a.createdAt||''));
+  function projectCard(p){
+    const contribs=p.contributions||[];
+    const raised=contribs.reduce((s,c)=>s+Number(c.amount),0);
+    const target=Number(p.targetAmount||0);
+    const pct=target?Math.min(100,Math.round(raised/target*100)):0;
+    const milestones=p.milestones||[];
+    const done=milestones.filter(m=>m.done).length;
+    return `<div class="project-card" style="${p.status==='completed'?'border-color:var(--teal);':''} ">
+      <div class="project-card-head">
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;flex-wrap:wrap;">
+            <span class="badge ${p.status==='completed'?'badge-paid':'badge-active'}">${p.status==='completed'?'Completed':'Active'}</span>
+            <span class="project-title">${escHtml(p.title)}</span>
+          </div>
+          <div class="project-meta">${p.deadline?'Deadline: '+fmtDate(p.deadline)+' &middot; ':''}${contribs.length} contribution${contribs.length!==1?'s':''}</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap;">
+          ${isOfc?`<button type="button" class="btn" style="font-size:12px;padding:5px 10px;" onclick="openAddProjContrib('${p.id}')">+ Contrib</button>`:''}
+          ${isOfc?`<button type="button" class="btn" style="font-size:12px;padding:5px 10px;" onclick="toggleProjectStatus('${p.id}')">${p.status==='completed'?'Reopen':'Complete'}</button>`:''}
+          ${isOfc?`<button type="button" class="icon-btn" onclick="deleteProject('${p.id}')" title="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>`:''}
+        </div>
+      </div>
+      ${p.description?`<p style="font-size:13px;color:var(--ink-soft);margin-bottom:8px;line-height:1.5;">${escHtml(p.description)}</p>`:''}
+      ${target?`<div class="project-prog-label"><span>Raised: ${fmtMoney(raised)} of ${fmtMoney(target)}</span><span style="font-weight:600;color:var(--teal-dark);">${pct}%</span></div>
+      <div class="project-prog-bar"><div class="project-prog-fill" style="width:${pct}%"></div></div>`:''}
+      ${milestones.length?`<div style="margin-top:14px;">
+        <div style="font-size:11.5px;font-weight:600;color:var(--ink-faint);letter-spacing:.05em;text-transform:uppercase;margin-bottom:8px;">Milestones &mdash; ${done}/${milestones.length}</div>
+        ${milestones.map(ms=>`<div class="project-milestone">
+          <input type="checkbox" ${ms.done?'checked':''} ${isOfc?`onchange="toggleMilestone('${p.id}','${ms.id}',this.checked)"`:''} ${isOfc?'':'disabled'}/>
+          <span class="${ms.done?'milestone-done':''}">${escHtml(ms.text)}</span>
+        </div>`).join('')}</div>`:''}
+      ${contribs.length?`<details style="margin-top:12px;"><summary style="cursor:pointer;font-size:12.5px;color:var(--ink-faint);">Contributions (${fmtMoney(raised)} total)</summary>
+        <div style="margin-top:8px;">${contribs.map(c=>{const mem=DATA.members.find(x=>x.id===c.memberId);return`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--line-soft);font-size:13px;"><span>${escHtml(mem?mem.name:'Unknown')}</span><span style="font-weight:600;">${fmtMoney(Number(c.amount))}</span></div>`;}).join('')}</div>
+      </details>`:''}
+    </div>`;
+  }
+  return `<div class="page-head">
+    <div><h1>Projects</h1><div class="sub">${projects.filter(p=>p.status!=='completed').length} active, ${projects.filter(p=>p.status==='completed').length} completed</div></div>
+    ${isOfc?`<button type="button" class="btn btn-primary" onclick="openAddProject()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M12 5v14M5 12h14"/></svg>New project</button>`:''}
+  </div>
+  ${projects.length?projects.map(projectCard).join(''):emptyState('No projects yet','Officers can track club projects with targets, milestones, and member contributions.')}`;
+}
+function openAddProject(){
+  openModal(`<h3>New Project</h3>
+    <div class="field"><label>Project title</label><input type="text" id="pj-title" placeholder="e.g. New Club Hall, Road Rehabilitation"/></div>
+    <div class="field"><label>Description (optional)</label><textarea id="pj-desc" rows="2" placeholder="Brief overview of the project..."></textarea></div>
+    <div class="field-row">
+      <div class="field"><label>Target amount (&#8358;, optional)</label><input type="number" id="pj-target" min="0" placeholder="0"/></div>
+      <div class="field"><label>Deadline (optional)</label><input type="date" id="pj-deadline"/></div>
+    </div>
+    <div class="field"><label>Milestones &mdash; one per line (optional)</label><textarea id="pj-milestones" rows="3" placeholder="Site survey&#10;Foundation laying&#10;Roofing&#10;Inauguration"></textarea></div>
+    <div class="modal-actions"><button type="button" class="btn" onclick="closeModal()">Cancel</button><button type="button" class="btn btn-primary" onclick="submitAddProject()">Create project</button></div>`);
+}
+function submitAddProject(){
+  const title=(document.getElementById('pj-title').value||'').trim();
+  if(!title){showToast('Project title is required.');return;}
+  const milestoneLines=(document.getElementById('pj-milestones').value||'').split('\n').map(s=>s.trim()).filter(Boolean);
+  const milestones=milestoneLines.map(text=>({id:uid(),text,done:false}));
+  const item={id:uid(),title,description:(document.getElementById('pj-desc').value||'').trim(),
+    targetAmount:document.getElementById('pj-target').value||'',
+    deadline:document.getElementById('pj-deadline').value||'',
+    status:'active',milestones,contributions:[],createdAt:new Date().toISOString()};
+  const arr=loadProjects();arr.unshift(item);saveProjects(arr);
+  closeModal();render();showToast('Project created!');
+}
+function openAddProjContrib(projId){
+  const p=loadProjects().find(x=>x.id===projId);if(!p)return;
+  const active=DATA.members.filter(isActiveMember);
+  openModal(`<h3>Record Contribution &mdash; ${escHtml(p.title)}</h3>
+    <div class="field"><label>Member</label><select id="pc2-member">${active.map(m=>`<option value="${m.id}">${escHtml(m.name)}</option>`).join('')}</select></div>
+    <div class="field-row">
+      <div class="field"><label>Amount (&#8358;)</label><input type="number" id="pc2-amount" min="0" placeholder="e.g. 5000"/></div>
+      <div class="field"><label>Date</label><input type="date" id="pc2-date" value="${new Date().toISOString().slice(0,10)}"/></div>
+    </div>
+    <div class="modal-actions"><button type="button" class="btn" onclick="closeModal()">Cancel</button><button type="button" class="btn btn-primary" onclick="submitProjContrib('${projId}')">Save</button></div>`);
+}
+function submitProjContrib(projId){
+  const memberId=document.getElementById('pc2-member').value;
+  const amount=document.getElementById('pc2-amount').value;
+  const date=document.getElementById('pc2-date').value;
+  if(!amount||!date){showToast('Amount and date are required.');return;}
+  const arr=loadProjects();
+  const p=arr.find(x=>x.id===projId);if(!p)return;
+  if(!p.contributions)p.contributions=[];
+  p.contributions.push({id:uid(),memberId,amount:Number(amount),date});
+  saveProjects(arr);closeModal();render();showToast('Contribution recorded.');
+}
+function toggleMilestone(projId,milestoneId,done){
+  const arr=loadProjects();
+  const p=arr.find(x=>x.id===projId);if(!p)return;
+  const ms=p.milestones.find(m=>m.id===milestoneId);if(ms)ms.done=done;
+  saveProjects(arr);render();
+}
+function toggleProjectStatus(projId){
+  const arr=loadProjects();
+  const p=arr.find(x=>x.id===projId);if(!p)return;
+  p.status=p.status==='completed'?'active':'completed';
+  saveProjects(arr);render();showToast(p.status==='completed'?'Project marked complete!':'Project reopened.');
+}
+function deleteProject(id){
+  if(!confirm('Delete this project and all its data?'))return;
+  saveProjects(loadProjects().filter(p=>p.id!==id));render();
+}
+
+/* ====================== WHATSAPP SHARE ====================== */
+function shareWhatsApp(text){window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank','noopener,noreferrer');}
+function shareEvent(evId){
+  const ev=loadEvents().find(e=>e.id===evId);if(!ev)return;
+  let txt='📅 Oasis Club — Upcoming Event\n\n'+ev.title+'\nDate: '+fmtDate(ev.date);
+  if(ev.time)txt+='\nTime: '+ev.time;
+  if(ev.location)txt+='\nVenue: '+ev.location;
+  if(ev.description)txt+='\n\n'+ev.description;
+  shareWhatsApp(txt);
+}
+function shareNewsItem(newsId){
+  const item=loadNews().find(n=>n.id===newsId);if(!item)return;
+  const txt='📣 Oasis Club Notice\n\n'+item.title+'\n\n'+item.body+'\n\n— '+(item.author||'Club Secretary');
+  shareWhatsApp(txt);
+}
+const WA_SVG='<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" style="flex-shrink:0"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>';
+
+/* ====================== MEMBER ID CARD ====================== */
+function openMemberIdCard(memberId){
+  const mem=DATA.members.find(m=>m.id===memberId);if(!mem)return;
+  const dob=getExtra(memberId,'dob');
+  const avatarHtml=mem.photo
+    ?`<img class="id-card-avatar" src="${mem.photo}" alt="${escHtml(mem.name)}"/>`
+    :`<div class="id-card-avatar-ph">${escHtml(initials(mem.name))}</div>`;
+  openModal(`<h3>Member ID Card</h3>
+    <div style="padding:8px 0;">
+      <div class="id-card" id="id-card-inner">
+        <img class="id-card-logo" src="icons/icon-192.png" alt="Oasis Club"/>
+        <div class="id-card-club">Oasis Club of Otun Ekiti</div>
+        <div class="id-card-member">Member Identity Card</div>
+        ${avatarHtml}
+        <div class="id-card-name">${escHtml(mem.name)}</div>
+        <div class="id-card-role">${escHtml(mem.role||'Member')}</div>
+        <div class="id-card-detail-row">
+          <div class="id-card-detail"><strong>${escHtml(mem.id.toUpperCase())}</strong>Member ID</div>
+          <div class="id-card-detail"><strong>${escHtml((mem.status||'Active').charAt(0).toUpperCase()+(mem.status||'active').slice(1))}</strong>Status</div>
+          ${mem.joined?`<div class="id-card-detail"><strong>${escHtml(fmtDate(mem.joined))}</strong>Joined</div>`:''}
+        </div>
+        ${dob?`<div style="font-size:11px;color:rgba(255,255,255,.55);margin-top:4px;">Date of birth: ${escHtml(fmtDate(dob))}</div>`:''}
+        <div class="id-card-motto">&ldquo;Be Fruitful&rdquo;</div>
+      </div>
+    </div>
+    <div class="modal-actions" style="flex-direction:column;gap:8px;">
+      <button type="button" class="id-card-print-btn" onclick="printIdCard()">&#128438; Print / Save as PDF</button>
+      <button type="button" class="btn" onclick="closeModal()">Close</button>
+    </div>`);
+}
+function printIdCard(){
+  const card=document.getElementById('id-card-inner');
+  if(!card)return;
+  const win=window.open('','_blank','width=440,height=700,noopener');
+  if(!win){showToast('Pop-up blocked. Please allow pop-ups for this page.');return;}
+  win.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Oasis Club ID Card</title>'
+    +'<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,700;1,400&family=Inter:wght@400;600;700&display=swap" rel="stylesheet"/>'
+    +'<style>*{box-sizing:border-box;margin:0;padding:0;}'
+    +'body{font-family:Inter,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f0f4f0;padding:20px;}'
+    +'.id-card{background:linear-gradient(135deg,#0F6E56 0%,#156b53 100%);border-radius:16px;padding:28px 24px;color:#fff;width:300px;position:relative;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.25);}'
+    +'.id-card::before{content:"";position:absolute;top:-40px;right:-40px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.07);}'
+    +'.id-card::after{content:"";position:absolute;bottom:-30px;left:-30px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.05);}'
+    +'.id-card-logo{width:44px;height:44px;border-radius:10px;margin-bottom:16px;display:block;}'
+    +'.id-card-club{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.65);margin-bottom:4px;}'
+    +'.id-card-member{font-size:11px;color:rgba(255,255,255,.5);margin-bottom:14px;}'
+    +'.id-card-avatar{width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid rgba(255,255,255,.4);margin-bottom:14px;display:block;}'
+    +'.id-card-avatar-ph{width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,.15);border:3px solid rgba(255,255,255,.4);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;color:#fff;margin-bottom:14px;}'
+    +'.id-card-name{font-size:20px;font-weight:700;font-family:"Source Serif 4",serif;margin-bottom:4px;}'
+    +'.id-card-role{font-size:13px;color:rgba(255,255,255,.75);margin-bottom:14px;}'
+    +'.id-card-detail-row{display:flex;gap:20px;margin-bottom:8px;flex-wrap:wrap;}'
+    +'.id-card-detail{font-size:11px;color:rgba(255,255,255,.6);}'
+    +'.id-card-detail strong{display:block;color:#fff;font-size:13px;margin-bottom:1px;}'
+    +'.id-card-motto{margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,.15);font-style:italic;color:rgba(255,255,255,.55);font-size:12px;}'
+    +'@media print{body{background:white;padding:0;}.id-card{box-shadow:none;}}'
+    +'</style></head><body>'+card.outerHTML+'<script>window.onload=function(){window.print();setTimeout(function(){window.close();},800);}<\/script></body></html>');
+  win.document.close();
+}
+
 /* ============ RENDER ============ */
 function render(){
   const main=document.getElementById('main');
@@ -2831,6 +3434,8 @@ function render(){
   else if(currentPage==='events')main.innerHTML=pageEvents();
   else if(currentPage==='news')main.innerHTML=pageNews();
   else if(currentPage==='interactive')main.innerHTML=pageInteractive();
+  else if(currentPage==='welfare')main.innerHTML=pageWelfare();
+  else if(currentPage==='projects')main.innerHTML=pageProjects();
 }
 
 /* ============ APP UPDATE HANDLING ============ */
