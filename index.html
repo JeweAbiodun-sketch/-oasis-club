@@ -2555,7 +2555,7 @@ function setupServiceWorker(){
     <textarea id="asst-input" rows="1" placeholder="Ask about the club…"></textarea>
     <button class="asst-sendbtn" id="asst-sendbtn" onclick="asstSend()" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg></button>
   </div>
-  <div class="asst-disclaim">AI can make mistakes — confirm important details with a club officer.</div>
+  <div class="asst-disclaim">Answers are drawn from this app's live club records.</div>
 </div>
 
 <script>
@@ -2605,18 +2605,71 @@ function asstBuildContext(){
 const ASST_PREAMBLE='You are the Oasis Assistant for the Oasis Club of Otun Ekiti. Answer the member\u2019s questions using ONLY the club information provided below (constitution, meeting minutes, finance summary, member directory). Rules: if the answer is not in the data, say you do not have it on record and suggest contacting the relevant officer (e.g. the Secretary or Treasurer). Be concise, warm and clear \u2014 two or three sentences is usually enough. When you state a fact, briefly note its source, e.g. "(Article 4)" or "(per the April minutes)". Never invent names, figures or dates. Use Naira (\u20a6) for money.';
 const ASST_SUGGESTIONS=['When is the next meeting?','Maximum number of members?','How much is in the account?','Who are the officers?','What are the dues this year?'];
 
-/* ---- chat wiring (calls the Edge Function) ---- */
+/* ---- chat wiring (local assistant — answers from in-memory club data) ---- */
 let asstHistory=[], asstBusy=false;
 async function asstCall(system,messages){
-  if(typeof sb==='undefined' || !sb) throw new Error('Not connected to Supabase');
-  const{data,error}=await sb.functions.invoke('oasis-assistant',{body:{system,messages,max_tokens:1024}});
-  if(error){
-    let msg=error.message||'request failed';
-    try{ if(error.context && typeof error.context.json==='function'){ const j=await error.context.json(); if(j&&j.error) msg=j.error; } }catch(_){}
-    throw new Error(msg);
+  const q=(messages[messages.length-1]?.content||'').toLowerCase();
+  const meta=DATA.meta||{};
+  const members=DATA.members||[];
+  const active=members.filter(m=>m.status==='active');
+  const txns=DATA.transactions||[];
+  const annualDue=Number(meta.annualDueAmount||50000);
+  const yr=meta.duesYearLabel||'this year';
+  const balance=txns.reduce((s,t)=>s+(t.type==='income'?Number(t.amount):-Number(t.amount)),0);
+  const paid=members.filter(m=>Number(m.duesPaid||0)>=annualDue);
+  const unpaid=active.filter(m=>Number(m.duesPaid||0)<annualDue);
+  const OROLES=['President','Vice-President','Secretary','Assistant Secretary','Treasurer','Financial Secretary','PRO'];
+  const officers=members.filter(m=>OROLES.includes(m.role));
+  const fmt=n=>'₦'+Number(n).toLocaleString('en-NG');
+  function nextMeetingDate(){
+    const now=new Date();
+    function lastSun(y,mo){const d=new Date(y,mo+1,0);while(d.getDay()!==0)d.setDate(d.getDate()-1);return d;}
+    let d=lastSun(now.getFullYear(),now.getMonth());
+    if(d<=now)d=lastSun(now.getFullYear(),now.getMonth()+1);
+    return d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   }
-  if(data&&data.error) throw new Error(data.error);
-  return (data&&data.text)||'';
+  if(/next meeting|when.*meet|meeting.*date|schedule/.test(q))
+    return 'The next general meeting is **'+nextMeetingDate()+'**. Oasis Club meets on the last Sunday of every month (Article 10).';
+  if(/maximum|max.*member|member.*limit|how many.*allow|article 4/.test(q))
+    return 'The constitution caps membership at **25 members** (Article 4). There are currently **'+members.length+'** members on record ('+active.length+' active).';
+  if(/balance|account|how much.*money|fund|treasury/.test(q))
+    return 'The current account balance is **'+fmt(balance)+'**, based on all '+txns.length+' recorded transactions for '+yr+'.';
+  if(/officer|who.*run|president|vice.pres|secretary|treasurer|financial sec|\bpro\b|committee member/.test(q)){
+    if(!officers.length) return 'No officers have been assigned yet. The Secretary can update roles on the Members page.';
+    return 'Current officers: '+officers.map(o=>'**'+o.name+'** ('+o.role+')').join(', ')+'.';
+  }
+  if(/dues|subscription|annual.*due|how much.*pay|membership fee|yearly fee/.test(q))
+    return 'Annual dues for **'+yr+'** are **'+fmt(annualDue)+'**. **'+paid.length+'** of '+active.length+' active members have fully paid; **'+unpaid.length+'** still have outstanding balances.';
+  if(/who.*paid|fully paid|cleared.*dues|paid.*full/.test(q)){
+    if(!paid.length) return 'No members have fully paid their '+yr+' dues yet.';
+    return '**'+paid.length+' members** have fully paid for '+yr+': '+paid.map(m=>m.name).join(', ')+'.';
+  }
+  if(/who.*owe|outstanding|arrears|not paid|unpaid|behind/.test(q)){
+    if(!unpaid.length) return 'All active members have fully paid their '+yr+' dues!';
+    return '**'+unpaid.length+' members** have outstanding dues: '+unpaid.map(m=>m.name+' (paid '+fmt(m.duesPaid||0)+')').join(', ')+'.';
+  }
+  if(/quorum/.test(q)){
+    const genQ=Math.ceil(active.length*2/3);
+    return 'General meeting quorum is 2/3 of active members — **'+genQ+' members** (out of '+active.length+' active). Committee quorum is a simple majority of the 7 officers (4 members).';
+  }
+  if(/agm|annual.*general|annual meeting/.test(q)){
+    const agm=meta.nextAgmDate;
+    return agm?'The next AGM is scheduled for **'+new Date(agm).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})+'**.'
+              :'The AGM date has not been set yet. The Secretary can configure it on the Committee & Quorum page.';
+  }
+  if(/how many member|total member|member.*count|size of club/.test(q))
+    return 'There are **'+members.length+' members** on record: **'+active.length+' active**, '+members.filter(m=>m.status==='inactive').length+' inactive, '+members.filter(m=>m.status==='suspended').length+' suspended, '+members.filter(m=>m.status==='dismissed').length+' dismissed.';
+  if(/constitution|article|rule|bye.?law|by.?law/.test(q))
+    return 'The full club constitution is on the **Constitution page** in this app. Key rules: max 25 members (Art. 4), meetings on the last Sunday monthly (Art. 10), annual dues for '+yr+', 2/3 quorum for general meetings.';
+  if(/minute|last meeting|recent meeting/.test(q)){
+    const mins=(DATA.minutes||[]).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+    if(!mins.length) return 'No meeting minutes have been recorded yet. The Secretary can add them on the Meeting Minutes page.';
+    const last=mins[0];
+    return 'The most recent minutes are for **'+last.title+'** on '+last.date+'. There are '+mins.length+' meeting(s) on record. See the Meeting Minutes page for details.';
+  }
+  if(/\b(hi|hello|hey)\b|good (morning|afternoon|evening)/.test(q))
+    return "Hello! I'm the Oasis Assistant. Ask me about dues, finances, members, meetings, or the constitution.";
+  return "I don't have a specific answer for that. Try asking about **dues**, **account balance**, **officers**, **next meeting**, **quorum**, or **AGM**. For anything else, please contact the Secretary or Treasurer.";
 }
 function toggleAsst(){
   const p=document.getElementById('asst-panel');
