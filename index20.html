@@ -240,46 +240,6 @@ body.dark .badge-inactive{color:var(--ink-faint);}
 body.dark .dues-cell.paid{color:#7fd9be;}
 body.dark .avatar-placeholder,body.dark .avatar-placeholder-large{color:#7fd9be;}
 body.dark .toast{background:#322f29;color:#fff;}
-
-/* ===== Oasis Assistant (floating chat) ===== */
-#asst-fab{position:fixed;bottom:22px;right:22px;z-index:700;width:58px;height:58px;border-radius:50%;border:none;cursor:pointer;background:var(--teal);color:#fff;display:none;align-items:center;justify-content:center;box-shadow:0 10px 26px -6px rgba(15,110,86,.5);transition:transform .15s;}
-#asst-fab:hover{transform:translateY(-2px);}
-#asst-fab svg{width:26px;height:26px;}
-#asst-fab .dot{position:absolute;top:12px;right:13px;width:9px;height:9px;border-radius:50%;background:var(--gold);border:2px solid var(--teal);}
-#asst-panel{position:fixed;bottom:90px;right:22px;z-index:701;width:380px;max-width:calc(100vw - 32px);height:560px;max-height:calc(100vh - 130px);background:var(--paper);border:1px solid var(--line);border-radius:18px;overflow:hidden;display:none;flex-direction:column;box-shadow:0 30px 70px -20px rgba(15,30,40,.4);}
-#asst-panel.show{display:flex;}
-.asst-head{background:linear-gradient(150deg,var(--teal) 0%,var(--teal-dark) 100%);color:#fff;padding:14px 16px;display:flex;align-items:center;gap:11px;flex-shrink:0;}
-.asst-head .mark{width:36px;height:36px;border-radius:50%;overflow:hidden;flex-shrink:0;box-shadow:0 0 0 2px rgba(255,255,255,.25);}
-.asst-head .mark img{width:100%;height:100%;object-fit:cover;display:block;}
-.asst-head .t{flex:1;}
-.asst-head .t .name{font-family:'Source Serif 4',serif;font-size:15px;font-weight:600;line-height:1.1;color:#fff;}
-.asst-head .t .sub{font-size:11px;color:rgba(255,255,255,.72);margin-top:2px;}
-.asst-head .x{background:rgba(255,255,255,.16);border:none;color:#fff;width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:18px;line-height:1;}
-.asst-head .x:hover{background:rgba(255,255,255,.26);}
-.asst-body{flex:1;overflow-y:auto;padding:16px;background:var(--cream);display:flex;flex-direction:column;gap:11px;}
-.asst-msg{max-width:85%;padding:10px 13px;border-radius:14px;font-size:13.5px;line-height:1.5;white-space:pre-wrap;}
-.asst-msg.a{align-self:flex-start;background:var(--paper);border:1px solid var(--line);color:var(--ink);border-bottom-left-radius:5px;}
-.asst-msg.u{align-self:flex-end;background:var(--teal);color:#fff;border-bottom-right-radius:5px;}
-.asst-msg.a b{color:var(--teal-dark);}
-body.dark .asst-msg.a b{color:#a7e6d0;}
-.asst-typing{align-self:flex-start;display:flex;gap:4px;padding:12px 14px;background:var(--paper);border:1px solid var(--line);border-radius:14px;}
-.asst-typing span{width:7px;height:7px;border-radius:50%;background:var(--ink-faint);animation:asstBlink 1.2s infinite;}
-.asst-typing span:nth-child(2){animation-delay:.2s;}
-.asst-typing span:nth-child(3){animation-delay:.4s;}
-@keyframes asstBlink{0%,80%,100%{opacity:.3;}40%{opacity:1;}}
-.asst-chips{display:flex;flex-wrap:wrap;gap:7px;padding:0 16px 10px;background:var(--cream);}
-.asst-chip{background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-size:12px;color:var(--teal-dark);cursor:pointer;font-family:inherit;font-weight:500;}
-body.dark .asst-chip{color:#a7e6d0;}
-.asst-chip:hover{border-color:var(--teal);}
-.asst-foot{flex-shrink:0;padding:11px;border-top:1px solid var(--line);background:var(--paper);display:flex;gap:8px;align-items:flex-end;}
-.asst-foot textarea{flex:1;resize:none;border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-family:inherit;font-size:13.5px;color:var(--ink);background:var(--paper);outline:none;max-height:90px;line-height:1.4;}
-.asst-foot textarea:focus{border-color:var(--teal);}
-.asst-sendbtn{flex-shrink:0;width:40px;height:40px;border-radius:11px;border:none;background:var(--teal);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;}
-.asst-sendbtn:disabled{opacity:.4;cursor:default;}
-.asst-sendbtn svg{width:18px;height:18px;}
-.asst-disclaim{font-size:10.5px;color:var(--ink-faint);text-align:center;padding:5px 12px 9px;background:var(--paper);}
-.const-editor textarea{width:100%;min-height:300px;font-family:'Inter',-apple-system,sans-serif;font-size:12.5px;line-height:1.55;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px 14px;resize:vertical;outline:none;}
-.const-editor textarea:focus{border-color:var(--teal);}
 @keyframes spin{to{transform:rotate(360deg);}}
 
 ::-webkit-scrollbar{width:7px;height:7px;}
@@ -2079,16 +2039,6 @@ function pageConstitution(){
     </div>
     ${canManage?'<p class="cell-muted" style="margin-top:10px;margin-bottom:0;">As a club officer, you can upload or replace the official PDF here. This updates the download link for everyone.</p>':''}
   </div>
-  ${isSecretaryNow()?`
-  <div class="card const-editor" style="margin-bottom:20px;border:1px solid var(--teal-light);">
-    <div class="card-head"><h2 style="font-size:14.5px;">Assistant source text &middot; Secretary only</h2></div>
-    <p class="cell-muted" style="margin-top:-8px;margin-bottom:12px;">This is the constitution text the Oasis Assistant reads when answering members. Only the Secretary can edit it; saving updates it for the whole club.</p>
-    <textarea id="const-text" spellcheck="false"></textarea>
-    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">
-      <button class="btn" type="button" onclick="resetConstText()">Reset to default</button>
-      <button class="btn btn-primary" type="button" onclick="saveConstText()">Save constitution text</button>
-    </div>
-  </div>`:''}
   ${CONSTITUTION_ARTICLES.map(a=>`
   <div class="card" style="margin-bottom:14px;">
     <div class="card-head"><h2 style="font-size:15px;">${escHtml(a.title)}</h2></div>
@@ -2103,8 +2053,6 @@ function pageConstitution(){
 }
 
 function setupConstitutionPage(){
-  const ct=document.getElementById('const-text');
-  if(ct && typeof getConstitutionText==='function') ct.value=getConstitutionText();
   const fileInput=document.getElementById('constitution-file');
   if(!fileInput)return;
   fileInput.addEventListener('change',async e=>{
@@ -2233,12 +2181,6 @@ function getCurrentAuthPin(){
 }
 function isOfficerSessionNow(){
   return (sessionStorage.getItem(SESSION_KEY)||'').startsWith('role:');
-}
-function isSecretaryNow(){
-  const s=sessionStorage.getItem(SESSION_KEY)||'';
-  if(s==='role:secretary')return true;
-  if(s.startsWith('member:')){const m=DATA.members.find(x=>x.id===s.slice(7));return !!(m&&m.role==='Secretary');}
-  return false;
 }
 
 const LAST_LOGIN_STORE='oasis-member-logins';
@@ -2531,138 +2473,6 @@ function setupServiceWorker(){
     document.getElementById('pin-gate').classList.add('show');
   }
   render();
-})();
-</script>
-
-<!-- ============================================================
-     OASIS ASSISTANT — floating chat over club records
-     Calls the Supabase Edge Function 'oasis-assistant' (holds your
-     Anthropic key). Deploy that function for the chat to work live.
-     ============================================================ -->
-<button id="asst-fab" onclick="toggleAsst()" aria-label="Open assistant">
-  <span class="dot"></span>
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 01-9 8.5 8.5 8.5 0 01-3.9-.9L3 20l1.4-4.1A8.5 8.5 0 0112 3a8.38 8.38 0 019 8.5z"/></svg>
-</button>
-<div id="asst-panel">
-  <div class="asst-head">
-    <div class="mark"><img src="icons/icon-192.png" alt="Oasis" /></div>
-    <div class="t"><div class="name">Oasis Assistant</div><div class="sub">Answers from your club records</div></div>
-    <button class="x" onclick="toggleAsst()" aria-label="Close">&times;</button>
-  </div>
-  <div class="asst-body" id="asst-body"></div>
-  <div class="asst-chips" id="asst-chips"></div>
-  <div class="asst-foot">
-    <textarea id="asst-input" rows="1" placeholder="Ask about the club…"></textarea>
-    <button class="asst-sendbtn" id="asst-sendbtn" onclick="asstSend()" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg></button>
-  </div>
-  <div class="asst-disclaim">AI can make mistakes — confirm important details with a club officer.</div>
-</div>
-
-<script>
-/* ---- constitution text (Secretary-editable, used by the assistant) ---- */
-function defaultConstitutionText(){
-  try{ return CONSTITUTION_ARTICLES.map(a=>a.title+'\n'+(a.body||[]).join('\n')).join('\n\n'); }catch(e){ return ''; }
-}
-function getConstitutionText(){
-  return (window.__constitutionOverride && window.__constitutionOverride.trim()) ? window.__constitutionOverride : defaultConstitutionText();
-}
-function resetConstText(){ const ta=document.getElementById('const-text'); if(ta) ta.value=defaultConstitutionText(); }
-async function saveConstText(){
-  const ta=document.getElementById('const-text'); if(!ta) return;
-  if(!isSecretaryNow()){ showToast('Only the Secretary can edit the constitution.'); return; }
-  if(typeof sb==='undefined' || !sb){ showToast('Not connected to the database.'); return; }
-  const text=ta.value;
-  showToast('Saving\u2026');
-  try{
-    const blob=new Blob([text],{type:'text/plain;charset=utf-8'});
-    const{error}=await sb.storage.from('constitution').upload('constitution-assistant.txt',blob,{upsert:true,contentType:'text/plain;charset=utf-8'});
-    if(error)throw error;
-    window.__constitutionOverride=text;
-    showToast('Constitution text saved');
-  }catch(e){ showToast('Save failed: '+(e.message||'unknown error')); }
-}
-async function loadConstitutionOverride(){
-  if(typeof sb==='undefined' || !sb) return;
-  try{
-    const{data}=sb.storage.from('constitution').getPublicUrl('constitution-assistant.txt');
-    const res=await fetch(data.publicUrl+'?v='+Date.now());
-    if(res.ok){ const t=await res.text(); if(t&&t.trim()) window.__constitutionOverride=t; }
-  }catch(e){}
-}
-
-/* ---- build the assistant's knowledge from live club data ---- */
-function asstBuildContext(){
-  const expected=Number(DATA.meta.annualDueAmount||50000);
-  const active=DATA.members.filter(m=>m.status==='active');
-  const paid=DATA.members.filter(m=>Number(m.duesPaid||0)>=expected).length;
-  const overdue=active.length-paid;
-  const balance=(DATA.transactions||[]).reduce((s,t)=>s+(t.type==='income'?Number(t.amount):-Number(t.amount)),0);
-  const minutes=(DATA.minutes||[]).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(x=>'- ['+x.date+'] '+x.title+' ('+(x.type||'meeting')+'): '+String(x.notes||'').replace(/\s+/g,' ').slice(0,800)).join('\n');
-  const members=DATA.members.map(m=>'- '+m.name+' \u2014 '+m.role+' ('+m.status+'); dues paid '+fmtMoney(m.duesPaid||0)).join('\n');
-  const fin='Account balance: '+fmtMoney(balance)+'. Annual dues ('+(DATA.meta.duesYearLabel||'')+'): '+fmtMoney(expected)+'. Members fully paid up: '+paid+'. Members in arrears: '+overdue+'. Next AGM: '+(DATA.meta.nextAgmDate||'not set')+'.';
-  return '=== CONSTITUTION ===\n'+getConstitutionText()+'\n\n=== MEETING MINUTES (newest first) ===\n'+(minutes||'No minutes on record.')+'\n\n=== FINANCE SUMMARY ===\n'+fin+'\n\n=== MEMBER DIRECTORY ===\n'+members;
-}
-const ASST_PREAMBLE='You are the Oasis Assistant for the Oasis Club of Otun Ekiti. Answer the member\u2019s questions using ONLY the club information provided below (constitution, meeting minutes, finance summary, member directory). Rules: if the answer is not in the data, say you do not have it on record and suggest contacting the relevant officer (e.g. the Secretary or Treasurer). Be concise, warm and clear \u2014 two or three sentences is usually enough. When you state a fact, briefly note its source, e.g. "(Article 4)" or "(per the April minutes)". Never invent names, figures or dates. Use Naira (\u20a6) for money.';
-const ASST_SUGGESTIONS=['When is the next meeting?','Maximum number of members?','How much is in the account?','Who are the officers?','What are the dues this year?'];
-
-/* ---- chat wiring (calls the Edge Function) ---- */
-let asstHistory=[], asstBusy=false;
-async function asstCall(system,messages){
-  if(typeof sb==='undefined' || !sb) throw new Error('Not connected');
-  const{data,error}=await sb.functions.invoke('oasis-assistant',{body:{system,messages,max_tokens:1024}});
-  if(error) throw error;
-  if(data&&data.error) throw new Error(data.error);
-  return (data&&data.text)||'';
-}
-function toggleAsst(){
-  const p=document.getElementById('asst-panel');
-  const open=p.classList.toggle('show');
-  if(open){ if(asstHistory.length===0) asstGreet(); setTimeout(()=>{const i=document.getElementById('asst-input'); if(i)i.focus();},50); }
-}
-function asstGreet(){ asstAddMsg('a','Hello! I\u2019m the Oasis Assistant. Ask me anything about the club\u2019s minutes, constitution, dues or members.'); asstRenderChips(); }
-function asstRenderChips(){
-  const wrap=document.getElementById('asst-chips'); wrap.innerHTML='';
-  ASST_SUGGESTIONS.forEach(q=>{ const b=document.createElement('button'); b.className='asst-chip'; b.textContent=q; b.onclick=()=>{ document.getElementById('asst-input').value=q; asstSend(); }; wrap.appendChild(b); });
-}
-function asstAddMsg(role,text){
-  const body=document.getElementById('asst-body'); const d=document.createElement('div');
-  d.className='asst-msg '+(role==='u'?'u':'a');
-  d.innerHTML = role==='a' ? String(text).replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c])).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>') : String(text).replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
-  body.appendChild(d); body.scrollTop=body.scrollHeight;
-}
-function asstSetTyping(on){
-  const body=document.getElementById('asst-body'); let t=document.getElementById('asst-typing');
-  if(on&&!t){ t=document.createElement('div'); t.id='asst-typing'; t.className='asst-typing'; t.innerHTML='<span></span><span></span><span></span>'; body.appendChild(t); body.scrollTop=body.scrollHeight; }
-  else if(!on&&t){ t.remove(); }
-}
-async function asstSend(){
-  if(asstBusy) return;
-  const input=document.getElementById('asst-input'); const q=input.value.trim(); if(!q) return;
-  input.value=''; input.style.height='auto';
-  document.getElementById('asst-chips').innerHTML='';
-  asstAddMsg('u',q); asstHistory.push({role:'user',content:q});
-  asstBusy=true; document.getElementById('asst-sendbtn').disabled=true; asstSetTyping(true);
-  try{
-    const system=ASST_PREAMBLE+'\n\n'+asstBuildContext();
-    const answer=await asstCall(system, asstHistory);
-    asstSetTyping(false);
-    asstAddMsg('a',(answer||'').trim()||'I\u2019m not sure about that one \u2014 please check with a club officer.');
-    asstHistory.push({role:'assistant',content:answer});
-  }catch(e){
-    asstSetTyping(false);
-    asstAddMsg('a','Sorry \u2014 I couldn\u2019t reach the assistant just now. (The assistant service may not be set up yet.)');
-  }
-  asstBusy=false; document.getElementById('asst-sendbtn').disabled=false;
-  const i=document.getElementById('asst-input'); if(i)i.focus();
-}
-(function(){
-  const ta=document.getElementById('asst-input');
-  if(ta){ ta.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); asstSend(); }}); ta.addEventListener('input',()=>{ ta.style.height='auto'; ta.style.height=Math.min(ta.scrollHeight,90)+'px'; }); }
-  const gate=document.getElementById('pin-gate'), fab=document.getElementById('asst-fab');
-  function upd(){ const locked=gate&&gate.classList.contains('show'); fab.style.display=locked?'none':'flex'; if(locked) document.getElementById('asst-panel').classList.remove('show'); }
-  if(gate) new MutationObserver(upd).observe(gate,{attributes:true,attributeFilter:['class']});
-  upd();
-  (function waitSb(n){ if(typeof sb!=='undefined'&&sb){ loadConstitutionOverride(); } else if(n<40){ setTimeout(()=>waitSb(n+1),250); } })(0);
 })();
 </script>
 </body>
