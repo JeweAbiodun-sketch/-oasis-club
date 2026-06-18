@@ -2608,13 +2608,9 @@ const ASST_SUGGESTIONS=['When is the next meeting?','Maximum number of members?'
 /* ---- chat wiring (calls the Edge Function) ---- */
 let asstHistory=[], asstBusy=false;
 async function asstCall(system,messages){
-  if(typeof sb==='undefined' || !sb) throw new Error('Not connected to Supabase');
+  if(typeof sb==='undefined' || !sb) throw new Error('Not connected');
   const{data,error}=await sb.functions.invoke('oasis-assistant',{body:{system,messages,max_tokens:1024}});
-  if(error){
-    let msg=error.message||'request failed';
-    try{ if(error.context && typeof error.context.json==='function'){ const j=await error.context.json(); if(j&&j.error) msg=j.error; } }catch(_){}
-    throw new Error(msg);
-  }
+  if(error) throw error;
   if(data&&data.error) throw new Error(data.error);
   return (data&&data.text)||'';
 }
@@ -2654,9 +2650,7 @@ async function asstSend(){
     asstHistory.push({role:'assistant',content:answer});
   }catch(e){
     asstSetTyping(false);
-    const detail=(e&&e.message)?('\n\nDetails: '+e.message):'';
-    asstAddMsg('a','Sorry \u2014 I couldn\u2019t reach the assistant just now. (The assistant service may not be set up yet.)'+detail);
-    try{console.error('[Oasis Assistant]',e);}catch(_){}
+    asstAddMsg('a','Sorry \u2014 I couldn\u2019t reach the assistant just now. (The assistant service may not be set up yet.)');
   }
   asstBusy=false; document.getElementById('asst-sendbtn').disabled=false;
   const i=document.getElementById('asst-input'); if(i)i.focus();
