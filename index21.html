@@ -186,60 +186,28 @@ tr:hover td{background:var(--cream);}
 #load-overlay .ring{width:28px;height:28px;border:3px solid var(--line);border-top-color:var(--teal);border-radius:50%;animation:spin .8s linear infinite;}
 #load-overlay .hint{font-size:12px;color:var(--ink-soft);margin-top:4px;}
 
-#pin-gate{position:fixed;inset:0;background:#EEF1F4;display:none;align-items:center;justify-content:center;z-index:900;padding:20px;--paper:#fff;--ink:#2C2C2A;--ink-soft:#5F5E5A;--ink-faint:#888780;--line:#E5E1D6;--line-soft:#EFEBE0;--cream:#FBF8F2;--red:#A32D2D;}
+#pin-gate{position:fixed;inset:0;background:var(--cream);display:none;align-items:center;justify-content:center;z-index:900;padding:20px;}
 #pin-gate.show{display:flex;}
-.pin-card{background:var(--paper);border-radius:24px;max-width:380px;width:100%;overflow:hidden;box-shadow:0 30px 70px -24px rgba(15,30,60,.45);}
-.pin-hero{position:relative;overflow:hidden;padding:44px 30px 32px;text-align:center;background:linear-gradient(150deg,#2C7BE5 0%,#1B8A5B 100%);}
-.pin-hero::before{content:"";position:absolute;top:-90px;right:-70px;width:300px;height:300px;border-radius:50%;background:rgba(255,255,255,.14);}
-.pin-hero::after{content:"";position:absolute;bottom:-80px;left:-60px;width:240px;height:240px;border-radius:50%;background:rgba(184,134,11,.32);filter:blur(4px);}
-.pin-hero-logo{position:relative;z-index:2;width:104px;height:104px;border-radius:50%;overflow:hidden;margin:0 auto 18px;box-shadow:0 18px 40px -10px rgba(0,0,0,.45),0 0 0 6px rgba(255,255,255,.20);}
-.pin-hero-logo img{width:100%;height:100%;object-fit:cover;display:block;}
-.pin-hero-title{position:relative;z-index:2;font-family:'Source Serif 4',serif;font-size:30px;font-weight:600;color:#fff;letter-spacing:-.01em;line-height:1.1;}
-.pin-place{position:relative;z-index:2;font-size:11px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.82);margin-top:5px;}
-.pin-chip{position:relative;z-index:2;display:inline-flex;align-items:center;white-space:nowrap;gap:7px;margin-top:16px;padding:6px 15px;border-radius:999px;background:rgba(255,255,255,.18);font-size:12.5px;font-weight:600;color:#fff;}
-.pin-chip::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--gold);}
-.pin-body{padding:26px 30px 28px;text-align:center;}
-.pin-body h2{font-family:'Source Serif 4',serif;font-size:19px;font-weight:600;color:var(--ink);margin-bottom:4px;}
-.pin-intro-h{font-family:'Source Serif 4',serif;font-size:20px;font-weight:600;color:var(--ink);}
-.pin-intro-sub,.pin-sub{font-size:13px;color:var(--ink-soft);margin:6px 0 20px;line-height:1.5;}
+.pin-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius-lg);padding:34px 32px;max-width:360px;width:100%;text-align:center;box-shadow:0 24px 60px -28px rgba(15,30,60,.30);}
+.pin-card .pin-logo{width:64px;height:64px;border-radius:16px;overflow:hidden;margin:0 auto 16px;box-shadow:0 0 0 4px var(--brand-soft);}
+.pin-card .pin-logo img{width:100%;height:100%;object-fit:cover;display:block;}
+.pin-card h2{font-size:19px;margin-bottom:4px;color:var(--ink);}
+.pin-card .pin-sub{font-size:12.5px;color:var(--ink-soft);margin-bottom:20px;line-height:1.5;}
 .pin-field{text-align:left;margin-bottom:14px;}
 .pin-field label{display:block;font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:6px;letter-spacing:.02em;}
 #pin-input,.pin-code{text-align:center;font-size:20px;letter-spacing:8px;font-family:'Inter',sans-serif;}
 #pin-error{font-size:12.5px;color:var(--red);margin-top:10px;min-height:16px;}
-.pin-actions{margin-top:6px;display:flex;flex-direction:column;gap:10px;}
-.pin-actions .btn{width:100%;justify-content:center;height:48px;font-size:14.5px;border-radius:12px;}
-#pin-gate .btn-primary{background:var(--brand);color:#fff;border-color:var(--brand);}
-#pin-gate .btn-primary:hover{background:var(--brand-dark);border-color:var(--brand-dark);}
+.pin-actions{margin-top:6px;}
+.pin-actions .btn{width:100%;}
 .pin-back{margin-top:14px;background:none;border:none;cursor:pointer;color:var(--ink-soft);font-family:inherit;font-size:13px;font-weight:500;}
 .pin-back:hover{color:var(--brand);}
 #locked-msg{margin-bottom:18px;}
 .navlink-sm{font-size:12.5px;}
+.pin-motto{margin-top:18px;font-family:'Source Serif 4',serif;font-size:13px;font-style:italic;color:var(--ink-faint);}
 .pin-lock-ico{width:84px;height:84px;border-radius:50%;background:var(--gold-light);border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;margin:0 auto 18px;}
 .pin-badge{display:inline-block;padding:4px 12px;border-radius:999px;background:var(--gold-light);color:#7a5800;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;margin-bottom:12px;}
 .pin-state{display:none;}
 .pin-state.on{display:block;}
-
-/* ===== Dark mode (applies to the app after login; the login gate stays light) ===== */
-body.dark{
-  --cream:#1b1a17;--paper:#26241f;
-  --ink:#ECEAE3;--ink-soft:#B6B2A7;--ink-faint:#8C887E;
-  --line:#3a372f;--line-soft:#2f2c26;
-  --teal:#46c39e;--teal-light:#163a32;
-  --gold:#d9a93a;--gold-light:#332913;
-  --red:#e08a7a;--red-light:#3a211c;
-}
-body.dark h1,body.dark h2,body.dark h3{color:#a7e6d0;}
-body.dark .btn:hover{background:#322f29;}
-body.dark .stat .value.teal{color:#5fd0b0;}
-body.dark .stat .value.gold{color:#e3bf63;}
-body.dark .stat .value.red{color:#ec9888;}
-body.dark .badge-paid,body.dark .badge-active{color:#7fd9be;}
-body.dark .badge-due,body.dark .badge-suspended{color:#e6c878;}
-body.dark .badge-overdue,body.dark .badge-dismissed{color:#ec9b8a;}
-body.dark .badge-inactive{color:var(--ink-faint);}
-body.dark .dues-cell.paid{color:#7fd9be;}
-body.dark .avatar-placeholder,body.dark .avatar-placeholder-large{color:#7fd9be;}
-body.dark .toast{background:#322f29;color:#fff;}
 @keyframes spin{to{transform:rotate(360deg);}}
 
 ::-webkit-scrollbar{width:7px;height:7px;}
@@ -335,71 +303,54 @@ body.dark .toast{background:#322f29;color:#fff;}
 
 <div id="pin-gate">
   <div class="pin-card">
-    <div class="pin-hero">
-      <div class="pin-hero-logo"><img src="icons/icon-192.png" alt="Oasis Club" /></div>
-      <div class="pin-hero-title">Oasis Club</div>
-      <div class="pin-place">of Otun Ekiti</div>
-      <div class="pin-chip">Be Fruitful</div>
+    <div class="pin-logo"><img src="icons/icon-192.png" alt="Oasis Club" /></div>
+
+    <!-- STATE: sign in (returning member or officer) -->
+    <div class="pin-state on" id="pin-signin">
+      <h2>Oasis Club records</h2>
+      <div class="pin-sub">Select your name and enter your PIN to continue.</div>
+      <div class="pin-field">
+        <label for="pin-role">Your name</label>
+        <select id="pin-role" onchange="onPinSelectChange()">
+          <option value="">Select your name&hellip;</option>
+        </select>
+      </div>
+      <div class="pin-field">
+        <label for="pin-input">PIN</label>
+        <input type="password" id="pin-input" inputmode="numeric" maxlength="6" placeholder="&middot;&middot;&middot;&middot;" />
+      </div>
+      <div class="pin-actions"><button type="button" class="btn btn-primary" onclick="checkPin()">Unlock</button></div>
     </div>
-    <div class="pin-body">
 
-      <!-- STATE: welcome -->
-      <div class="pin-state on" id="pin-welcome">
-        <div class="pin-intro-h">Members &amp; club records</div>
-        <div class="pin-intro-sub">Dues, minutes and finances &mdash; secured behind your personal PIN.</div>
-        <div class="pin-actions">
-          <button type="button" class="btn btn-primary" onclick="enterSignin()">Set up my access</button>
-          <button type="button" class="btn" onclick="enterSignin()">I already have a PIN</button>
-        </div>
+    <!-- STATE: first-time setup (member has no PIN yet) -->
+    <div class="pin-state" id="pin-setup">
+      <h2 id="setup-title">Welcome</h2>
+      <div class="pin-sub">Create a 4-digit PIN to finish setting up your access. You&rsquo;ll use it to sign in from now on.</div>
+      <div class="pin-field">
+        <label for="setup-pin">Create a 4-digit PIN</label>
+        <input type="password" id="setup-pin" class="pin-code" inputmode="numeric" maxlength="4" placeholder="&middot;&middot;&middot;&middot;" />
       </div>
-
-      <!-- STATE: sign in (returning member or officer) -->
-      <div class="pin-state" id="pin-signin">
-        <div class="pin-intro-h">Sign in</div>
-        <div class="pin-intro-sub">Select your name and enter your PIN to continue.</div>
-        <div class="pin-field">
-          <label for="pin-role">Your name</label>
-          <select id="pin-role" onchange="onPinSelectChange()">
-            <option value="">Select your name&hellip;</option>
-          </select>
-        </div>
-        <div class="pin-field">
-          <label for="pin-input">PIN</label>
-          <input type="password" id="pin-input" inputmode="numeric" maxlength="6" placeholder="&middot;&middot;&middot;&middot;" />
-        </div>
-        <div class="pin-actions"><button type="button" class="btn btn-primary" onclick="checkPin()">Unlock</button></div>
-        <button type="button" class="pin-back" onclick="showPinState('welcome')">&larr; Back</button>
+      <div class="pin-field">
+        <label for="setup-confirm">Confirm PIN</label>
+        <input type="password" id="setup-confirm" class="pin-code" inputmode="numeric" maxlength="4" placeholder="&middot;&middot;&middot;&middot;" />
       </div>
-
-      <!-- STATE: first-time setup (member has no PIN yet) -->
-      <div class="pin-state" id="pin-setup">
-        <h2 id="setup-title">Welcome</h2>
-        <div class="pin-sub">Create a 4-digit PIN to finish setting up your access. You&rsquo;ll use it to sign in from now on.</div>
-        <div class="pin-field">
-          <label for="setup-pin">Create a 4-digit PIN</label>
-          <input type="password" id="setup-pin" class="pin-code" inputmode="numeric" maxlength="4" placeholder="&middot;&middot;&middot;&middot;" />
-        </div>
-        <div class="pin-field">
-          <label for="setup-confirm">Confirm PIN</label>
-          <input type="password" id="setup-confirm" class="pin-code" inputmode="numeric" maxlength="4" placeholder="&middot;&middot;&middot;&middot;" />
-        </div>
-        <div class="pin-actions"><button type="button" class="btn btn-primary" onclick="submitFirstPin()">Create PIN &amp; continue</button></div>
-        <button type="button" class="pin-back" onclick="resetPinGate()">&larr; Choose a different name</button>
-      </div>
-
-      <!-- STATE: locked out (suspended / dismissed) -->
-      <div class="pin-state" id="pin-locked">
-        <div class="pin-lock-ico">
-          <svg width="38" height="38" viewBox="0 0 24 24" fill="none"><rect x="5" y="10.5" width="14" height="9.5" rx="2.2" stroke="#7a5800" stroke-width="1.9"/><path d="M8 10.5V8a4 4 0 018 0v2.5" stroke="#7a5800" stroke-width="1.9"/></svg>
-        </div>
-        <div class="pin-badge" id="locked-badge">Membership suspended</div>
-        <h2>Access is paused</h2>
-        <div class="pin-sub" id="locked-msg"></div>
-        <div class="pin-actions"><button type="button" class="btn btn-primary" onclick="resetPinGate()">Choose a different name</button></div>
-      </div>
-
-      <div id="pin-error"></div>
+      <div class="pin-actions"><button type="button" class="btn btn-primary" onclick="submitFirstPin()">Create PIN &amp; continue</button></div>
+      <button type="button" class="pin-back" onclick="resetPinGate()">&larr; Choose a different name</button>
     </div>
+
+    <!-- STATE: locked out (suspended / dismissed) -->
+    <div class="pin-state" id="pin-locked">
+      <div class="pin-lock-ico">
+        <svg width="38" height="38" viewBox="0 0 24 24" fill="none"><rect x="5" y="10.5" width="14" height="9.5" rx="2.2" stroke="#7a5800" stroke-width="1.9"/><path d="M8 10.5V8a4 4 0 018 0v2.5" stroke="#7a5800" stroke-width="1.9"/></svg>
+      </div>
+      <div class="pin-badge" id="locked-badge">Membership suspended</div>
+      <h2>Access is paused</h2>
+      <div class="pin-sub" id="locked-msg"></div>
+      <div class="pin-actions"><button type="button" class="btn btn-primary" onclick="resetPinGate()">Choose a different name</button></div>
+    </div>
+
+    <div class="pin-motto">&ldquo;Be Fruitful&rdquo;</div>
+    <div id="pin-error"></div>
   </div>
 </div>
 
@@ -431,7 +382,6 @@ body.dark .toast{background:#322f29;color:#fff;}
   <div class="nav-divider"></div>
   <button type="button" class="navlink navlink-sm" onclick="exportBackup();closeMobileNav();"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg>Export snapshot</button>
   <div class="nav-divider"></div>
-  <button type="button" class="navlink navlink-sm" onclick="toggleTheme()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12.8A8.5 8.5 0 1111.2 3 6.6 6.6 0 0021 12.8z"/></svg><span id="theme-label">Dark mode</span></button>
   <button type="button" class="navlink navlink-sm" onclick="lockApp()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>Lock</button>
   <div class="nav-foot">Records sync live across every device.<br/>Export snapshot saves a local copy for your own records.</div>
 </nav>
@@ -2240,80 +2190,6 @@ function populatePinSelect(){
   if(prev)sel.value=prev;
 }
 
-function showPinState(id){
-  ['welcome','signin','setup','locked'].forEach(s=>{
-    const el=document.getElementById('pin-'+s);
-    if(el)el.classList.toggle('on', s===id);
-  });
-  const err=document.getElementById('pin-error'); if(err)err.textContent='';
-}
-function focusPinInput(){const el=document.getElementById('pin-input');if(el)el.focus();}
-function enterSignin(){
-  document.getElementById('pin-role').value='';
-  document.getElementById('pin-input').value='';
-  showPinState('signin');
-  const sel=document.getElementById('pin-role'); if(sel)sel.focus();
-}
-function onPinSelectChange(){
-  const v=document.getElementById('pin-role').value;
-  if(!v){showPinState('signin');return;}
-  if(v.startsWith('role:')){showPinState('signin');focusPinInput();return;}
-  const m=DATA.members.find(x=>x.id===v.slice(7));
-  if(!m){showPinState('signin');return;}
-  if(m.status==='suspended'||m.status==='dismissed'){renderLocked(m);return;}
-  if(!m.pin){renderSetup(m);return;}
-  showPinState('signin');focusPinInput();
-}
-function renderSetup(m){
-  document.getElementById('setup-title').textContent='Welcome, '+m.name.split(' ')[0];
-  document.getElementById('setup-pin').value='';
-  document.getElementById('setup-confirm').value='';
-  showPinState('setup');
-  document.getElementById('setup-pin').focus();
-}
-function renderLocked(m){
-  document.getElementById('locked-badge').textContent=(m.status==='dismissed'?'Membership ended':'Membership suspended');
-  document.getElementById('locked-msg').innerHTML='Your membership is currently <b>'+m.status+'</b>, so sign-in is blocked. Please contact the Secretary to have your access restored.';
-  showPinState('locked');
-}
-function resetPinGate(){
-  document.getElementById('pin-role').value='';
-  document.getElementById('pin-input').value='';
-  showPinState('signin');
-}
-async function submitFirstPin(){
-  const v=document.getElementById('pin-role').value;
-  const errEl=document.getElementById('pin-error');
-  const a=document.getElementById('setup-pin').value.trim();
-  const b=document.getElementById('setup-confirm').value.trim();
-  if(!/^\d{4}$/.test(a)){errEl.textContent='Choose a 4-digit PIN (numbers only).';return;}
-  if(a!==b){errEl.textContent='Those PINs don\u2019t match \u2014 try again.';return;}
-  const member=DATA.members.find(m=>m.id===v.slice(7));
-  if(!member){errEl.textContent='Member not found.';return;}
-  // NOTE: members are created with a PIN already, so this path rarely runs.
-  // To persist a brand-new PIN, route it through your Supabase RPC here.
-  member.pin=a;
-  sessionStorage.setItem(SESSION_KEY,v);
-  recordLogin(member.id);
-  document.getElementById('pin-gate').classList.remove('show');
-  errEl.textContent='';
-  updateNavForSession();
-  showToast('Welcome, '+member.name);
-  render();
-}
-/* ===== Theme (dark mode) — applies to the app after login ===== */
-function applyTheme(t){
-  const dark=(t==='dark');
-  document.body.classList.toggle('dark',dark);
-  const lbl=document.getElementById('theme-label'); if(lbl)lbl.textContent=dark?'Light mode':'Dark mode';
-  const meta=document.querySelector('meta[name="theme-color"]'); if(meta)meta.content=dark?'#1b1a17':'#0F6E56';
-}
-function toggleTheme(){
-  const next=(localStorage.getItem('oasis_theme')==='dark')?'light':'dark';
-  localStorage.setItem('oasis_theme',next);
-  applyTheme(next);
-}
-
 function checkPin(){
   const value=document.getElementById('pin-role').value;
   const pin=document.getElementById('pin-input').value.trim();
@@ -2339,7 +2215,10 @@ function checkPin(){
   const memberId=value.slice(7);
   const member=DATA.members.find(m=>m.id===memberId);
   if(!member){errEl.textContent='Member not found.';return;}
-  if(member.status==='suspended'||member.status==='dismissed'){ renderLocked(member); return; }
+  if(member.status==='suspended'||member.status==='dismissed'){
+    errEl.textContent='Access has been suspended for this member. Contact a club officer.';
+    return;
+  }
   if(member.pin===pin){
     sessionStorage.setItem(SESSION_KEY,value);
     recordLogin(member.id);
@@ -2355,8 +2234,6 @@ function checkPin(){
 document.addEventListener('DOMContentLoaded',()=>{
   const pinInput=document.getElementById('pin-input');
   if(pinInput)pinInput.addEventListener('keydown',e=>{if(e.key==='Enter')checkPin();});
-  const sc=document.getElementById('setup-confirm');
-  if(sc)sc.addEventListener('keydown',e=>{if(e.key==='Enter')submitFirstPin();});
 });
 function checkSession(){
   const value=sessionStorage.getItem(SESSION_KEY);
@@ -2387,7 +2264,6 @@ function lockApp(){
   document.getElementById('pin-gate').classList.add('show');
   document.getElementById('pin-input').value='';
   document.getElementById('pin-role').value='';
-  showPinState('welcome');
 }
 
 /* ============ RENDER ============ */
@@ -2462,7 +2338,6 @@ function setupServiceWorker(){
 }
 
 (async function init(){
-  applyTheme(localStorage.getItem('oasis_theme')||'light');
   await loadData();
   populatePinSelect();
   setupServiceWorker();
