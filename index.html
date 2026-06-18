@@ -278,6 +278,21 @@ body.dark .asst-chip{color:#a7e6d0;}
 .asst-sendbtn:disabled{opacity:.4;cursor:default;}
 .asst-sendbtn svg{width:18px;height:18px;}
 .asst-disclaim{font-size:10.5px;color:var(--ink-faint);text-align:center;padding:5px 12px 9px;background:var(--paper);}
+.asst-head .asst-gear{margin-right:4px;font-size:14px;}
+#asst-settings-panel{display:none;flex-direction:column;gap:10px;padding:14px 16px;background:var(--paper);border-bottom:1px solid var(--line);flex-shrink:0;}
+#asst-settings-panel.show{display:flex;}
+.aset-title{font-size:13px;font-weight:600;color:var(--ink);}
+.aset-body{font-size:12px;color:var(--ink-soft);line-height:1.55;}
+.aset-link{color:var(--teal);text-decoration:none;}
+.aset-link:hover{text-decoration:underline;}
+.aset-input{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:13px;font-family:inherit;color:var(--ink);background:var(--paper);outline:none;}
+.aset-input:focus{border-color:var(--teal);}
+.aset-actions{display:flex;gap:8px;}
+.aset-save{background:var(--teal);color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:13px;cursor:pointer;font-weight:500;font-family:inherit;}
+.aset-save:hover{background:var(--teal-dark);}
+.aset-clear{background:transparent;color:var(--ink-faint);border:1px solid var(--line);border-radius:8px;padding:7px 12px;font-size:13px;cursor:pointer;font-family:inherit;}
+.aset-clear:hover{color:var(--red);border-color:var(--red-light);}
+.asst-ai-badge{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--gold);margin-right:4px;vertical-align:middle;}
 .const-editor textarea{width:100%;min-height:300px;font-family:'Inter',-apple-system,sans-serif;font-size:12.5px;line-height:1.55;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px 14px;resize:vertical;outline:none;}
 .const-editor textarea:focus{border-color:var(--teal);}
 @keyframes spin{to{transform:rotate(360deg);}}
@@ -2536,8 +2551,8 @@ function setupServiceWorker(){
 
 <!-- ============================================================
      OASIS ASSISTANT — floating chat over club records
-     Calls the Supabase Edge Function 'oasis-assistant' (holds your
-     Anthropic key). Deploy that function for the chat to work live.
+     Local smart fallback always works; set a Gemini API key via the ⚙
+     gear icon for full AI intelligence (free tier covers club usage).
      ============================================================ -->
 <button id="asst-fab" onclick="toggleAsst()" aria-label="Open assistant">
   <span class="dot"></span>
@@ -2546,8 +2561,23 @@ function setupServiceWorker(){
 <div id="asst-panel">
   <div class="asst-head">
     <div class="mark"><img src="icons/icon-192.png" alt="Oasis" /></div>
-    <div class="t"><div class="name">Oasis Assistant</div><div class="sub">Answers from your club records</div></div>
+    <div class="t"><div class="name">Oasis Assistant</div><div class="sub" id="asst-sub-label">Answers from your club records</div></div>
+    <button class="x asst-gear" id="asst-gear-btn" onclick="toggleAsstSettings()" aria-label="AI settings" title="AI settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="16" height="16"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+    </button>
     <button class="x" onclick="toggleAsst()" aria-label="Close">&times;</button>
+  </div>
+  <div id="asst-settings-panel">
+    <div class="aset-title">Enable AI intelligence</div>
+    <div class="aset-body">
+      Add a free <strong>Google Gemini API key</strong> to unlock full AI — meeting summaries, complex questions, anything about the club.<br/>
+      <a class="aset-link" href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">Get a free key at aistudio.google.com →</a>
+    </div>
+    <input type="password" id="asst-api-key" class="aset-input" placeholder="Paste Gemini API key here…" autocomplete="off"/>
+    <div class="aset-actions">
+      <button type="button" class="aset-save" onclick="saveAsstKey()">Save &amp; enable AI</button>
+      <button type="button" class="aset-clear" onclick="clearAsstKey()">Remove key</button>
+    </div>
   </div>
   <div class="asst-body" id="asst-body"></div>
   <div class="asst-chips" id="asst-chips"></div>
@@ -2555,7 +2585,7 @@ function setupServiceWorker(){
     <textarea id="asst-input" rows="1" placeholder="Ask about the club…"></textarea>
     <button class="asst-sendbtn" id="asst-sendbtn" onclick="asstSend()" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg></button>
   </div>
-  <div class="asst-disclaim">Answers are drawn from this app's live club records.</div>
+  <div class="asst-disclaim" id="asst-disclaim">Answers drawn from live club records — no AI key set.</div>
 </div>
 
 <script>
@@ -2605,9 +2635,59 @@ function asstBuildContext(){
 const ASST_PREAMBLE='You are the Oasis Assistant for the Oasis Club of Otun Ekiti. Answer the member\u2019s questions using ONLY the club information provided below (constitution, meeting minutes, finance summary, member directory). Rules: if the answer is not in the data, say you do not have it on record and suggest contacting the relevant officer (e.g. the Secretary or Treasurer). Be concise, warm and clear \u2014 two or three sentences is usually enough. When you state a fact, briefly note its source, e.g. "(Article 4)" or "(per the April minutes)". Never invent names, figures or dates. Use Naira (\u20a6) for money.';
 const ASST_SUGGESTIONS=['When is the next meeting?','Maximum number of members?','How much is in the account?','Who are the officers?','What are the dues this year?'];
 
-/* ---- chat wiring (local assistant — answers from in-memory club data) ---- */
+/* ---- Oasis Assistant — Gemini AI + local fallback ---- */
+const ASST_KEY_STORE='oasis-asst-gemini-key';
 let asstHistory=[], asstBusy=false;
-async function asstCall(system,messages){
+
+function asstHasKey(){ return !!(localStorage.getItem(ASST_KEY_STORE)||'').trim(); }
+
+function asstUpdateUI(){
+  const hasKey=asstHasKey();
+  const sub=document.getElementById('asst-sub-label');
+  const disc=document.getElementById('asst-disclaim');
+  if(sub) sub.textContent=hasKey?'Powered by Gemini AI':'Answers from your club records';
+  if(disc) disc.innerHTML=hasKey
+    ?'<span class="asst-ai-badge"></span>AI answers may occasionally be imprecise — verify with a club officer.'
+    :'Answers drawn from live club records. Add a Gemini key (⚙) for full AI.';
+}
+
+function toggleAsstSettings(){
+  const p=document.getElementById('asst-settings-panel');
+  const opening=!p.classList.contains('show');
+  p.classList.toggle('show');
+  if(opening){ const inp=document.getElementById('asst-api-key'); inp.value=localStorage.getItem(ASST_KEY_STORE)||''; inp.focus(); }
+}
+
+function saveAsstKey(){
+  const key=(document.getElementById('asst-api-key').value||'').trim();
+  if(key){ localStorage.setItem(ASST_KEY_STORE,key); showToast('AI enabled — Gemini key saved.'); }
+  else { localStorage.removeItem(ASST_KEY_STORE); showToast('AI key removed.'); }
+  document.getElementById('asst-settings-panel').classList.remove('show');
+  asstHistory=[]; document.getElementById('asst-body').innerHTML='';
+  asstUpdateUI(); asstGreet();
+}
+
+function clearAsstKey(){
+  localStorage.removeItem(ASST_KEY_STORE);
+  document.getElementById('asst-api-key').value='';
+  document.getElementById('asst-settings-panel').classList.remove('show');
+  asstHistory=[]; document.getElementById('asst-body').innerHTML='';
+  asstUpdateUI(); asstGreet(); showToast('AI key removed.');
+}
+
+async function callGemini(apiKey,systemPrompt,messages){
+  const contents=messages.map(m=>({role:m.role==='assistant'?'model':'user',parts:[{text:m.content}]}));
+  const resp=await fetch(
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key='+encodeURIComponent(apiKey),
+    {method:'POST',headers:{'Content-Type':'application/json'},
+     body:JSON.stringify({systemInstruction:{parts:[{text:systemPrompt}]},contents,generationConfig:{maxOutputTokens:1024,temperature:0.3}})}
+  );
+  if(!resp.ok){ const err=await resp.json().catch(()=>({})); throw new Error(err.error?.message||'Gemini error '+resp.status); }
+  const data=await resp.json();
+  return data.candidates?.[0]?.content?.parts?.[0]?.text||'';
+}
+
+function localAsstAnswer(messages){
   const q=(messages[messages.length-1]?.content||'').toLowerCase();
   const meta=DATA.meta||{};
   const members=DATA.members||[];
@@ -2631,15 +2711,15 @@ async function asstCall(system,messages){
   if(/next meeting|when.*meet|meeting.*date|schedule/.test(q))
     return 'The next general meeting is **'+nextMeetingDate()+'**. Oasis Club meets on the last Sunday of every month (Article 10).';
   if(/maximum|max.*member|member.*limit|how many.*allow|article 4/.test(q))
-    return 'The constitution caps membership at **25 members** (Article 4). There are currently **'+members.length+'** members on record ('+active.length+' active).';
+    return 'The constitution caps membership at **25 members** (Article 4). There are currently **'+members.length+'** on record ('+active.length+' active).';
   if(/balance|account|how much.*money|fund|treasury/.test(q))
-    return 'The current account balance is **'+fmt(balance)+'**, based on all '+txns.length+' recorded transactions for '+yr+'.';
+    return 'The current account balance is **'+fmt(balance)+'**, from '+txns.length+' transactions recorded for '+yr+'.';
   if(/officer|who.*run|president|vice.pres|secretary|treasurer|financial sec|\bpro\b|committee member/.test(q)){
-    if(!officers.length) return 'No officers have been assigned yet. The Secretary can update roles on the Members page.';
+    if(!officers.length) return 'No officers assigned yet. The Secretary can update roles on the Members page.';
     return 'Current officers: '+officers.map(o=>'**'+o.name+'** ('+o.role+')').join(', ')+'.';
   }
   if(/dues|subscription|annual.*due|how much.*pay|membership fee|yearly fee/.test(q))
-    return 'Annual dues for **'+yr+'** are **'+fmt(annualDue)+'**. **'+paid.length+'** of '+active.length+' active members have fully paid; **'+unpaid.length+'** still have outstanding balances.';
+    return 'Annual dues for **'+yr+'** are **'+fmt(annualDue)+'**. **'+paid.length+'** of '+active.length+' active members have fully paid; **'+unpaid.length+'** still have balances outstanding.';
   if(/who.*paid|fully paid|cleared.*dues|paid.*full/.test(q)){
     if(!paid.length) return 'No members have fully paid their '+yr+' dues yet.';
     return '**'+paid.length+' members** have fully paid for '+yr+': '+paid.map(m=>m.name).join(', ')+'.';
@@ -2650,7 +2730,7 @@ async function asstCall(system,messages){
   }
   if(/quorum/.test(q)){
     const genQ=Math.ceil(active.length*2/3);
-    return 'General meeting quorum is 2/3 of active members — **'+genQ+' members** (out of '+active.length+' active). Committee quorum is a simple majority of the 7 officers (4 members).';
+    return 'General meeting quorum is 2/3 of active members — **'+genQ+'** (out of '+active.length+' active). Committee quorum is a simple majority of the 7 officers (4 members).';
   }
   if(/agm|annual.*general|annual meeting/.test(q)){
     const agm=meta.nextAgmDate;
@@ -2660,26 +2740,41 @@ async function asstCall(system,messages){
   if(/how many member|total member|member.*count|size of club/.test(q))
     return 'There are **'+members.length+' members** on record: **'+active.length+' active**, '+members.filter(m=>m.status==='inactive').length+' inactive, '+members.filter(m=>m.status==='suspended').length+' suspended, '+members.filter(m=>m.status==='dismissed').length+' dismissed.';
   if(/constitution|article|rule|bye.?law|by.?law/.test(q))
-    return 'The full club constitution is on the **Constitution page** in this app. Key rules: max 25 members (Art. 4), meetings on the last Sunday monthly (Art. 10), annual dues for '+yr+', 2/3 quorum for general meetings.';
-  if(/minute|last meeting|recent meeting/.test(q)){
+    return 'The full constitution is on the **Constitution page**. Key rules: max 25 members (Art. 4), meetings last Sunday monthly (Art. 10), 2/3 quorum for general meetings.';
+  if(/minute|last meeting|recent meeting|summar/.test(q)){
     const mins=(DATA.minutes||[]).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
-    if(!mins.length) return 'No meeting minutes have been recorded yet. The Secretary can add them on the Meeting Minutes page.';
+    if(!mins.length) return 'No minutes on record yet. The Secretary can add them on the Meeting Minutes page.';
     const last=mins[0];
-    return 'The most recent minutes are for **'+last.title+'** on '+last.date+'. There are '+mins.length+' meeting(s) on record. See the Meeting Minutes page for details.';
+    return 'Most recent: **'+last.title+'** ('+last.date+'). '+mins.length+' meeting(s) on record total.\n\nFor AI summaries and analysis, add a free Gemini key via the ⚙ settings button.';
   }
   if(/\b(hi|hello|hey)\b|good (morning|afternoon|evening)/.test(q))
-    return "Hello! I'm the Oasis Assistant. Ask me about dues, finances, members, meetings, or the constitution.";
-  return "I don't have a specific answer for that. Try asking about **dues**, **account balance**, **officers**, **next meeting**, **quorum**, or **AGM**. For anything else, please contact the Secretary or Treasurer.";
+    return 'Hello! I’m the Oasis Assistant. Ask me about dues, finances, members, meetings, or the constitution. Add a Gemini key (⚙) for richer AI answers.';
+  return 'I don’t have a specific match for that. Try: **dues**, **account balance**, **officers**, **next meeting**, **quorum**, or **AGM**.\n\nFor open questions like summaries or analysis, add a free Gemini API key via the ⚙ settings button.';
+}
+
+async function asstCall(system,messages){
+  const key=(localStorage.getItem(ASST_KEY_STORE)||'').trim();
+  if(key) return await callGemini(key,system,messages);
+  return localAsstAnswer(messages);
 }
 function toggleAsst(){
   const p=document.getElementById('asst-panel');
   const open=p.classList.toggle('show');
   if(open){ if(asstHistory.length===0) asstGreet(); setTimeout(()=>{const i=document.getElementById('asst-input'); if(i)i.focus();},50); }
 }
-function asstGreet(){ asstAddMsg('a','Hello! I\u2019m the Oasis Assistant. Ask me anything about the club\u2019s minutes, constitution, dues or members.'); asstRenderChips(); }
+function asstGreet(){
+  const hasKey=asstHasKey();
+  asstAddMsg('a',hasKey
+    ?'Hello! I\u2019m the Oasis Assistant, powered by Gemini AI. Ask me anything \u2014 meeting summaries, dues analysis, finances, constitution, or anything about the club.'
+    :'Hello! I\u2019m the Oasis Assistant. I can answer common questions about dues, finances, meetings and members.\n\nFor deeper questions (summaries, analysis, comparisons), tap \u2699 above to add a free Gemini AI key.');
+  asstRenderChips();
+}
 function asstRenderChips(){
   const wrap=document.getElementById('asst-chips'); wrap.innerHTML='';
-  ASST_SUGGESTIONS.forEach(q=>{ const b=document.createElement('button'); b.className='asst-chip'; b.textContent=q; b.onclick=()=>{ document.getElementById('asst-input').value=q; asstSend(); }; wrap.appendChild(b); });
+  const chips=asstHasKey()
+    ?['Summarise the last meeting','Who has paid dues?','What is the account balance?','Who are the officers?','When is the next meeting?','Who still owes dues?']
+    :['When is the next meeting?','How much is in the account?','Who are the officers?','What are the dues this year?','Who has paid?'];
+  chips.forEach(q=>{ const b=document.createElement('button'); b.type='button'; b.className='asst-chip'; b.textContent=q; b.onclick=()=>{ document.getElementById('asst-input').value=q; asstSend(); }; wrap.appendChild(b); });
 }
 function asstAddMsg(role,text){
   const body=document.getElementById('asst-body'); const d=document.createElement('div');
@@ -2703,12 +2798,12 @@ async function asstSend(){
     const system=ASST_PREAMBLE+'\n\n'+asstBuildContext();
     const answer=await asstCall(system, asstHistory);
     asstSetTyping(false);
-    asstAddMsg('a',(answer||'').trim()||'I\u2019m not sure about that one \u2014 please check with a club officer.');
+    asstAddMsg('a',(answer||'').trim()||'I\'m not sure about that one \u2014 please check with a club officer.');
     asstHistory.push({role:'assistant',content:answer});
   }catch(e){
     asstSetTyping(false);
-    const detail=(e&&e.message)?('\n\nDetails: '+e.message):'';
-    asstAddMsg('a','Sorry \u2014 I couldn\u2019t reach the assistant just now. (The assistant service may not be set up yet.)'+detail);
+    const detail=(e&&e.message)?' ('+e.message+')':'';
+    asstAddMsg('a','Sorry, something went wrong.'+detail+(asstHasKey()?'\n\nCheck your Gemini API key in \u2699 settings.':''));
     try{console.error('[Oasis Assistant]',e);}catch(_){}
   }
   asstBusy=false; document.getElementById('asst-sendbtn').disabled=false;
@@ -2721,6 +2816,7 @@ async function asstSend(){
   function upd(){ const locked=gate&&gate.classList.contains('show'); fab.style.display=locked?'none':'flex'; if(locked) document.getElementById('asst-panel').classList.remove('show'); }
   if(gate) new MutationObserver(upd).observe(gate,{attributes:true,attributeFilter:['class']});
   upd();
+  asstUpdateUI();
   (function waitSb(n){ if(typeof sb!=='undefined'&&sb){ loadConstitutionOverride(); } else if(n<40){ setTimeout(()=>waitSb(n+1),250); } })(0);
 })();
 </script>
