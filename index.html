@@ -201,6 +201,8 @@ tr:hover td{background:var(--cream);}
 .pin-actions .btn{width:100%;}
 .pin-back{margin-top:14px;background:none;border:none;cursor:pointer;color:var(--ink-soft);font-family:inherit;font-size:13px;font-weight:500;}
 .pin-back:hover{color:var(--brand);}
+#locked-msg{margin-bottom:18px;}
+.navlink-sm{font-size:12.5px;}
 .pin-motto{margin-top:18px;font-family:'Source Serif 4',serif;font-size:13px;font-style:italic;color:var(--ink-faint);}
 .pin-lock-ico{width:84px;height:84px;border-radius:50%;background:var(--gold-light);border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;margin:0 auto 18px;}
 .pin-badge{display:inline-block;padding:4px 12px;border-radius:999px;background:var(--gold-light);color:#7a5800;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;margin-bottom:12px;}
@@ -241,6 +243,60 @@ tr:hover td{background:var(--cream);}
   .stats{grid-template-columns:1fr;}
   .photo-grid{grid-template-columns:repeat(auto-fill,minmax(110px,1fr));}
 }
+
+/* ── Committee / Officers page ── */
+.committee-hero{background:linear-gradient(135deg,var(--teal-dark) 0%,#156b53 100%);border-radius:var(--radius-lg);padding:26px 28px;margin-bottom:16px;}
+.ch-top{display:flex;align-items:center;gap:16px;}
+.ch-logo{width:52px;height:52px;border-radius:12px;flex-shrink:0;box-shadow:0 0 0 2px rgba(255,255,255,.25),0 4px 12px rgba(0,0,0,.2);}
+.ch-title{color:#fff;font-size:22px;letter-spacing:-.02em;margin-bottom:2px;}
+.ch-sub{color:rgba(255,255,255,.65);font-size:13px;}
+.ch-motto{margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,.12);font-family:'Source Serif 4',serif;font-style:italic;color:rgba(255,255,255,.6);font-size:14px;}
+
+.officer-section{margin-bottom:16px;}
+.officer-section-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.officer-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;}
+
+.officer-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius-lg);overflow:hidden;transition:box-shadow .15s;}
+.officer-card:hover{box-shadow:0 4px 20px rgba(0,0,0,.07);}
+.officer-card--featured{border:2px solid var(--gold);margin-bottom:14px;}
+.oc-accent{display:block;height:4px;background:var(--teal);}
+.officer-card--featured .oc-accent{height:5px;background:linear-gradient(90deg,var(--gold),#d4a017);}
+.oc-body{padding:16px 18px;}
+.officer-card--featured .oc-body{display:flex;align-items:center;gap:22px;}
+
+.oc-avatar{width:44px;height:44px;border-radius:50%;object-fit:cover;display:block;flex-shrink:0;background:var(--teal-light);}
+.oc-avatar--lg{width:76px;height:76px;}
+.oc-avatar-ph{display:flex!important;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:var(--teal-dark);}
+.oc-avatar--lg.oc-avatar-ph{font-size:26px;}
+.officer-card--featured .oc-avatar-ph{background:var(--gold-light);color:#7a5800;}
+.oc-avatar-vacant{background:var(--line-soft)!important;color:var(--ink-faint)!important;border:2px dashed var(--line);}
+
+.oc-details{flex:1;min-width:0;}
+.oc-role{font-size:10.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--teal-dark);margin-bottom:4px;margin-top:10px;}
+.officer-card--featured .oc-role{color:#7a5800;margin-top:0;}
+.oc-name{font-size:15px;font-weight:600;font-family:'Source Serif 4',serif;color:var(--ink);line-height:1.2;margin-bottom:4px;}
+.officer-card--featured .oc-name{font-size:21px;}
+.oc-name.oc-vacant{color:var(--ink-faint);font-style:italic;font-weight:400;}
+.oc-contact{font-size:12px;color:var(--ink-faint);margin-top:2px;}
+
+.quorum-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:4px;}
+.quorum-block{text-align:center;padding:8px 0;}
+.quorum-circle{width:76px;height:76px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:700;font-family:'Source Serif 4',serif;margin:0 auto 10px;}
+.quorum-circle--committee{background:var(--teal-light);color:var(--teal-dark);}
+.quorum-circle--general{background:var(--gold-light);color:#7a5800;}
+.quorum-lbl{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:2px;}
+
+.term-bar-row{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-faint);margin-bottom:5px;}
+.term-bar-wrap{background:var(--line-soft);border-radius:99px;height:8px;margin-bottom:10px;}
+.term-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--teal),var(--teal-dark));transition:width .6s ease;}
+
+.two-col-cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+@media(max-width:640px){
+  .two-col-cards{grid-template-columns:1fr;}
+  .officer-card--featured .oc-body{flex-direction:column;align-items:flex-start;gap:12px;}
+  .officer-card--featured .oc-name{font-size:17px;}
+  .officer-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));}
+}
 </style>
 </head>
 <body>
@@ -263,7 +319,7 @@ tr:hover td{background:var(--cream);}
         <label for="pin-input">PIN</label>
         <input type="password" id="pin-input" inputmode="numeric" maxlength="6" placeholder="&middot;&middot;&middot;&middot;" />
       </div>
-      <div class="pin-actions"><button class="btn btn-primary" onclick="checkPin()">Unlock</button></div>
+      <div class="pin-actions"><button type="button" class="btn btn-primary" onclick="checkPin()">Unlock</button></div>
     </div>
 
     <!-- STATE: first-time setup (member has no PIN yet) -->
@@ -278,8 +334,8 @@ tr:hover td{background:var(--cream);}
         <label for="setup-confirm">Confirm PIN</label>
         <input type="password" id="setup-confirm" class="pin-code" inputmode="numeric" maxlength="4" placeholder="&middot;&middot;&middot;&middot;" />
       </div>
-      <div class="pin-actions"><button class="btn btn-primary" onclick="submitFirstPin()">Create PIN &amp; continue</button></div>
-      <button class="pin-back" onclick="resetPinGate()">&larr; Choose a different name</button>
+      <div class="pin-actions"><button type="button" class="btn btn-primary" onclick="submitFirstPin()">Create PIN &amp; continue</button></div>
+      <button type="button" class="pin-back" onclick="resetPinGate()">&larr; Choose a different name</button>
     </div>
 
     <!-- STATE: locked out (suspended / dismissed) -->
@@ -289,8 +345,8 @@ tr:hover td{background:var(--cream);}
       </div>
       <div class="pin-badge" id="locked-badge">Membership suspended</div>
       <h2>Access is paused</h2>
-      <div class="pin-sub" id="locked-msg" style="margin-bottom:18px;"></div>
-      <div class="pin-actions"><button class="btn btn-primary" onclick="resetPinGate()">Choose a different name</button></div>
+      <div class="pin-sub" id="locked-msg"></div>
+      <div class="pin-actions"><button type="button" class="btn btn-primary" onclick="resetPinGate()">Choose a different name</button></div>
     </div>
 
     <div class="pin-motto">&ldquo;Be Fruitful&rdquo;</div>
@@ -313,20 +369,20 @@ tr:hover td{background:var(--cream);}
   </div>
 </div>
 
-  <button class="navlink active" data-page="overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Overview</button>
-  <button class="navlink" data-page="profile" id="nav-profile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.9 3.1-7 7-7s7 3.1 7 7"/></svg>My profile</button>
-  <button class="navlink" data-page="members"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.5 2.7-6 6-6s6 2.5 6 6"/><circle cx="17" cy="9" r="2.6"/><path d="M15.5 14c2.5.3 4.5 2.3 4.5 5"/></svg>Members</button>
-  <button class="navlink" data-page="photos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="15" rx="2"/><circle cx="8.5" cy="10" r="2"/><path d="M21 16l-5-5-4.5 4.5L9 13l-6 6"/></svg>Photos</button>
-  <button class="navlink" data-page="dues"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 9.5c0-1.4 1.3-2.5 3-2.5s3 .9 3 2.2c0 3-6 1.5-6 4.6 0 1.4 1.3 2.5 3 2.5s3-1 3-2.4"/></svg>Dues &amp; subscriptions</button>
-  <button class="navlink" data-page="minutes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Meeting minutes</button>
-  <button class="navlink" data-page="finance"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 17l5-5 4 4 8-8"/><path d="M14 7h6v6"/></svg>Financial year</button>
-  <button class="navlink" data-page="committee"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l3 6 6.5.6-5 4.4 1.5 6.4L12 16l-6 3.4L7.5 13l-5-4.4L9 8z"/></svg>Committee &amp; quorum</button>
-  <button class="navlink" data-page="constitution"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2h9l5 5v15H6z"/><path d="M15 2v5h5"/><path d="M9 13h6M9 17h6M9 9h2"/></svg>Constitution</button>
+  <button type="button" class="navlink active" data-page="overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Overview</button>
+  <button type="button" class="navlink" data-page="profile" id="nav-profile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.9 3.1-7 7-7s7 3.1 7 7"/></svg>My profile</button>
+  <button type="button" class="navlink" data-page="members"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.5 2.7-6 6-6s6 2.5 6 6"/><circle cx="17" cy="9" r="2.6"/><path d="M15.5 14c2.5.3 4.5 2.3 4.5 5"/></svg>Members</button>
+  <button type="button" class="navlink" data-page="photos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="15" rx="2"/><circle cx="8.5" cy="10" r="2"/><path d="M21 16l-5-5-4.5 4.5L9 13l-6 6"/></svg>Photos</button>
+  <button type="button" class="navlink" data-page="dues"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 9.5c0-1.4 1.3-2.5 3-2.5s3 .9 3 2.2c0 3-6 1.5-6 4.6 0 1.4 1.3 2.5 3 2.5s3-1 3-2.4"/></svg>Dues &amp; subscriptions</button>
+  <button type="button" class="navlink" data-page="minutes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Meeting minutes</button>
+  <button type="button" class="navlink" data-page="finance"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 17l5-5 4 4 8-8"/><path d="M14 7h6v6"/></svg>Financial year</button>
+  <button type="button" class="navlink" data-page="committee"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l3 6 6.5.6-5 4.4 1.5 6.4L12 16l-6 3.4L7.5 13l-5-4.4L9 8z"/></svg>Committee &amp; quorum</button>
+  <button type="button" class="navlink" data-page="constitution"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2h9l5 5v15H6z"/><path d="M15 2v5h5"/><path d="M9 13h6M9 17h6M9 9h2"/></svg>Constitution</button>
 
   <div class="nav-divider"></div>
-  <button class="navlink" onclick="exportBackup();closeMobileNav();" style="font-size:12.5px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg>Export snapshot</button>
+  <button type="button" class="navlink navlink-sm" onclick="exportBackup();closeMobileNav();"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg>Export snapshot</button>
   <div class="nav-divider"></div>
-  <button class="navlink" onclick="lockApp()" style="font-size:12.5px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>Lock</button>
+  <button type="button" class="navlink navlink-sm" onclick="lockApp()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>Lock</button>
   <div class="nav-foot">Records sync live across every device.<br/>Export snapshot saves a local copy for your own records.</div>
 </nav>
 <div id="nav-backdrop" onclick="closeMobileNav()"></div>
@@ -1689,39 +1745,101 @@ async function deleteTx(id){
 }
 
 /* ============ COMMITTEE ============ */
+function renderOfficerCard(role, canEdit, featured){
+  const holder=DATA.members.find(m=>m.role===role);
+  const lg=featured?' oc-avatar--lg':'';
+  const av=holder&&holder.photo
+    ?`<img class="oc-avatar${lg}" src="${holder.photo}" alt="${escHtml(holder.name)}"/>`
+    :`<div class="oc-avatar${lg} oc-avatar-ph${holder?'':' oc-avatar-vacant'}">${holder?initials(holder.name):''}</div>`;
+  return `
+  <div class="officer-card${featured?' officer-card--featured':''}">
+    <span class="oc-accent"></span>
+    <div class="oc-body">
+      ${av}
+      <div class="oc-details">
+        <div class="oc-role">${escHtml(role)}</div>
+        ${holder
+          ?`<div class="oc-name">${escHtml(holder.name)}</div>
+            ${holder.phone?`<div class="oc-contact">${escHtml(holder.phone)}</div>`:''}
+            ${holder.email?`<div class="oc-contact">${escHtml(holder.email)}</div>`:''}`
+          :`<div class="oc-name oc-vacant">Vacant</div>`}
+        ${canEdit?`<button type="button" class="btn btn-sm" onclick="openOfficerForm('${escHtml(role)}')" style="margin-top:10px;">${holder?'Reassign':'Assign'}</button>`:''}
+      </div>
+    </div>
+  </div>`;
+}
+
 function pageCommittee(){
-  const officers=['President','Vice-President','Secretary','Assistant Secretary','Treasurer','Financial Secretary','PRO'];
+  const OFFICER_ROLES=['President','Vice-President','Secretary','Assistant Secretary','Treasurer','Financial Secretary','PRO'];
   const active=DATA.members.filter(isActiveMember);
-  const committeeQuorum=Math.floor(officers.length/2)+1;
+  const committeeQuorum=Math.floor(OFFICER_ROLES.length/2)+1;
   const generalQuorum=Math.ceil(active.length*2/3);
   const canEdit=isOfficerSessionNow();
+
+  let termPct=0, termEnd='';
+  if(DATA.meta.termStart){
+    const startMs=new Date(DATA.meta.termStart+'T00:00:00').getTime();
+    const endDate=new Date(DATA.meta.termStart+'T00:00:00');
+    endDate.setFullYear(endDate.getFullYear()+2);
+    termEnd=endDate.toISOString().slice(0,10);
+    termPct=Math.min(100,Math.max(0,Math.round((Date.now()-startMs)/(endDate-startMs)*100)));
+  }
+
   return `
-  <div class="page-head">
-    <div><h1>Committee &amp; quorum</h1><div class="sub">Two-year term &middot; Article 8</div></div>
+  <div class="committee-hero">
+    <div class="ch-top">
+      <img src="icons/icon-192.png" class="ch-logo" alt="Oasis Club"/>
+      <div>
+        <h1 class="ch-title">Committee &amp; Officers</h1>
+        <div class="ch-sub">Two-year term &middot; Elected at AGM &middot; Article 8</div>
+      </div>
+    </div>
+    <div class="ch-motto">&ldquo;Be Fruitful&rdquo; &mdash; Oasis Club of Otun Ekiti</div>
   </div>
-  <div class="card">
-    <div class="card-head"><h2>Current officers</h2>${canEdit?'<span class="meta">Click edit to assign or rename an officer</span>':''}</div>
-    <table><thead><tr><th>Office</th><th>Holder</th>${canEdit?'<th></th>':''}</tr></thead><tbody>
-      ${officers.map(o=>{
-        const holder=DATA.members.find(m=>m.role===o);
-        return `<tr><td class="cell-name">${o}</td><td>${holder?escHtml(holder.name):'<span class="cell-muted">Vacant</span>'}</td>
-        ${canEdit?`<td style="text-align:right;"><button class="icon-btn" onclick="openOfficerForm('${o}')" aria-label="Edit officer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button></td>`:''}</tr>`;
-      }).join('')}
-    </tbody></table>
-  </div>
-  <div class="card">
-    <div class="card-head"><h2>Quorum calculator</h2><span class="meta">Auto-calculated from current roster</span></div>
-    <div class="field-row">
-      <div class="stat" style="margin:0;"><div class="label">Committee meeting</div><div class="value teal">${committeeQuorum}</div><div class="note">of ${officers.length} officers (more than half)</div></div>
-      <div class="stat" style="margin:0;"><div class="label">General meeting</div><div class="value gold">${generalQuorum}</div><div class="note">of ${active.length} active members (2/3)</div></div>
+
+  <div class="officer-section">
+    <div class="officer-section-head">
+      <h2 style="font-size:16px;">Current officers</h2>
+      ${canEdit?'<span class="meta">Officers signed in may assign holders</span>':''}
+    </div>
+    ${renderOfficerCard('President', canEdit, true)}
+    <div class="officer-grid">
+      ${OFFICER_ROLES.slice(1).map(o=>renderOfficerCard(o, canEdit, false)).join('')}
     </div>
   </div>
-  <div class="card">
-    <div class="card-head"><h2>Term tracker</h2></div>
-    ${canEdit?`<div class="field"><label>Current committee elected (Annual General Meeting date)</label>
-      <input type="date" id="term-date" value="${DATA.meta.termStart||''}" style="max-width:240px;" onchange="updateTermStart(this.value)"/>
-    </div>`:`<div class="field"><label>Current committee elected (Annual General Meeting date)</label><p style="margin:0;">${DATA.meta.termStart?fmtDate(DATA.meta.termStart):'<span class="cell-muted">Not yet set</span>'}</p></div>`}
-    ${DATA.meta.termStart?`<p class="cell-muted">Term concludes at the Annual General Meeting nearest <strong style="color:var(--ink);font-weight:500;">${fmtDate(addYears(DATA.meta.termStart,2))}</strong> (two-year term per Article 8.2).</p>`:''}
+
+  <div class="two-col-cards">
+    <div class="card">
+      <div class="card-head"><h2>Quorum</h2><span class="meta">Live calculation</span></div>
+      <div class="quorum-grid">
+        <div class="quorum-block">
+          <div class="quorum-circle quorum-circle--committee">${committeeQuorum}</div>
+          <div class="quorum-lbl">Committee meeting</div>
+          <div class="cell-muted">of ${OFFICER_ROLES.length} officers</div>
+        </div>
+        <div class="quorum-block">
+          <div class="quorum-circle quorum-circle--general">${generalQuorum}</div>
+          <div class="quorum-lbl">General meeting</div>
+          <div class="cell-muted">of ${active.length} members (2/3)</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h2>Term tracker</h2></div>
+      ${DATA.meta.termStart?`
+        <div class="term-bar-row">
+          <span>${fmtDate(DATA.meta.termStart)}</span>
+          <span>${termPct}% elapsed</span>
+          <span>${fmtDate(termEnd)}</span>
+        </div>
+        <div class="term-bar-wrap"><div class="term-bar-fill" style="width:${termPct}%;"></div></div>
+        <p class="cell-muted">Term concludes near <strong>${fmtDate(termEnd)}</strong> per Article 8.2.</p>
+        ${canEdit?`<div class="field" style="margin-top:12px;"><label>Change election date</label><input type="date" id="term-date" value="${DATA.meta.termStart}" style="max-width:200px;" onchange="updateTermStart(this.value)"/></div>`:''}
+      `:`
+        <p class="cell-muted">No election date set yet.</p>
+        ${canEdit?`<div class="field" style="margin-top:10px;"><label>Set election date</label><input type="date" id="term-date" value="" style="max-width:200px;" onchange="updateTermStart(this.value)"/></div>`:''}
+      `}
+    </div>
   </div>`;
 }
 function addYears(dateStr,years){
