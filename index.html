@@ -10,11 +10,21 @@
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="manifest" href="manifest.webmanifest"/>
-<link rel="apple-touch-icon" href="icons/icon-192.png"/>
-<meta name="theme-color" content="#0F6E56"/>
+
+<!-- iOS PWA -->
+<link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180.png"/>
+<link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192.png"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="apple-mobile-web-app-title" content="Oasis Club"/>
+
+<!-- Android / Chrome PWA -->
+<meta name="theme-color" content="#0F6E56"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+
+<!-- Favicon sizes -->
+<link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png"/>
+<link rel="icon" type="image/png" sizes="96x96" href="icons/icon-96.png"/>
 <style>
 :root{
   --brand:#1C6BD8;--brand-dark:#1557B0;--brand-soft:#E8F0FB;
@@ -174,6 +184,7 @@ tr:hover td{background:var(--cream);}
 
 #load-overlay{position:fixed;inset:0;background:var(--cream);display:flex;align-items:center;justify-content:center;z-index:1000;flex-direction:column;gap:10px;}
 #load-overlay .ring{width:28px;height:28px;border:3px solid var(--line);border-top-color:var(--teal);border-radius:50%;animation:spin .8s linear infinite;}
+#load-overlay .hint{font-size:12px;color:var(--ink-soft);margin-top:4px;}
 
 #pin-gate{position:fixed;inset:0;background:var(--cream);display:none;align-items:center;justify-content:center;z-index:900;padding:20px;}
 #pin-gate.show{display:flex;}
@@ -284,6 +295,21 @@ tr:hover td{background:var(--cream);}
 
     <div class="pin-motto">&ldquo;Be Fruitful&rdquo;</div>
     <div id="pin-error"></div>
+  </div>
+</div>
+
+<div id="load-overlay">
+  <div class="ring"></div>
+  <div class="hint">Loading&hellip;</div>
+</div>
+
+<div id="shell">
+<nav id="nav">
+<div class="brand">
+  <div class="brand-mark"><img src="icons/icon-192.png" alt="Oasis Club"/></div>
+  <div class="brand-text">
+    <div class="name">Oasis Club</div>
+    <div class="place">Otun Ekiti</div>
   </div>
 </div>
 
