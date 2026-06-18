@@ -621,7 +621,7 @@ body.dark .asst-chip{color:#a7e6d0;}
 <script>
 /* Bump this string every time you publish changes to GitHub.
    This is what tells everyone's app that a newer version exists. */
-const APP_VERSION='2026-06-18-1';
+const APP_VERSION='2026-06-18-2';
 const STORE_KEY='oasis-club-data-v1';
 let DATA={members:[
   {
@@ -1051,6 +1051,15 @@ function rowsToMinutes(rows){
 function rowsToTransactions(rows){
   return rows.map(r=>({id:r.id,desc:r.desc_text,type:r.type,amount:Number(r.amount),date:r.date}));
 }
+function rowsToEvents(rows){
+  return rows.map(r=>({id:r.id,title:r.title,date:r.date,time:r.time||'',location:r.location||'',type:r.type||'general',description:r.description||'',createdAt:r.created_at}));
+}
+function rowsToNews(rows){
+  return rows.map(r=>({id:r.id,title:r.title,body:r.body,author:r.author||'Club Secretary',createdAt:r.created_at}));
+}
+function rowsToPolls(rows){
+  return rows.map(r=>({id:r.id,question:r.question,options:r.options||[],endsAt:r.ends_at||'',createdBy:r.created_by||'',createdAt:r.created_at}));
+}
 function rowToMeta(r){
   if(!r)return{financialYearStart:'2025-10-01',annualDueAmount:50000,duesYearLabel:'2025/2026',quorumNote:'',nextAgmDate:'2026-12-26',termStart:'',constitutionUrl:'',constitutionUploadedAt:''};
   return{
@@ -1079,11 +1088,14 @@ async function loadData(){
 
 async function fetchAllData(){
   try{
-    const[membersRes,minutesRes,txRes,metaRes]=await Promise.all([
+    const[membersRes,minutesRes,txRes,metaRes,eventsRes,newsRes,pollsRes]=await Promise.all([
       sb.from('members').select('*'),
       sb.from('minutes').select('*'),
       sb.from('transactions').select('*'),
-      sb.from('club_meta').select('*').eq('id',1).maybeSingle()
+      sb.from('club_meta').select('*').eq('id',1).maybeSingle(),
+      sb.from('club_events').select('*').order('created_at',{ascending:false}),
+      sb.from('club_news').select('*').order('created_at',{ascending:false}),
+      sb.from('club_polls').select('*').order('created_at',{ascending:false})
     ]);
     if(membersRes.error||minutesRes.error||txRes.error||metaRes.error){
       throw membersRes.error||minutesRes.error||txRes.error||metaRes.error;
@@ -1092,13 +1104,29 @@ async function fetchAllData(){
       members:rowsToMembers(membersRes.data||[]),
       minutes:rowsToMinutes(minutesRes.data||[]),
       transactions:rowsToTransactions(txRes.data||[]),
-      meta:rowToMeta(metaRes.data)
+      meta:rowToMeta(metaRes.data),
+      events:rowsToEvents(eventsRes.data||[]),
+      news:rowsToNews(newsRes.data||[]),
+      polls:rowsToPolls(pollsRes.data||[])
     };
+    // Cache for offline reading
+    try{
+      localStorage.setItem(EVENTS_STORE,JSON.stringify(DATA.events));
+      localStorage.setItem(NEWS_STORE,JSON.stringify(DATA.news));
+      localStorage.setItem(POLLS_STORE,JSON.stringify(DATA.polls));
+    }catch(_){}
     connectionStatus='connected';
   }catch(e){
     console.error('Failed to load from Supabase:',e);
     connectionStatus='offline';
-    if(!DATA||!DATA.members)DATA={members:[],minutes:[],transactions:[],meta:rowToMeta(null)};
+    if(!DATA||!DATA.members){
+      DATA={members:[],minutes:[],transactions:[],meta:rowToMeta(null),
+        events:[],news:[],polls:[]};
+    }
+    // Restore events/news/polls from offline cache
+    if(!DATA.events||!DATA.events.length)try{DATA.events=JSON.parse(localStorage.getItem(EVENTS_STORE)||'[]');}catch(_){}
+    if(!DATA.news||!DATA.news.length)try{DATA.news=JSON.parse(localStorage.getItem(NEWS_STORE)||'[]');}catch(_){}
+    if(!DATA.polls||!DATA.polls.length)try{DATA.polls=JSON.parse(localStorage.getItem(POLLS_STORE)||'[]');}catch(_){}
   }
 }
 
@@ -1109,26 +1137,33 @@ function subscribeToRealtime(){
     .on('postgres_changes',{event:'*',schema:'public',table:'minutes'},handleRealtimeChange)
     .on('postgres_changes',{event:'*',schema:'public',table:'transactions'},handleRealtimeChange)
     .on('postgres_changes',{event:'*',schema:'public',table:'club_meta'},handleRealtimeChange)
-    .on('broadcast',{event:'new-event'},handleBroadcast)
-    .on('broadcast',{event:'del-event'},handleBroadcast)
-    .on('broadcast',{event:'new-news'},handleBroadcast)
-    .on('broadcast',{event:'del-news'},handleBroadcast)
-    .on('broadcast',{event:'new-poll'},handleBroadcast)
-    .on('broadcast',{event:'vote'},handleBroadcast)
-    .on('broadcast',{event:'del-poll'},handleBroadcast)
+    .on('postgres_changes',{event:'*',schema:'public',table:'club_events'},handleRealtimeChange)
+    .on('postgres_changes',{event:'*',schema:'public',table:'club_news'},handleRealtimeChange)
+    .on('postgres_changes',{event:'*',schema:'public',table:'club_polls'},handleRealtimeChange)
     .subscribe(status=>{
       if(status==='SUBSCRIBED'){connectionStatus='connected';render();}
       else if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'||status==='CLOSED'){connectionStatus='offline';render();}
     });
 }
 let realtimeRefreshTimer=null;
-function handleRealtimeChange(){
-  // Refetch rather than patch in place: simplest way to stay correct
-  // given several tables can change together. Debounced so a burst of
-  // changes (e.g. restoring a backup) doesn't cause a render storm.
+function handleRealtimeChange(payload){
+  // Show toast/notification for new events and notices posted by other devices
+  if(payload&&payload.eventType==='INSERT'){
+    if(payload.table==='club_news'&&payload.new){
+      showToast('New notice: '+(payload.new.title||''));
+      sendNotif('Oasis Club Notice',payload.new.title||'');
+    }else if(payload.table==='club_events'&&payload.new){
+      showToast('New event: '+(payload.new.title||''));
+      sendNotif('New Club Event',payload.new.title||'');
+    }else if(payload.table==='club_polls'&&payload.new){
+      showToast('New poll: '+(payload.new.question||''));
+    }
+  }
+  // Debounced refetch — stays correct even when multiple tables change together
   clearTimeout(realtimeRefreshTimer);
   realtimeRefreshTimer=setTimeout(async()=>{
     await fetchAllData();
+    updateBadges();
     render();
   },150);
 }
@@ -2728,11 +2763,21 @@ const SEEN_STORE='oasis-last-seen-v1';
 function escHtml(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
 
-function loadEvents(){try{return JSON.parse(localStorage.getItem(EVENTS_STORE)||'[]');}catch(_){return[];}}
+// Primary source is DATA (Supabase). localStorage is the offline cache only.
+function loadEvents(){
+  if(DATA&&DATA.events)return DATA.events;
+  try{return JSON.parse(localStorage.getItem(EVENTS_STORE)||'[]');}catch(_){return[];}
+}
 function saveEvents(a){localStorage.setItem(EVENTS_STORE,JSON.stringify(a));}
-function loadNews(){try{return JSON.parse(localStorage.getItem(NEWS_STORE)||'[]');}catch(_){return[];}}
+function loadNews(){
+  if(DATA&&DATA.news)return DATA.news;
+  try{return JSON.parse(localStorage.getItem(NEWS_STORE)||'[]');}catch(_){return[];}
+}
 function saveNews(a){localStorage.setItem(NEWS_STORE,JSON.stringify(a));}
-function loadPolls(){try{return JSON.parse(localStorage.getItem(POLLS_STORE)||'[]');}catch(_){return[];}}
+function loadPolls(){
+  if(DATA&&DATA.polls)return DATA.polls;
+  try{return JSON.parse(localStorage.getItem(POLLS_STORE)||'[]');}catch(_){return[];}
+}
 function savePolls(a){localStorage.setItem(POLLS_STORE,JSON.stringify(a));}
 function loadSeen(){try{return JSON.parse(localStorage.getItem(SEEN_STORE)||'{}');}catch(_){return{};}}
 function saveSeen(o){localStorage.setItem(SEEN_STORE,JSON.stringify(o));}
@@ -2859,27 +2904,38 @@ function openAddEvent(){
     +'<div class="modal-actions"><button type="button" class="btn" onclick="closeModal()">Cancel</button><button type="button" class="btn btn-primary" onclick="submitAddEvent()">Add event</button></div>');
 }
 
-function submitAddEvent(){
+async function submitAddEvent(){
   const title=(document.getElementById('ev-title').value||'').trim();
   const date=document.getElementById('ev-date').value;
   if(!title||!date){showToast('Title and date are required.');return;}
-  const item={id:uid(),title,date,time:document.getElementById('ev-time').value||'',
-    location:(document.getElementById('ev-loc').value||'').trim(),
-    type:document.getElementById('ev-type').value,
-    description:(document.getElementById('ev-desc').value||'').trim(),
-    createdAt:new Date().toISOString()};
-  const arr=loadEvents(); arr.unshift(item); saveEvents(arr);
-  broadcastItem('new-event',{item});
-  reqNotifPermission();
-  closeModal(); render(); updateBadges();
-  showToast('Event added and broadcast to all members.');
+  const btn=document.querySelector('#modal-content .btn-primary');
+  if(btn){btn.disabled=true;btn.textContent='Saving…';}
+  const pin=getCurrentAuthPin();
+  try{
+    const{error}=await sb.rpc('add_club_event',{
+      p_officer_pin:pin, p_id:uid(), p_title:title, p_date:date,
+      p_time:document.getElementById('ev-time').value||'',
+      p_location:(document.getElementById('ev-loc').value||'').trim(),
+      p_type:document.getElementById('ev-type').value,
+      p_description:(document.getElementById('ev-desc').value||'').trim()
+    });
+    if(error)throw error;
+    reqNotifPermission();
+    closeModal();
+    showToast('Event saved — syncing to all members.');
+  }catch(e){
+    if(btn){btn.disabled=false;btn.textContent='Add event';}
+    showToast('Could not save: '+(e.message||'unknown error'));
+  }
 }
 
-function deleteEvent(id){
+async function deleteEvent(id){
   if(!confirm('Delete this event?'))return;
-  saveEvents(loadEvents().filter(e=>e.id!==id));
-  broadcastItem('del-event',{id});
-  render();
+  const pin=getCurrentAuthPin();
+  try{
+    const{error}=await sb.rpc('delete_club_event',{p_officer_pin:pin,p_id:id});
+    if(error)throw error;
+  }catch(e){showToast('Could not delete: '+(e.message||'unknown error'));}
 }
 
 /* ---- News page ---- */
@@ -2916,23 +2972,35 @@ function openAddNews(){
     +'<div class="modal-actions"><button type="button" class="btn" onclick="closeModal()">Cancel</button><button type="button" class="btn btn-primary" onclick="submitAddNews()">Post notice</button></div>');
 }
 
-function submitAddNews(){
+async function submitAddNews(){
   const title=(document.getElementById('nw-title').value||'').trim();
   const body=(document.getElementById('nw-body').value||'').trim();
   if(!title||!body){showToast('Title and message are required.');return;}
-  const item={id:uid(),title,body,author:(document.getElementById('nw-author').value||'').trim()||'Club Secretary',createdAt:new Date().toISOString()};
-  const arr=loadNews(); arr.unshift(item); saveNews(arr);
-  broadcastItem('new-news',{item});
-  reqNotifPermission();
-  closeModal(); render(); updateBadges();
-  showToast('Notice posted and broadcast to all members.');
+  const btn=document.querySelector('#modal-content .btn-primary');
+  if(btn){btn.disabled=true;btn.textContent='Posting…';}
+  const pin=getCurrentAuthPin();
+  try{
+    const{error}=await sb.rpc('add_club_news',{
+      p_officer_pin:pin, p_id:uid(), p_title:title, p_body:body,
+      p_author:(document.getElementById('nw-author').value||'').trim()||'Club Secretary'
+    });
+    if(error)throw error;
+    reqNotifPermission();
+    closeModal();
+    showToast('Notice posted — syncing to all members.');
+  }catch(e){
+    if(btn){btn.disabled=false;btn.textContent='Post notice';}
+    showToast('Could not post: '+(e.message||'unknown error'));
+  }
 }
 
-function deleteNews(id){
+async function deleteNews(id){
   if(!confirm('Delete this notice?'))return;
-  saveNews(loadNews().filter(n=>n.id!==id));
-  broadcastItem('del-news',{id});
-  render();
+  const pin=getCurrentAuthPin();
+  try{
+    const{error}=await sb.rpc('delete_club_news',{p_officer_pin:pin,p_id:id});
+    if(error)throw error;
+  }catch(e){showToast('Could not delete: '+(e.message||'unknown error'));}
 }
 
 /* ---- Polls / Interactive page ---- */
@@ -2993,38 +3061,66 @@ function openAddPoll(){
     +'<div class="modal-actions"><button type="button" class="btn" onclick="closeModal()">Cancel</button><button type="button" class="btn btn-primary" onclick="submitAddPoll()">Create poll</button></div>');
 }
 
-function submitAddPoll(){
+async function submitAddPoll(){
   const question=(document.getElementById('pl-q').value||'').trim();
   const opts=[0,1,2].map(i=>(document.getElementById('pl-o'+i).value||'').trim()).filter(Boolean);
   if(!question||opts.length<2){showToast('Question and at least 2 options are required.');return;}
-  const item={id:uid(),question,options:opts.map(text=>({id:uid(),text,votes:[]})),endsAt:document.getElementById('pl-ends').value||null,createdAt:new Date().toISOString()};
-  const arr=loadPolls(); arr.unshift(item); savePolls(arr);
-  broadcastItem('new-poll',{item});
-  closeModal(); render();
-  showToast('Poll created and sent to all members.');
+  const btn=document.querySelector('#modal-content .btn-primary');
+  if(btn){btn.disabled=true;btn.textContent='Creating…';}
+  const pin=getCurrentAuthPin();
+  const options=opts.map(text=>({id:uid(),text,votes:[]}));
+  const endsAt=document.getElementById('pl-ends').value||'';
+  const createdBy=getCurrentMemberId()||'';
+  try{
+    const{error}=await sb.rpc('add_club_poll',{
+      p_officer_pin:pin, p_id:uid(), p_question:question,
+      p_options:options, p_ends_at:endsAt, p_created_by:createdBy
+    });
+    if(error)throw error;
+    closeModal();
+    showToast('Poll created — syncing to all members.');
+  }catch(e){
+    if(btn){btn.disabled=false;btn.textContent='Create poll';}
+    showToast('Could not create poll: '+(e.message||'unknown error'));
+  }
 }
 
-function castVote(pollId,optionId){
+async function castVote(pollId,optionId){
   const session=sessionStorage.getItem(SESSION_KEY)||'';
   const memberId=session.startsWith('member:')?session.slice(7):null;
   if(!memberId){showToast('Log in as a member to vote.');return;}
-  const polls=loadPolls();
-  const poll=polls.find(p=>p.id===pollId);
+  const poll=(DATA.polls||[]).find(p=>p.id===pollId);
   if(!poll)return;
   if(poll.options.some(o=>o.votes.includes(memberId))){showToast('You have already voted.');return;}
+
+  // Optimistic update so the vote feels instant
   const opt=poll.options.find(o=>o.id===optionId);
   if(opt)opt.votes.push(memberId);
-  savePolls(polls);
-  broadcastItem('vote',{pollId,optionId,memberId});
   render();
   showToast('Vote recorded!');
+
+  // Persist to Supabase
+  const pin=getCurrentAuthPin();
+  try{
+    const{error}=await sb.rpc('vote_club_poll',{
+      p_member_pin:pin, p_poll_id:pollId, p_option_id:optionId, p_member_id:memberId
+    });
+    if(error)throw error;
+  }catch(e){
+    // Roll back optimistic update and re-fetch
+    if(opt){const idx=opt.votes.indexOf(memberId);if(idx>-1)opt.votes.splice(idx,1);}
+    await fetchAllData();render();
+    showToast('Vote could not be saved: '+(e.message||'unknown error'));
+  }
 }
 
-function deletePoll(id){
+async function deletePoll(id){
   if(!confirm('Delete this poll and all votes?'))return;
-  savePolls(loadPolls().filter(p=>p.id!==id));
-  broadcastItem('del-poll',{id});
-  render();
+  const pin=getCurrentAuthPin();
+  try{
+    const{error}=await sb.rpc('delete_club_poll',{p_officer_pin:pin,p_id:id});
+    if(error)throw error;
+  }catch(e){showToast('Could not delete: '+(e.message||'unknown error'));}
 }
 
 /* ====================== ATTENDANCE TRACKER ====================== */
