@@ -2748,8 +2748,8 @@ function localAsstAnswer(messages){
     return 'Most recent: **'+last.title+'** ('+last.date+'). '+mins.length+' meeting(s) on record total.\n\nFor AI summaries and analysis, add a free Gemini key via the ⚙ settings button.';
   }
   if(/\b(hi|hello|hey)\b|good (morning|afternoon|evening)/.test(q))
-    return 'Hello! I’m the Oasis Assistant. Ask me about dues, finances, members, meetings, or the constitution. Add a Gemini key (⚙) for richer AI answers.';
-  return 'I don’t have a specific match for that. Try: **dues**, **account balance**, **officers**, **next meeting**, **quorum**, or **AGM**.\n\nFor open questions like summaries or analysis, add a free Gemini API key via the ⚙ settings button.';
+    return "Hello! I’m the Oasis Assistant. Ask me about dues, finances, members, meetings, or the constitution. Add a Gemini key (⚙) for richer AI answers.";
+  return "I don’t have a specific match for that. Try: **dues**, **account balance**, **officers**, **next meeting**, **quorum**, or **AGM**.\n\nFor open questions like summaries or analysis, add a free Gemini API key via the ⚙ settings button.";
 }
 
 async function asstCall(system,messages){
