@@ -331,6 +331,44 @@ body.dark .asst-chip{color:#a7e6d0;}
   .photo-grid{grid-template-columns:repeat(auto-fill,minmax(110px,1fr));}
 }
 
+/* ── Nav badge dot ── */
+.nav-dot{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;border-radius:99px;background:#e53935;color:#fff;font-size:10px;font-weight:700;margin-left:auto;padding:0 4px;flex-shrink:0;}
+.nav-dot.hidden{display:none;}
+
+/* ── Events page ── */
+.ev-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius-lg);padding:16px 18px;margin-bottom:12px;display:flex;gap:16px;align-items:flex-start;}
+.ev-card-date{flex-shrink:0;width:48px;text-align:center;background:var(--teal-light);border-radius:10px;padding:8px 6px;}
+.ev-day{font-size:22px;font-weight:700;font-family:'Source Serif 4',serif;color:var(--teal-dark);line-height:1;}
+.ev-mon{font-size:11px;font-weight:600;color:var(--teal);letter-spacing:.04em;text-transform:uppercase;margin-top:2px;}
+.ev-yr{font-size:10px;color:var(--ink-faint);margin-top:1px;}
+.ev-card-body{flex:1;min-width:0;}
+.ev-type-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.ev-time{font-size:12px;color:var(--ink-faint);}
+.ev-title{font-size:15px;font-weight:600;font-family:'Source Serif 4',serif;color:var(--ink);margin-bottom:4px;}
+.ev-meta{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--ink-faint);margin-bottom:4px;}
+.ev-desc{font-size:13px;color:var(--ink-soft);margin-top:4px;line-height:1.5;}
+.ev-actions{display:flex;align-items:center;flex-shrink:0;}
+
+/* ── News page ── */
+.news-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius-lg);padding:18px 20px;margin-bottom:12px;}
+.news-card-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:12px;}
+.news-title{font-size:16px;font-weight:600;font-family:'Source Serif 4',serif;color:var(--ink);margin-bottom:3px;}
+.news-meta{font-size:12px;color:var(--ink-faint);}
+.news-body{font-size:13.5px;color:var(--ink-soft);line-height:1.65;}
+
+/* ── Polls page ── */
+.poll-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius-lg);padding:18px 20px;margin-bottom:12px;}
+.poll-q{font-size:16px;font-weight:600;font-family:'Source Serif 4',serif;color:var(--ink);margin-bottom:4px;}
+.poll-ends{font-size:12px;color:var(--ink-faint);margin-bottom:12px;}
+.poll-options{display:flex;flex-direction:column;gap:8px;margin:12px 0;}
+
+.poll-bar-wrap{position:relative;background:var(--line-soft);border-radius:8px;height:36px;display:flex;align-items:center;overflow:hidden;}
+.poll-bar-fill{position:absolute;left:0;top:0;height:100%;background:var(--teal-light);border-radius:8px;transition:width .4s ease;}
+.poll-opt-voted .poll-bar-fill{background:linear-gradient(90deg,var(--teal-light),#b8e8d8);}
+.poll-bar-label{position:relative;z-index:1;padding:0 12px;font-size:13px;font-weight:500;color:var(--ink);flex:1;}
+.poll-bar-pct{position:relative;z-index:1;padding-right:12px;font-size:12px;font-weight:600;color:var(--teal-dark);}
+.poll-foot{display:flex;align-items:center;font-size:12px;color:var(--ink-faint);margin-top:10px;gap:6px;}
+
 /* ── Committee / Officers page ── */
 .committee-hero{background:linear-gradient(135deg,var(--teal-dark) 0%,#156b53 100%);border-radius:var(--radius-lg);padding:26px 28px;margin-bottom:16px;}
 .ch-top{display:flex;align-items:center;gap:16px;}
@@ -482,6 +520,10 @@ body.dark .asst-chip{color:#a7e6d0;}
   <button type="button" class="navlink" data-page="finance"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 17l5-5 4 4 8-8"/><path d="M14 7h6v6"/></svg>Financial year</button>
   <button type="button" class="navlink" data-page="committee"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l3 6 6.5.6-5 4.4 1.5 6.4L12 16l-6 3.4L7.5 13l-5-4.4L9 8z"/></svg>Committee &amp; quorum</button>
   <button type="button" class="navlink" data-page="constitution"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2h9l5 5v15H6z"/><path d="M15 2v5h5"/><path d="M9 13h6M9 17h6M9 9h2"/></svg>Constitution</button>
+  <div class="nav-divider"></div>
+  <button type="button" class="navlink" data-page="events"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>Upcoming events<span class="nav-dot hidden" id="dot-events"></span></button>
+  <button type="button" class="navlink" data-page="news"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h16v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"/><path d="M8 8h8M8 12h5"/></svg>News &amp; notices<span class="nav-dot hidden" id="dot-news"></span></button>
+  <button type="button" class="navlink" data-page="interactive"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Polls &amp; voting</button>
 
   <div class="nav-divider"></div>
   <button type="button" class="navlink navlink-sm" onclick="exportBackup();closeMobileNav();"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg>Export snapshot</button>
@@ -997,6 +1039,13 @@ function subscribeToRealtime(){
     .on('postgres_changes',{event:'*',schema:'public',table:'minutes'},handleRealtimeChange)
     .on('postgres_changes',{event:'*',schema:'public',table:'transactions'},handleRealtimeChange)
     .on('postgres_changes',{event:'*',schema:'public',table:'club_meta'},handleRealtimeChange)
+    .on('broadcast',{event:'new-event'},handleBroadcast)
+    .on('broadcast',{event:'del-event'},handleBroadcast)
+    .on('broadcast',{event:'new-news'},handleBroadcast)
+    .on('broadcast',{event:'del-news'},handleBroadcast)
+    .on('broadcast',{event:'new-poll'},handleBroadcast)
+    .on('broadcast',{event:'vote'},handleBroadcast)
+    .on('broadcast',{event:'del-poll'},handleBroadcast)
     .subscribe(status=>{
       if(status==='SUBSCRIBED'){connectionStatus='connected';render();}
       else if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'||status==='CLOSED'){connectionStatus='offline';render();}
@@ -2463,6 +2512,310 @@ function lockApp(){
   showPinState('welcome');
 }
 
+/* ============ EVENTS / NEWS / POLLS ============ */
+const EVENTS_STORE='oasis-events-v1';
+const NEWS_STORE='oasis-news-v1';
+const POLLS_STORE='oasis-polls-v1';
+const SEEN_STORE='oasis-last-seen-v1';
+
+function escHtml(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+
+function loadEvents(){try{return JSON.parse(localStorage.getItem(EVENTS_STORE)||'[]');}catch(_){return[];}}
+function saveEvents(a){localStorage.setItem(EVENTS_STORE,JSON.stringify(a));}
+function loadNews(){try{return JSON.parse(localStorage.getItem(NEWS_STORE)||'[]');}catch(_){return[];}}
+function saveNews(a){localStorage.setItem(NEWS_STORE,JSON.stringify(a));}
+function loadPolls(){try{return JSON.parse(localStorage.getItem(POLLS_STORE)||'[]');}catch(_){return[];}}
+function savePolls(a){localStorage.setItem(POLLS_STORE,JSON.stringify(a));}
+function loadSeen(){try{return JSON.parse(localStorage.getItem(SEEN_STORE)||'{}');}catch(_){return{};}}
+function saveSeen(o){localStorage.setItem(SEEN_STORE,JSON.stringify(o));}
+
+function updateBadges(){
+  const seen=loadSeen();
+  const seenEv=seen.events?new Date(seen.events):new Date(0);
+  const seenNw=seen.news?new Date(seen.news):new Date(0);
+  const newEv=loadEvents().filter(e=>new Date(e.createdAt)>seenEv).length;
+  const newNw=loadNews().filter(n=>new Date(n.createdAt)>seenNw).length;
+  const de=document.getElementById('dot-events');
+  const dn=document.getElementById('dot-news');
+  if(de){de.textContent=newEv||'';de.classList.toggle('hidden',!newEv);}
+  if(dn){dn.textContent=newNw||'';dn.classList.toggle('hidden',!newNw);}
+}
+
+function markSeen(type){
+  const s=loadSeen(); s[type]=new Date().toISOString(); saveSeen(s); updateBadges();
+}
+
+function reqNotifPermission(){
+  if(!('Notification' in window)||Notification.permission==='granted'||Notification.permission==='denied')return;
+  Notification.requestPermission();
+}
+
+function sendNotif(title,body){
+  if(Notification.permission==='granted'){
+    try{new Notification(title,{body,icon:'icons/icon-192.png'});}catch(_){}
+  }
+}
+
+function broadcastItem(event,payload){
+  if(typeof sb!=='undefined'&&sb&&realtimeChannel){
+    try{realtimeChannel.send({type:'broadcast',event,payload});}catch(_){}
+  }
+}
+
+function handleBroadcast({event,payload}){
+  if(!payload)return;
+  if(event==='new-event'){
+    const arr=loadEvents();
+    if(!arr.find(e=>e.id===payload.item.id)){arr.unshift(payload.item);saveEvents(arr);}
+    updateBadges();
+    showToast('New event: '+payload.item.title);
+    sendNotif('New Club Event',payload.item.title+(payload.item.location?' — '+payload.item.location:''));
+    if(currentPage==='events')render();
+  } else if(event==='del-event'){
+    saveEvents(loadEvents().filter(e=>e.id!==payload.id));
+    if(currentPage==='events')render();
+  } else if(event==='new-news'){
+    const arr=loadNews();
+    if(!arr.find(n=>n.id===payload.item.id)){arr.unshift(payload.item);saveNews(arr);}
+    updateBadges();
+    showToast('New notice: '+payload.item.title);
+    sendNotif('Oasis Club Notice',payload.item.title);
+    if(currentPage==='news')render();
+  } else if(event==='del-news'){
+    saveNews(loadNews().filter(n=>n.id!==payload.id));
+    if(currentPage==='news')render();
+  } else if(event==='new-poll'){
+    const arr=loadPolls();
+    if(!arr.find(p=>p.id===payload.item.id)){arr.unshift(payload.item);savePolls(arr);}
+    showToast('New poll: '+payload.item.question);
+    if(currentPage==='interactive')render();
+  } else if(event==='vote'){
+    const polls=loadPolls();
+    const poll=polls.find(p=>p.id===payload.pollId);
+    if(poll){const opt=poll.options.find(o=>o.id===payload.optionId);if(opt&&!opt.votes.includes(payload.memberId))opt.votes.push(payload.memberId);savePolls(polls);}
+    if(currentPage==='interactive')render();
+  } else if(event==='del-poll'){
+    savePolls(loadPolls().filter(p=>p.id!==payload.id));
+    if(currentPage==='interactive')render();
+  }
+}
+
+/* ---- Events page ---- */
+function pageEvents(){
+  markSeen('events');
+  const evts=loadEvents();
+  const isOfc=isOfficerSessionNow();
+  const now=new Date(); now.setHours(0,0,0,0);
+  const upcoming=evts.filter(e=>new Date(e.date+'T00:00:00')>=now).sort((a,b)=>a.date.localeCompare(b.date));
+  const past=evts.filter(e=>new Date(e.date+'T00:00:00')<now).sort((a,b)=>b.date.localeCompare(a.date));
+  const typeBadge={general:'badge-active',agm:'badge-due',social:'badge-inactive',committee:'badge-overdue'};
+  function evCard(ev){
+    const dd=new Date(ev.date+'T00:00:00');
+    return '<div class="ev-card">'
+      +'<div class="ev-card-date"><div class="ev-day">'+dd.toLocaleDateString('en-GB',{day:'2-digit'})+'</div>'
+      +'<div class="ev-mon">'+dd.toLocaleDateString('en-GB',{month:'short'})+'</div>'
+      +'<div class="ev-yr">'+dd.getFullYear()+'</div></div>'
+      +'<div class="ev-card-body">'
+      +'<div class="ev-type-row"><span class="badge '+(typeBadge[ev.type]||'badge-active')+'">'+escHtml(ev.type.charAt(0).toUpperCase()+ev.type.slice(1))+'</span>'
+      +(ev.time?'<span class="ev-time">'+escHtml(ev.time)+'</span>':'')+'</div>'
+      +'<div class="ev-title">'+escHtml(ev.title)+'</div>'
+      +(ev.location?'<div class="ev-meta">&#128205; '+escHtml(ev.location)+'</div>':'')
+      +(ev.description?'<div class="ev-desc">'+escHtml(ev.description)+'</div>':'')
+      +'</div>'
+      +(isOfc?'<div class="ev-actions"><button type="button" class="icon-btn" onclick="deleteEvent(\''+ev.id+'\')" title="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button></div>':'')
+      +'</div>';
+  }
+  let html='<div class="page-head"><div><h1>Upcoming Events</h1>'
+    +'<div class="sub">'+upcoming.length+' upcoming'+(past.length?' · '+past.length+' past':'')+'</div></div>'
+    +(isOfc?'<button type="button" class="btn btn-primary" onclick="openAddEvent()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M12 5v14M5 12h14"/></svg>Add event</button>':'')
+    +'</div>';
+  if(upcoming.length){html+=upcoming.map(evCard).join('');}
+  else{html+='<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><div class="title">No upcoming events</div><div class="hint">'+(isOfc?'Use the button above to add your first event.':'Nothing scheduled yet — check back soon.')+'</div></div>';}
+  if(past.length){html+='<details style="margin-top:20px"><summary style="cursor:pointer;font-size:13px;color:var(--ink-faint);padding:8px 0">Show '+past.length+' past event'+(past.length>1?'s':'')+'</summary>'+past.map(evCard).join('')+'</details>';}
+  return html;
+}
+
+function openAddEvent(){
+  openModal('<h3>Add Event</h3>'
+    +'<div class="field"><label>Title</label><input type="text" id="ev-title" placeholder="e.g. Monthly General Meeting"/></div>'
+    +'<div class="field-row">'
+    +'<div class="field"><label>Date</label><input type="date" id="ev-date"/></div>'
+    +'<div class="field"><label>Time (optional)</label><input type="time" id="ev-time"/></div>'
+    +'</div>'
+    +'<div class="field"><label>Location (optional)</label><input type="text" id="ev-loc" placeholder="e.g. Club Hall, Otun Ekiti"/></div>'
+    +'<div class="field"><label>Type</label><select id="ev-type"><option value="general">General meeting</option><option value="committee">Committee meeting</option><option value="agm">AGM</option><option value="social">Social event</option></select></div>'
+    +'<div class="field"><label>Description (optional)</label><textarea id="ev-desc" rows="3"></textarea></div>'
+    +'<div class="modal-actions"><button type="button" class="btn" onclick="closeModal()">Cancel</button><button type="button" class="btn btn-primary" onclick="submitAddEvent()">Add event</button></div>');
+}
+
+function submitAddEvent(){
+  const title=(document.getElementById('ev-title').value||'').trim();
+  const date=document.getElementById('ev-date').value;
+  if(!title||!date){showToast('Title and date are required.');return;}
+  const item={id:uid(),title,date,time:document.getElementById('ev-time').value||'',
+    location:(document.getElementById('ev-loc').value||'').trim(),
+    type:document.getElementById('ev-type').value,
+    description:(document.getElementById('ev-desc').value||'').trim(),
+    createdAt:new Date().toISOString()};
+  const arr=loadEvents(); arr.unshift(item); saveEvents(arr);
+  broadcastItem('new-event',{item});
+  reqNotifPermission();
+  closeModal(); render(); updateBadges();
+  showToast('Event added and broadcast to all members.');
+}
+
+function deleteEvent(id){
+  if(!confirm('Delete this event?'))return;
+  saveEvents(loadEvents().filter(e=>e.id!==id));
+  broadcastItem('del-event',{id});
+  render();
+}
+
+/* ---- News page ---- */
+function pageNews(){
+  markSeen('news');
+  const news=loadNews();
+  const isOfc=isOfficerSessionNow();
+  function newsCard(item){
+    const d=new Date(item.createdAt);
+    return '<div class="news-card">'
+      +'<div class="news-card-head">'
+      +'<div><div class="news-title">'+escHtml(item.title)+'</div>'
+      +'<div class="news-meta">'+d.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})+' · '+escHtml(item.author||'Club Secretary')+'</div></div>'
+      +(isOfc?'<button type="button" class="icon-btn" onclick="deleteNews(\''+item.id+'\')" title="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>':'')
+      +'</div>'
+      +'<div class="news-body">'+escHtml(item.body).replace(/\n/g,'<br/>')+'</div>'
+      +'</div>';
+  }
+  let html='<div class="page-head"><div><h1>News &amp; Notices</h1>'
+    +'<div class="sub">'+news.length+' post'+(news.length!==1?'s':'')+'</div></div>'
+    +(isOfc?'<button type="button" class="btn btn-primary" onclick="openAddNews()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M12 5v14M5 12h14"/></svg>Post notice</button>':'')
+    +'</div>';
+  html+=news.length?news.map(newsCard).join('')
+    :'<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><div class="title">No notices yet</div><div class="hint">'+(isOfc?'Post your first club notice using the button above.':'No notices from the committee yet.')+'</div></div>';
+  return html;
+}
+
+function openAddNews(){
+  openModal('<h3>Post a Notice</h3>'
+    +'<div class="field"><label>Title</label><input type="text" id="nw-title" placeholder="e.g. AGM Reminder"/></div>'
+    +'<div class="field"><label>Posted by</label><input type="text" id="nw-author" placeholder="e.g. The Secretary"/></div>'
+    +'<div class="field"><label>Message</label><textarea id="nw-body" rows="5" placeholder="Write your notice here…"></textarea></div>'
+    +'<div class="modal-actions"><button type="button" class="btn" onclick="closeModal()">Cancel</button><button type="button" class="btn btn-primary" onclick="submitAddNews()">Post notice</button></div>');
+}
+
+function submitAddNews(){
+  const title=(document.getElementById('nw-title').value||'').trim();
+  const body=(document.getElementById('nw-body').value||'').trim();
+  if(!title||!body){showToast('Title and message are required.');return;}
+  const item={id:uid(),title,body,author:(document.getElementById('nw-author').value||'').trim()||'Club Secretary',createdAt:new Date().toISOString()};
+  const arr=loadNews(); arr.unshift(item); saveNews(arr);
+  broadcastItem('new-news',{item});
+  reqNotifPermission();
+  closeModal(); render(); updateBadges();
+  showToast('Notice posted and broadcast to all members.');
+}
+
+function deleteNews(id){
+  if(!confirm('Delete this notice?'))return;
+  saveNews(loadNews().filter(n=>n.id!==id));
+  broadcastItem('del-news',{id});
+  render();
+}
+
+/* ---- Polls / Interactive page ---- */
+function pageInteractive(){
+  const polls=loadPolls();
+  const isOfc=isOfficerSessionNow();
+  const session=sessionStorage.getItem(SESSION_KEY)||'';
+  const memberId=session.startsWith('member:')?session.slice(7):null;
+  const now=new Date();
+  const active=polls.filter(p=>!p.endsAt||new Date(p.endsAt+'T23:59:59')>=now);
+  const closed=polls.filter(p=>p.endsAt&&new Date(p.endsAt+'T23:59:59')<now);
+  function pollCard(poll){
+    const total=poll.options.reduce((s,o)=>s+o.votes.length,0);
+    const hasVoted=memberId&&poll.options.some(o=>o.votes.includes(memberId));
+    const isClosed=poll.endsAt&&new Date(poll.endsAt+'T23:59:59')<now;
+    const showResults=hasVoted||isClosed||isOfc;
+    let opts='';
+    poll.options.forEach(opt=>{
+      const pct=total?Math.round(opt.votes.length/total*100):0;
+      const voted=memberId&&opt.votes.includes(memberId);
+      if(showResults){
+        opts+='<div class="poll-opt"><div class="poll-bar-wrap'+(voted?' poll-opt-voted':'')+'"><div class="poll-bar-fill" style="width:'+pct+'%"></div>'
+          +'<span class="poll-bar-label">'+escHtml(opt.text)+(voted?' ✓':'')+'</span>'
+          +'<span class="poll-bar-pct">'+pct+'%</span></div></div>';
+      } else {
+        opts+='<div class="poll-opt"><button type="button" class="btn btn-sm" style="width:100%;justify-content:flex-start;text-align:left;" onclick="castVote(\''+poll.id+'\',\''+opt.id+'\')"'
+          +(!memberId?' disabled title="Log in as a member to vote"':'')+'>'
+          +escHtml(opt.text)+'</button></div>';
+      }
+    });
+    return '<div class="poll-card">'
+      +'<div class="poll-q">'+escHtml(poll.question)+'</div>'
+      +(poll.endsAt?'<div class="poll-ends">'+(isClosed?'Ended':'Closes')+' '+new Date(poll.endsAt+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})+'</div>':'')
+      +'<div class="poll-options">'+opts+'</div>'
+      +'<div class="poll-foot">'+total+' vote'+(total!==1?'s':'')
+      +(hasVoted?' · You voted':'')
+      +(!memberId&&!isOfc?' · Log in as a member to vote':'')
+      +(isOfc?'<button type="button" class="icon-btn" style="margin-left:auto;" onclick="deletePoll(\''+poll.id+'\')" title="Delete poll"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>':'')
+      +'</div></div>';
+  }
+  let html='<div class="page-head"><div><h1>Polls &amp; Voting</h1>'
+    +'<div class="sub">'+active.length+' active poll'+(active.length!==1?'s':'')+(closed.length?' · '+closed.length+' closed':'')+'</div></div>'
+    +(isOfc?'<button type="button" class="btn btn-primary" onclick="openAddPoll()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M12 5v14M5 12h14"/></svg>Create poll</button>':'')
+    +'</div>';
+  html+=active.length?active.map(pollCard).join('')
+    :'<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 20V10M12 20V4M6 20v-6"/></svg><div class="title">No active polls</div><div class="hint">'+(isOfc?'Create a poll to gather member opinions.':'No active polls right now.')+'</div></div>';
+  if(closed.length){html+='<h2 style="font-size:15px;margin:24px 0 12px;color:var(--ink-faint);">Closed polls</h2>'+closed.map(pollCard).join('');}
+  return html;
+}
+
+function openAddPoll(){
+  openModal('<h3>Create Poll</h3>'
+    +'<div class="field"><label>Question</label><input type="text" id="pl-q" placeholder="e.g. Should we move the meeting to Saturday?"/></div>'
+    +'<div class="field"><label>Option 1</label><input type="text" id="pl-o0" placeholder="Yes"/></div>'
+    +'<div class="field"><label>Option 2</label><input type="text" id="pl-o1" placeholder="No"/></div>'
+    +'<div class="field"><label>Option 3 (optional)</label><input type="text" id="pl-o2" placeholder="Abstain"/></div>'
+    +'<div class="field"><label>Closing date (optional)</label><input type="date" id="pl-ends"/></div>'
+    +'<div class="modal-actions"><button type="button" class="btn" onclick="closeModal()">Cancel</button><button type="button" class="btn btn-primary" onclick="submitAddPoll()">Create poll</button></div>');
+}
+
+function submitAddPoll(){
+  const question=(document.getElementById('pl-q').value||'').trim();
+  const opts=[0,1,2].map(i=>(document.getElementById('pl-o'+i).value||'').trim()).filter(Boolean);
+  if(!question||opts.length<2){showToast('Question and at least 2 options are required.');return;}
+  const item={id:uid(),question,options:opts.map(text=>({id:uid(),text,votes:[]})),endsAt:document.getElementById('pl-ends').value||null,createdAt:new Date().toISOString()};
+  const arr=loadPolls(); arr.unshift(item); savePolls(arr);
+  broadcastItem('new-poll',{item});
+  closeModal(); render();
+  showToast('Poll created and sent to all members.');
+}
+
+function castVote(pollId,optionId){
+  const session=sessionStorage.getItem(SESSION_KEY)||'';
+  const memberId=session.startsWith('member:')?session.slice(7):null;
+  if(!memberId){showToast('Log in as a member to vote.');return;}
+  const polls=loadPolls();
+  const poll=polls.find(p=>p.id===pollId);
+  if(!poll)return;
+  if(poll.options.some(o=>o.votes.includes(memberId))){showToast('You have already voted.');return;}
+  const opt=poll.options.find(o=>o.id===optionId);
+  if(opt)opt.votes.push(memberId);
+  savePolls(polls);
+  broadcastItem('vote',{pollId,optionId,memberId});
+  render();
+  showToast('Vote recorded!');
+}
+
+function deletePoll(id){
+  if(!confirm('Delete this poll and all votes?'))return;
+  savePolls(loadPolls().filter(p=>p.id!==id));
+  broadcastItem('del-poll',{id});
+  render();
+}
+
 /* ============ RENDER ============ */
 function render(){
   const main=document.getElementById('main');
@@ -2475,6 +2828,9 @@ function render(){
   else if(currentPage==='finance')main.innerHTML=pageFinance();
   else if(currentPage==='committee')main.innerHTML=pageCommittee();
   else if(currentPage==='constitution'){main.innerHTML=pageConstitution();setupConstitutionPage();}
+  else if(currentPage==='events')main.innerHTML=pageEvents();
+  else if(currentPage==='news')main.innerHTML=pageNews();
+  else if(currentPage==='interactive')main.innerHTML=pageInteractive();
 }
 
 /* ============ APP UPDATE HANDLING ============ */
@@ -2834,6 +3190,7 @@ async function asstSend(){
   if(gate) new MutationObserver(upd).observe(gate,{attributes:true,attributeFilter:['class']});
   upd();
   asstUpdateUI();
+  updateBadges();
   (function waitSb(n){ if(typeof sb!=='undefined'&&sb){ loadConstitutionOverride(); } else if(n<40){ setTimeout(()=>waitSb(n+1),250); } })(0);
 })();
 </script>
