@@ -621,7 +621,7 @@ body.dark .asst-chip{color:#a7e6d0;}
 <script>
 /* Bump this string every time you publish changes to GitHub.
    This is what tells everyone's app that a newer version exists. */
-const APP_VERSION='2026-06-19-8';
+const APP_VERSION='2026-06-19-7';
 const STORE_KEY='oasis-club-data-v1';
 let DATA={members:[
   {
@@ -1077,17 +1077,6 @@ function rowsToPendingNews(rows){
 function rowsToPaymentClaims(rows){
   return rows.map(r=>({id:r.id,memberId:r.member_id,amount:Number(r.amount),narration:r.narration,proofImage:r.proof_image||'',paymentDate:r.payment_date,status:r.status||'pending',createdAt:r.created_at}));
 }
-function rowsToWelfareLoans(rows){
-  return rows.map(r=>({
-    id:r.id,memberId:r.member_id,principal:Number(r.principal),interestRate:Number(r.interest_rate||0),
-    amountDue:Number(r.amount_due),amountRepaid:Number(r.amount_repaid||0),purpose:r.purpose,
-    proposedBy:r.proposed_by,approver1:r.approver_1,approver2:r.approver_2,status:r.status||'proposed',
-    dueDate:r.due_date,disbursedDate:r.disbursed_date,createdAt:r.created_at
-  }));
-}
-function rowsToLoanRepayments(rows){
-  return rows.map(r=>({id:r.id,loanId:r.loan_id,amount:Number(r.amount),paidDate:r.paid_date,recordedBy:r.recorded_by,createdAt:r.created_at}));
-}
 function rowsToPolls(rows){
   return rows.map(r=>({id:r.id,question:r.question,options:r.options||[],endsAt:r.ends_at||'',createdBy:r.created_by||'',createdAt:r.created_at}));
 }
@@ -1120,7 +1109,7 @@ async function loadData(){
 
 async function fetchAllData(){
   try{
-    const[membersRes,minutesRes,txRes,metaRes,eventsRes,newsRes,pollsRes,pendingNewsRes,paymentClaimsRes,loansRes,repaymentsRes]=await Promise.all([
+    const[membersRes,minutesRes,txRes,metaRes,eventsRes,newsRes,pollsRes,pendingNewsRes,paymentClaimsRes]=await Promise.all([
       sb.from('members').select('*'),
       sb.from('minutes').select('*'),
       sb.from('transactions').select('*'),
@@ -1129,9 +1118,7 @@ async function fetchAllData(){
       sb.from('club_news').select('*').order('created_at',{ascending:false}),
       sb.from('club_polls').select('*').order('created_at',{ascending:false}),
       sb.from('club_news_pending').select('*').order('created_at',{ascending:false}),
-      sb.from('dues_payment_claims').select('*').order('created_at',{ascending:false}),
-      sb.from('welfare_loans').select('*').order('created_at',{ascending:false}),
-      sb.from('welfare_loan_repayments').select('*').order('created_at',{ascending:false})
+      sb.from('dues_payment_claims').select('*').order('created_at',{ascending:false})
     ]);
     if(membersRes.error||minutesRes.error||txRes.error||metaRes.error){
       throw membersRes.error||minutesRes.error||txRes.error||metaRes.error;
@@ -1145,9 +1132,7 @@ async function fetchAllData(){
       news:rowsToNews(newsRes.data||[]),
       polls:rowsToPolls(pollsRes.data||[]),
       pendingNews:rowsToPendingNews(pendingNewsRes.data||[]),
-      paymentClaims:rowsToPaymentClaims(paymentClaimsRes.data||[]),
-      welfareLoans:rowsToWelfareLoans(loansRes.data||[]),
-      loanRepayments:rowsToLoanRepayments(repaymentsRes.data||[])
+      paymentClaims:rowsToPaymentClaims(paymentClaimsRes.data||[])
     };
     // Cache for offline reading
     try{
@@ -1156,8 +1141,6 @@ async function fetchAllData(){
       localStorage.setItem(POLLS_STORE,JSON.stringify(DATA.polls));
       localStorage.setItem(PENDING_NEWS_STORE,JSON.stringify(DATA.pendingNews));
       localStorage.setItem(PAYMENT_CLAIMS_STORE,JSON.stringify(DATA.paymentClaims));
-      localStorage.setItem(WELFARE_LOANS_STORE,JSON.stringify(DATA.welfareLoans));
-      localStorage.setItem(LOAN_REPAYMENTS_STORE,JSON.stringify(DATA.loanRepayments));
     }catch(_){}
     connectionStatus='connected';
     // Refresh chatbot UI now that DATA.meta.chatbotApiKey is known
@@ -1175,8 +1158,6 @@ async function fetchAllData(){
     if(!DATA.polls||!DATA.polls.length)try{DATA.polls=JSON.parse(localStorage.getItem(POLLS_STORE)||'[]');}catch(_){}
     if(!DATA.pendingNews||!DATA.pendingNews.length)try{DATA.pendingNews=JSON.parse(localStorage.getItem(PENDING_NEWS_STORE)||'[]');}catch(_){}
     if(!DATA.paymentClaims||!DATA.paymentClaims.length)try{DATA.paymentClaims=JSON.parse(localStorage.getItem(PAYMENT_CLAIMS_STORE)||'[]');}catch(_){}
-    if(!DATA.welfareLoans||!DATA.welfareLoans.length)try{DATA.welfareLoans=JSON.parse(localStorage.getItem(WELFARE_LOANS_STORE)||'[]');}catch(_){}
-    if(!DATA.loanRepayments||!DATA.loanRepayments.length)try{DATA.loanRepayments=JSON.parse(localStorage.getItem(LOAN_REPAYMENTS_STORE)||'[]');}catch(_){}
   }
 }
 
@@ -1191,8 +1172,6 @@ function subscribeToRealtime(){
     .on('postgres_changes',{event:'*',schema:'public',table:'club_news'},handleRealtimeChange)
     .on('postgres_changes',{event:'*',schema:'public',table:'club_news_pending'},handleRealtimeChange)
     .on('postgres_changes',{event:'*',schema:'public',table:'dues_payment_claims'},handleRealtimeChange)
-    .on('postgres_changes',{event:'*',schema:'public',table:'welfare_loans'},handleRealtimeChange)
-    .on('postgres_changes',{event:'*',schema:'public',table:'welfare_loan_repayments'},handleRealtimeChange)
     .on('postgres_changes',{event:'*',schema:'public',table:'club_polls'},handleRealtimeChange)
     .subscribe(status=>{
       if(status==='SUBSCRIBED'){connectionStatus='connected';render();}
@@ -1218,10 +1197,6 @@ function handleRealtimeChange(payload){
       const mem=DATA.members.find(m=>m.id===payload.new.member_id);
       showToast('New payment claim from '+(mem?mem.name:'a member')+' — '+fmtMoney(Number(payload.new.amount)));
       sendNotif('Oasis Club — Payment claim',(mem?mem.name:'A member')+' reported a payment of '+fmtMoney(Number(payload.new.amount)));
-    }else if(payload.table==='welfare_loans'&&payload.new&&payload.new.status==='proposed'&&isWelfareCommitteeNow()){
-      const mem=DATA.members.find(m=>m.id===payload.new.member_id);
-      showToast('Loan proposed for '+(mem?mem.name:'a member')+' — needs committee approval');
-      sendNotif('Oasis Club — Loan needs approval',(mem?mem.name:'A member')+' has a loan proposal of '+fmtMoney(Number(payload.new.principal))+' awaiting approval');
     }
   }
   // Debounced refetch — stays correct even when multiple tables change together
@@ -1814,7 +1789,7 @@ function openMemberForm(id){
       <div class="field-row">
         <div class="field"><label>Role / office</label>
           <select id="f-role">
-            ${['Member','President','Vice-President','Secretary','Assistant Secretary','Treasurer','Financial Secretary','PRO','Welfare Committee'].map(r=>`<option ${existing&&existing.role===r?'selected':''}>${r}</option>`).join('')}
+            ${['Member','President','Vice-President','Secretary','Assistant Secretary','Treasurer','Financial Secretary','PRO'].map(r=>`<option ${existing&&existing.role===r?'selected':''}>${r}</option>`).join('')}
           </select>
         </div>
         <div class="field"><label>Status</label>
@@ -3277,8 +3252,6 @@ const NEWS_STORE='oasis-news-v1';
 const POLLS_STORE='oasis-polls-v1';
 const PENDING_NEWS_STORE='oasis-pending-news-v1';
 const PAYMENT_CLAIMS_STORE='oasis-payment-claims-v1';
-const WELFARE_LOANS_STORE='oasis-welfare-loans-v1';
-const LOAN_REPAYMENTS_STORE='oasis-loan-repayments-v1';
 const SEEN_STORE='oasis-last-seen-v1';
 
 function escHtml(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
@@ -3743,15 +3716,6 @@ function canReviewPaymentClaims(){
   if(s.startsWith('member:')){const m=DATA.members.find(x=>x.id===s.slice(7));return !!(m&&(m.role==='Treasurer'||m.role==='Financial Secretary'));}
   return false;
 }
-function isWelfareCommitteeNow(){
-  const s=sessionStorage.getItem(SESSION_KEY)||'';
-  if(s.startsWith('member:')){const m=DATA.members.find(x=>x.id===s.slice(7));return !!(m&&m.role==='Welfare Committee');}
-  return false;
-}
-function getCurrentMemberRecord(){
-  const id=getCurrentMemberId();
-  return id?DATA.members.find(m=>m.id===id):null;
-}
 
 function csvEsc(v){
   const s=String(v==null?'':v);
@@ -4089,7 +4053,6 @@ function pageWelfare(){
     ${wfyLabels.map(y=>`<button type="button" class="btn ${welfareYearFilter===y?'btn-primary':''}" style="padding:6px 14px;font-size:13px;" onclick="setWelfareYearFilter('${y}')">${y}</button>`).join('')}
   </div>
   ${welfare.length?welfare.map(welfareCard).join(''):emptyState('No welfare events recorded','Officers can log bereavement, new baby, illness levies and other special contributions.')}
-  ${pageWelfareLoansSection()}
   ${isTreasurerSession()?`<div class="card" style="margin-top:8px;">
     <div class="card-head"><h2>&#128202; Welfare spreadsheet</h2><span class="badge badge-active">Treasurer</span></div>
     <p class="cell-muted" style="margin:0 0 14px;">Download as CSV to see all events and member contributions. On upload, the data is replaced in full &mdash; keep a backup of the downloaded file before uploading.</p>
@@ -4106,131 +4069,6 @@ function pageWelfare(){
     </div>
   </div>`:''}`;
 }
-
-/* ---------- Welfare Committee Loans ---------- */
-function pageWelfareLoansSection(){
-  const isWc=isWelfareCommitteeNow();
-  const myId=getCurrentMemberId();
-  const loans=(DATA.welfareLoans||[]).slice().sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
-  if(!loans.length&&!isWc)return'';
-  const today=new Date().toISOString().slice(0,10);
-  function loanStatusInfo(loan){
-    if(loan.status==='closed')return{label:'Repaid in full',cls:'badge-paid'};
-    if(loan.status==='proposed')return{label:'Awaiting 2nd approval',cls:'badge-due'};
-    if(loan.status==='active'&&loan.dueDate&&loan.dueDate<today&&loan.amountRepaid<loan.amountDue)return{label:'Overdue',cls:'badge-overdue'};
-    return{label:'Active',cls:'badge-active'};
-  }
-  function loanCard(loan){
-    const mem=DATA.members.find(m=>m.id===loan.memberId);
-    const proposer=DATA.members.find(m=>m.id===loan.proposedBy);
-    const info=loanStatusInfo(loan);
-    const balance=Math.max(0,loan.amountDue-loan.amountRepaid);
-    const canApprove=isWc&&loan.status==='proposed'&&loan.proposedBy!==myId&&loan.approver1!==myId;
-    const repayments=(DATA.loanRepayments||[]).filter(r=>r.loanId===loan.id).sort((a,b)=>(b.paidDate||'').localeCompare(a.paidDate||''));
-    return `<div class="news-card" style="${info.cls==='badge-overdue'?'border:1.5px solid var(--red);':''}">
-      <div class="news-card-head">
-        <div>
-          <div class="news-title">${escHtml(mem?mem.name:'Member')} &mdash; ${fmtMoney(loan.principal)} <span class="badge ${info.cls}" style="font-size:10px;margin-left:4px;">${info.label}</span></div>
-          <div class="news-meta">Proposed by ${escHtml(proposer?proposer.name:'committee')} &middot; Interest ${loan.interestRate}% &middot; Total due ${fmtMoney(loan.amountDue)}${loan.dueDate?' &middot; Due '+fmtDate(loan.dueDate):''}</div>
-        </div>
-        ${canApprove?`<button type="button" class="btn btn-primary" style="font-size:12px;padding:5px 12px;" onclick="approveWelfareLoan('${loan.id}')">Approve</button>`:''}
-        ${isWc&&loan.status==='active'?`<button type="button" class="btn" style="font-size:12px;padding:5px 12px;" onclick="openRecordRepayment('${loan.id}')">Record repayment</button>`:''}
-      </div>
-      <div class="news-body">${escHtml(loan.purpose)}</div>
-      ${loan.status!=='proposed'?`<div class="cell-muted" style="margin-top:8px;font-size:12.5px;">Repaid so far: <strong>${fmtMoney(loan.amountRepaid)}</strong> &middot; Outstanding: <strong>${fmtMoney(balance)}</strong></div>`:''}
-      ${repayments.length?`<details style="margin-top:6px;"><summary style="cursor:pointer;font-size:12px;color:var(--ink-faint);">Repayment history (${repayments.length})</summary>
-        <div style="margin-top:6px;">${repayments.map(r=>`<div class="welfare-member-row"><span style="flex:1;font-size:13px;">${fmtDate(r.paidDate)}</span><span class="welfare-paid">${fmtMoney(r.amount)}</span></div>`).join('')}</div>
-      </details>`:''}
-    </div>`;
-  }
-  return `<div class="card-head" style="margin-top:14px;"><h2>&#129500; Welfare Committee loans</h2>${isWc?`<button type="button" class="btn btn-primary" style="font-size:12.5px;padding:6px 14px;" onclick="openProposeLoan()">Propose loan</button>`:''}</div>
-  ${loans.length?loans.map(loanCard).join(''):emptyState('No loans on record','The Welfare Committee can propose interest-bearing loans for members in urgent need.')}`;
-}
-
-function openProposeLoan(){
-  const active=DATA.members.filter(isActiveMember);
-  openModal(`<h3>Propose a Welfare Loan</h3>
-    <div class="field"><label>Member</label><select id="wl-member">${active.map(m=>`<option value="${m.id}">${escHtml(m.name)}</option>`).join('')}</select></div>
-    <div class="field-row">
-      <div class="field"><label>Principal (&#8358;)</label><input type="number" id="wl-principal" min="0" step="500" required/></div>
-      <div class="field"><label>Interest rate (%)</label><input type="number" id="wl-rate" min="0" step="0.5" value="0" required/></div>
-    </div>
-    <div class="field"><label>Purpose</label><textarea id="wl-purpose" rows="3" placeholder="e.g. Urgent medical expenses"></textarea></div>
-    <div class="field"><label>Due date</label><input type="date" id="wl-due"/></div>
-    <p class="cell-muted" style="font-size:12px;margin:4px 0 0;">This loan will need approval from a <em>second</em> Welfare Committee member before it becomes active.</p>
-    <div class="modal-actions"><button type="button" class="btn" onclick="closeModal()">Cancel</button><button type="button" class="btn btn-primary" onclick="submitProposeLoan()">Propose loan</button></div>`);
-}
-
-async function submitProposeLoan(){
-  const memberId=document.getElementById('wl-member').value;
-  const principal=Number(document.getElementById('wl-principal').value||0);
-  const rate=Number(document.getElementById('wl-rate').value||0);
-  const purpose=(document.getElementById('wl-purpose').value||'').trim();
-  const due=document.getElementById('wl-due').value||null;
-  if(!memberId||!principal||!purpose){showToast('Member, principal and purpose are required.');return;}
-  const me=getCurrentMemberRecord();
-  if(!me){showToast('You must be logged in to propose a loan.');return;}
-  const btn=document.querySelector('#modal-content .btn-primary');
-  if(btn){btn.disabled=true;btn.textContent='Proposing\u2026';}
-  try{
-    const{error}=await sb.rpc('propose_welfare_loan',{
-      p_committee_pin:me.pin,p_id:uid(),p_member_id:memberId,
-      p_principal:principal,p_interest_rate:rate,p_purpose:purpose,p_due_date:due
-    });
-    if(error)throw error;
-    closeModal();
-    showToast('Loan proposed — needs a second committee approval.');
-  }catch(e){
-    if(btn){btn.disabled=false;btn.textContent='Propose loan';}
-    showToast('Could not propose loan: '+(e.message||'unknown error'));
-  }
-}
-
-async function approveWelfareLoan(id){
-  const me=getCurrentMemberRecord();
-  if(!me){showToast('You must be logged in to approve.');return;}
-  try{
-    const{error}=await sb.rpc('approve_welfare_loan',{p_committee_pin:me.pin,p_id:id});
-    if(error)throw error;
-    showToast('Approval recorded.');
-  }catch(e){showToast('Could not approve: '+(e.message||'unknown error'));}
-}
-
-function openRecordRepayment(loanId){
-  const loan=(DATA.welfareLoans||[]).find(l=>l.id===loanId);
-  if(!loan)return;
-  const balance=Math.max(0,loan.amountDue-loan.amountRepaid);
-  openModal(`<h3>Record Repayment</h3>
-    <p class="cell-muted" style="margin:0 0 12px;font-size:12.5px;">Outstanding balance: <strong>${fmtMoney(balance)}</strong></p>
-    <div class="field-row">
-      <div class="field"><label>Amount (&#8358;)</label><input type="number" id="rp-amount" min="0" step="100" value="${balance}" required/></div>
-      <div class="field"><label>Date paid</label><input type="date" id="rp-date" value="${new Date().toISOString().slice(0,10)}" required/></div>
-    </div>
-    <div class="modal-actions"><button type="button" class="btn" onclick="closeModal()">Cancel</button><button type="button" class="btn btn-primary" onclick="submitRecordRepayment('${loanId}')">Save repayment</button></div>`);
-}
-
-async function submitRecordRepayment(loanId){
-  const amount=Number(document.getElementById('rp-amount').value||0);
-  const date=document.getElementById('rp-date').value;
-  if(!amount||!date){showToast('Amount and date are required.');return;}
-  const me=getCurrentMemberRecord();
-  if(!me){showToast('You must be logged in to record a repayment.');return;}
-  const btn=document.querySelector('#modal-content .btn-primary');
-  if(btn){btn.disabled=true;btn.textContent='Saving\u2026';}
-  try{
-    const{error}=await sb.rpc('record_loan_repayment',{
-      p_committee_pin:me.pin,p_loan_id:loanId,p_repayment_id:uid(),
-      p_amount:amount,p_paid_date:date
-    });
-    if(error)throw error;
-    closeModal();
-    showToast('Repayment recorded.');
-  }catch(e){
-    if(btn){btn.disabled=false;btn.textContent='Save repayment';}
-    showToast('Could not save: '+(e.message||'unknown error'));
-  }
-}
-
 function setWelfareYearFilter(y){
   welfareYearFilter=y;
   render();
@@ -4806,7 +4644,7 @@ function localAsstAnswer(messages){
   const balance=txns.reduce((s,t)=>s+(t.type==='income'?Number(t.amount):-Number(t.amount)),0);
   const paid=members.filter(m=>Number(m.duesPaid||0)>=annualDue);
   const unpaid=active.filter(m=>Number(m.duesPaid||0)<annualDue);
-  const OROLES=['President','Vice-President','Secretary','Assistant Secretary','Treasurer','Financial Secretary','PRO','Welfare Committee'];
+  const OROLES=['President','Vice-President','Secretary','Assistant Secretary','Treasurer','Financial Secretary','PRO'];
   const officers=members.filter(m=>OROLES.includes(m.role));
   const fmt=n=>'₦'+Number(n).toLocaleString('en-NG');
   function nextMeetingDate(){
