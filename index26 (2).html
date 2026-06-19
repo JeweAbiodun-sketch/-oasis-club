@@ -621,7 +621,7 @@ body.dark .asst-chip{color:#a7e6d0;}
 <script>
 /* Bump this string every time you publish changes to GitHub.
    This is what tells everyone's app that a newer version exists. */
-const APP_VERSION='2026-06-19-7';
+const APP_VERSION='2026-06-19-5';
 const STORE_KEY='oasis-club-data-v1';
 let DATA={members:[
   {
@@ -1074,9 +1074,6 @@ function rowsToNews(rows){
 function rowsToPendingNews(rows){
   return rows.map(r=>({id:r.id,title:r.title,body:r.body,author:r.author||'',submittedByMemberId:r.submitted_by_member_id,createdAt:r.created_at}));
 }
-function rowsToPaymentClaims(rows){
-  return rows.map(r=>({id:r.id,memberId:r.member_id,amount:Number(r.amount),narration:r.narration,proofImage:r.proof_image||'',paymentDate:r.payment_date,status:r.status||'pending',createdAt:r.created_at}));
-}
 function rowsToPolls(rows){
   return rows.map(r=>({id:r.id,question:r.question,options:r.options||[],endsAt:r.ends_at||'',createdBy:r.created_by||'',createdAt:r.created_at}));
 }
@@ -1109,7 +1106,7 @@ async function loadData(){
 
 async function fetchAllData(){
   try{
-    const[membersRes,minutesRes,txRes,metaRes,eventsRes,newsRes,pollsRes,pendingNewsRes,paymentClaimsRes]=await Promise.all([
+    const[membersRes,minutesRes,txRes,metaRes,eventsRes,newsRes,pollsRes,pendingNewsRes]=await Promise.all([
       sb.from('members').select('*'),
       sb.from('minutes').select('*'),
       sb.from('transactions').select('*'),
@@ -1117,8 +1114,7 @@ async function fetchAllData(){
       sb.from('club_events').select('*').order('created_at',{ascending:false}),
       sb.from('club_news').select('*').order('created_at',{ascending:false}),
       sb.from('club_polls').select('*').order('created_at',{ascending:false}),
-      sb.from('club_news_pending').select('*').order('created_at',{ascending:false}),
-      sb.from('dues_payment_claims').select('*').order('created_at',{ascending:false})
+      sb.from('club_news_pending').select('*').order('created_at',{ascending:false})
     ]);
     if(membersRes.error||minutesRes.error||txRes.error||metaRes.error){
       throw membersRes.error||minutesRes.error||txRes.error||metaRes.error;
@@ -1131,8 +1127,7 @@ async function fetchAllData(){
       events:rowsToEvents(eventsRes.data||[]),
       news:rowsToNews(newsRes.data||[]),
       polls:rowsToPolls(pollsRes.data||[]),
-      pendingNews:rowsToPendingNews(pendingNewsRes.data||[]),
-      paymentClaims:rowsToPaymentClaims(paymentClaimsRes.data||[])
+      pendingNews:rowsToPendingNews(pendingNewsRes.data||[])
     };
     // Cache for offline reading
     try{
@@ -1140,7 +1135,6 @@ async function fetchAllData(){
       localStorage.setItem(NEWS_STORE,JSON.stringify(DATA.news));
       localStorage.setItem(POLLS_STORE,JSON.stringify(DATA.polls));
       localStorage.setItem(PENDING_NEWS_STORE,JSON.stringify(DATA.pendingNews));
-      localStorage.setItem(PAYMENT_CLAIMS_STORE,JSON.stringify(DATA.paymentClaims));
     }catch(_){}
     connectionStatus='connected';
     // Refresh chatbot UI now that DATA.meta.chatbotApiKey is known
@@ -1157,7 +1151,6 @@ async function fetchAllData(){
     if(!DATA.news||!DATA.news.length)try{DATA.news=JSON.parse(localStorage.getItem(NEWS_STORE)||'[]');}catch(_){}
     if(!DATA.polls||!DATA.polls.length)try{DATA.polls=JSON.parse(localStorage.getItem(POLLS_STORE)||'[]');}catch(_){}
     if(!DATA.pendingNews||!DATA.pendingNews.length)try{DATA.pendingNews=JSON.parse(localStorage.getItem(PENDING_NEWS_STORE)||'[]');}catch(_){}
-    if(!DATA.paymentClaims||!DATA.paymentClaims.length)try{DATA.paymentClaims=JSON.parse(localStorage.getItem(PAYMENT_CLAIMS_STORE)||'[]');}catch(_){}
   }
 }
 
@@ -1171,7 +1164,6 @@ function subscribeToRealtime(){
     .on('postgres_changes',{event:'*',schema:'public',table:'club_events'},handleRealtimeChange)
     .on('postgres_changes',{event:'*',schema:'public',table:'club_news'},handleRealtimeChange)
     .on('postgres_changes',{event:'*',schema:'public',table:'club_news_pending'},handleRealtimeChange)
-    .on('postgres_changes',{event:'*',schema:'public',table:'dues_payment_claims'},handleRealtimeChange)
     .on('postgres_changes',{event:'*',schema:'public',table:'club_polls'},handleRealtimeChange)
     .subscribe(status=>{
       if(status==='SUBSCRIBED'){connectionStatus='connected';render();}
@@ -1193,10 +1185,6 @@ function handleRealtimeChange(payload){
     }else if(payload.table==='club_news_pending'&&payload.new&&isProSessionNow()){
       showToast('New post awaiting your review: '+(payload.new.title||''));
       sendNotif('Oasis Club — Post for review',payload.new.title||'');
-    }else if(payload.table==='dues_payment_claims'&&payload.new&&payload.new.status==='pending'&&canReviewPaymentClaims()){
-      const mem=DATA.members.find(m=>m.id===payload.new.member_id);
-      showToast('New payment claim from '+(mem?mem.name:'a member')+' — '+fmtMoney(Number(payload.new.amount)));
-      sendNotif('Oasis Club — Payment claim',(mem?mem.name:'A member')+' reported a payment of '+fmtMoney(Number(payload.new.amount)));
     }
   }
   // Debounced refetch — stays correct even when multiple tables change together
@@ -1940,35 +1928,9 @@ function pageDues(){
   const totalExpected=active.length*expected;
   const totalCollected=active.reduce((s,m)=>s+Number(m.duesPaid||0),0);
   const canEdit=isOfficerSessionNow();
-  const memberId=getCurrentMemberId();
-  const canReview=canReviewPaymentClaims();
-  const allClaims=(DATA.paymentClaims||[]).slice().sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
-  const pendingClaims=allClaims.filter(c=>c.status==='pending');
-  const myClaims=memberId?allClaims.filter(c=>c.memberId===memberId):[];
-  function claimCard(c,forReviewer){
-    const mem=DATA.members.find(m=>m.id===c.memberId);
-    const statusBadge=c.status==='approved'?'<span class="badge badge-paid" style="font-size:10px;">Approved</span>'
-      :c.status==='rejected'?'<span class="badge badge-overdue" style="font-size:10px;">Rejected</span>'
-      :'<span class="badge" style="background:var(--gold);color:#1a1a1a;font-size:10px;">Pending review</span>';
-    return `<div class="news-card" style="${c.status==='pending'?'border:1.5px dashed var(--gold);':''}">
-      <div class="news-card-head">
-        <div>
-          <div class="news-title">${fmtMoney(c.amount)} ${statusBadge}</div>
-          <div class="news-meta">${fmtDate(c.paymentDate)} &middot; ${escHtml(mem?mem.name:'Member')}</div>
-        </div>
-        ${forReviewer&&c.status==='pending'?`<div style="display:flex;gap:6px;">
-          <button type="button" class="btn btn-primary" style="font-size:12px;padding:5px 12px;" onclick="approvePaymentClaim('${c.id}')">Approve</button>
-          <button type="button" class="btn" style="font-size:12px;padding:5px 12px;" onclick="rejectPaymentClaim('${c.id}')">Reject</button>
-        </div>`:''}
-      </div>
-      <div class="news-body">${escHtml(c.narration)}</div>
-      ${c.proofImage?`<img src="${c.proofImage}" style="max-width:220px;border-radius:8px;margin-top:8px;display:block;border:1px solid var(--line);"/>`:''}
-    </div>`;
-  }
   return `
   <div class="page-head">
     <div><h1>Annual dues</h1><div class="sub">${DATA.meta.duesYearLabel||'Current financial year'} &middot; &#8358;${expected.toLocaleString('en-NG')} per member &middot; Article 5</div></div>
-    ${memberId?`<button type="button" class="btn btn-primary" onclick="openPaymentClaimForm()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M12 5v14M5 12h14"/></svg>Report a payment</button>`:''}
   </div>
   <div class="stats">
     <div class="stat"><div class="label">Expected</div><div class="value">${fmtMoney(totalExpected)}</div><div class="note">${active.length} active members</div></div>
@@ -1997,8 +1959,6 @@ function pageDues(){
     <label style="margin:0 0 0 12px;font-size:12.5px;">Year label</label>
     <input type="text" value="${DATA.meta.duesYearLabel||''}" placeholder="e.g. 2025/2026" style="max-width:140px;" onchange="updateDuesYearLabel(this.value)"/>
   </div>`:''}
-  ${canReview&&pendingClaims.length?`<div class="card-head" style="margin-top:14px;"><h2>&#128221; Payment claims awaiting review (${pendingClaims.length})</h2></div>${pendingClaims.map(c=>claimCard(c,true)).join('')}`:''}
-  ${!canReview&&myClaims.length?`<div class="card-head" style="margin-top:14px;"><h2>Your reported payments</h2></div>${myClaims.map(c=>claimCard(c,false)).join('')}`:''}
   ${isTreasurerSession()?`<div class="card" style="margin-top:4px;">
     <div class="card-head"><h2>&#128202; Dues spreadsheet</h2><span class="badge badge-active">Treasurer</span></div>
     <p class="cell-muted" style="margin:0 0 14px;">Download as CSV &rarr; edit in Excel or Google Sheets &rarr; upload to apply changes. Only the <em>Amount&nbsp;Paid</em> column is imported; other columns are ignored.</p>
@@ -2015,85 +1975,6 @@ function pageDues(){
     </div>
   </div>`:''}`;
 }
-function openPaymentClaimForm(){
-  openModal(`<h3>Report a Payment</h3>
-    <p class="cell-muted" style="margin:0 0 12px;font-size:12.5px;">Tell the Treasurer how much you paid and what it covers. Your claim will be reviewed before it reflects in your dues record.</p>
-    <div class="field-row">
-      <div class="field"><label>Amount (&#8358;)</label><input type="number" id="pc-amount" min="0" step="100" required/></div>
-      <div class="field"><label>Date paid</label><input type="date" id="pc-date" value="${new Date().toISOString().slice(0,10)}" required/></div>
-    </div>
-    <div class="field"><label>Narration</label><textarea id="pc-narration" rows="3" placeholder="e.g. Bank transfer for 2025/2026 annual due, part payment"></textarea></div>
-    <div class="field">
-      <label>Proof of payment (optional)</label>
-      <div class="photo-upload-row" style="margin-top:6px;">
-        <div id="pc-proof-preview" style="font-size:12px;color:var(--ink-faint);">No image selected</div>
-      </div>
-      <input type="file" id="pc-proof" accept="image/*" style="display:none;"/>
-      <button type="button" class="btn" style="font-size:12.5px;padding:6px 12px;" onclick="document.getElementById('pc-proof').click()">Choose image</button>
-    </div>
-    <div class="modal-actions"><button type="button" class="btn" onclick="closeModal()">Cancel</button><button type="button" class="btn btn-primary" onclick="submitPaymentClaim()">Send for review</button></div>`);
-  window.__paymentClaimProof=null;
-  const fileInput=document.getElementById('pc-proof');
-  fileInput.addEventListener('change',e=>{
-    const file=e.target.files[0];
-    if(!file)return;
-    if(!file.type.startsWith('image/')){showToast('Please choose an image file');return;}
-    if(file.size>4*1024*1024){showToast('Image is too large — please choose one under 4MB');return;}
-    const reader=new FileReader();
-    reader.onload=ev=>{
-      compressImage(ev.target.result,800,0.8).then(dataUrl=>{
-        window.__paymentClaimProof=dataUrl;
-        document.getElementById('pc-proof-preview').innerHTML=`<img src="${dataUrl}" style="max-width:120px;border-radius:8px;display:block;"/>`;
-      });
-    };
-    reader.readAsDataURL(file);
-  });
-}
-
-async function submitPaymentClaim(){
-  const amount=Number(document.getElementById('pc-amount').value||0);
-  const date=document.getElementById('pc-date').value;
-  const narration=(document.getElementById('pc-narration').value||'').trim();
-  if(!amount||!date||!narration){showToast('Amount, date and narration are required.');return;}
-  const memberId=getCurrentMemberId();
-  const mem=memberId?DATA.members.find(m=>m.id===memberId):null;
-  if(!mem){showToast('You must be logged in as a member to report a payment.');return;}
-  const btn=document.querySelector('#modal-content .btn-primary');
-  if(btn){btn.disabled=true;btn.textContent='Sending\u2026';}
-  try{
-    const{error}=await sb.rpc('submit_payment_claim',{
-      p_member_pin:mem.pin, p_id:uid(), p_amount:amount,
-      p_narration:narration, p_proof_image:window.__paymentClaimProof||null,
-      p_payment_date:date
-    });
-    if(error)throw error;
-    closeModal();
-    showToast('Sent to the Treasurer for review.');
-  }catch(e){
-    if(btn){btn.disabled=false;btn.textContent='Send for review';}
-    showToast('Could not submit: '+(e.message||'unknown error'));
-  }
-}
-
-async function approvePaymentClaim(id){
-  const pin=getCurrentAuthPin();
-  try{
-    const{error}=await sb.rpc('approve_payment_claim',{p_officer_pin:pin,p_id:id,p_tx_id:uid()});
-    if(error)throw error;
-    showToast('Payment approved and added to dues.');
-  }catch(e){showToast('Could not approve: '+(e.message||'unknown error'));}
-}
-
-async function rejectPaymentClaim(id){
-  if(!confirm('Reject this payment claim?'))return;
-  const pin=getCurrentAuthPin();
-  try{
-    const{error}=await sb.rpc('reject_payment_claim',{p_officer_pin:pin,p_id:id});
-    if(error)throw error;
-    showToast('Claim rejected.');
-  }catch(e){showToast('Could not reject: '+(e.message||'unknown error'));}
-}
-
 async function editDuesPaid(memberId){
   const mem=DATA.members.find(m=>m.id===memberId);
   if(!mem)return;
@@ -2267,7 +2148,7 @@ function pageFinance(){
         <td class="cell-name">${escHtml(t.desc)}</td>
         <td><span class="badge ${t.type==='income'?'badge-paid':'badge-overdue'}">${t.type==='income'?'Receipt':'Expenditure'}</span></td>
         <td style="text-align:right;font-weight:500;">${t.type==='income'?'+':'&minus;'} ${fmtMoney(t.amount)}</td>
-        ${canEdit?`<td style="text-align:right;white-space:nowrap;"><button class="icon-btn" onclick="openTxForm('${t.id}')" aria-label="Edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button><button class="icon-btn" onclick="deleteTx('${t.id}')" aria-label="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2m2 0v14a1 1 0 01-1 1H6a1 1 0 01-1-1V6z"/></svg></button></td>`:''}
+        ${canEdit?`<td style="text-align:right;"><button class="icon-btn" onclick="deleteTx('${t.id}')" aria-label="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2m2 0v14a1 1 0 01-1 1H6a1 1 0 01-1-1V6z"/></svg></button></td>`:''}
       </tr>`).join('')}
     </tbody></table>`:emptyState('No entries yet','Add receipts and expenditure to build the year\u2019s statement automatically.')}
   </div>
@@ -2566,21 +2447,17 @@ function setFinanceYearFilter(y){
   financeYearFilter=y;
   render();
 }
-function openTxForm(existingId){
-  const existing=existingId?DATA.transactions.find(t=>t.id===existingId):null;
+function openTxForm(){
   openModal(`
-    <h3>${existing?'Edit financial entry':'Add financial entry'}</h3>
+    <h3>Add financial entry</h3>
     <form id="tx-form">
-      <div class="field"><label>Description</label><input type="text" id="t-desc" placeholder="e.g. October subscriptions" value="${existing?escHtml(existing.desc):''}" required/></div>
+      <div class="field"><label>Description</label><input type="text" id="t-desc" placeholder="e.g. October subscriptions" required/></div>
       <div class="field-row">
-        <div class="field"><label>Type</label><select id="t-type">
-          <option value="income" ${existing&&existing.type==='income'?'selected':''}>Receipt (money in)</option>
-          <option value="expense" ${existing&&existing.type==='expense'?'selected':''}>Expenditure (money out)</option>
-        </select></div>
-        <div class="field"><label>Amount (&#8358;)</label><input type="number" id="t-amount" min="0" step="100" value="${existing?Number(existing.amount):''}" required/></div>
+        <div class="field"><label>Type</label><select id="t-type"><option value="income">Receipt (money in)</option><option value="expense">Expenditure (money out)</option></select></div>
+        <div class="field"><label>Amount (&#8358;)</label><input type="number" id="t-amount" min="0" step="100" required/></div>
       </div>
-      <div class="field"><label>Date</label><input type="date" id="t-date" value="${existing?existing.date:new Date().toISOString().slice(0,10)}" required/></div>
-      <div class="modal-actions"><button type="button" class="btn" onclick="closeModal()">Cancel</button><button type="submit" class="btn btn-primary">${existing?'Save changes':'Add entry'}</button></div>
+      <div class="field"><label>Date</label><input type="date" id="t-date" value="${new Date().toISOString().slice(0,10)}" required/></div>
+      <div class="modal-actions"><button type="button" class="btn" onclick="closeModal()">Cancel</button><button type="submit" class="btn btn-primary">Add entry</button></div>
     </form>
   `);
   document.getElementById('tx-form').addEventListener('submit',async e=>{
@@ -2592,27 +2469,16 @@ function openTxForm(existingId){
     const submitBtn=e.target.querySelector('button[type=submit]');
     submitBtn.disabled=true;submitBtn.textContent='Saving\u2026';
     try{
-      if(existing){
-        const{error}=await sb.rpc('officer_update_transaction',{
-          p_officer_pin:pin,p_id:existing.id,p_desc:desc,
-          p_type:document.getElementById('t-type').value,
-          p_amount:Number(amount),
-          p_date:document.getElementById('t-date').value
-        });
-        if(error)throw error;
-        closeModal();showToast('Entry updated');
-      }else{
-        const{error}=await sb.rpc('officer_add_transaction',{
-          p_officer_pin:pin,p_id:uid(),p_desc:desc,
-          p_type:document.getElementById('t-type').value,
-          p_amount:Number(amount),
-          p_date:document.getElementById('t-date').value
-        });
-        if(error)throw error;
-        closeModal();showToast('Entry added');
-      }
+      const{error}=await sb.rpc('officer_add_transaction',{
+        p_officer_pin:pin,p_id:uid(),p_desc:desc,
+        p_type:document.getElementById('t-type').value,
+        p_amount:Number(amount),
+        p_date:document.getElementById('t-date').value
+      });
+      if(error)throw error;
+      closeModal();showToast('Entry added');
     }catch(err){
-      submitBtn.disabled=false;submitBtn.textContent=existing?'Save changes':'Add entry';
+      submitBtn.disabled=false;submitBtn.textContent='Add entry';
       showToast('Could not save: '+(err.message||'unknown error'));
     }
   });
@@ -3251,7 +3117,6 @@ const EVENTS_STORE='oasis-events-v1';
 const NEWS_STORE='oasis-news-v1';
 const POLLS_STORE='oasis-polls-v1';
 const PENDING_NEWS_STORE='oasis-pending-news-v1';
-const PAYMENT_CLAIMS_STORE='oasis-payment-claims-v1';
 const SEEN_STORE='oasis-last-seen-v1';
 
 function escHtml(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
@@ -3709,12 +3574,6 @@ async function deletePoll(id){
 
 function isTreasurerSession(){
   return (sessionStorage.getItem(SESSION_KEY)||'')==='role:treasurer';
-}
-function canReviewPaymentClaims(){
-  const s=sessionStorage.getItem(SESSION_KEY)||'';
-  if(s==='role:treasurer'||s==='role:financial_secretary')return true;
-  if(s.startsWith('member:')){const m=DATA.members.find(x=>x.id===s.slice(7));return !!(m&&(m.role==='Treasurer'||m.role==='Financial Secretary'));}
-  return false;
 }
 
 function csvEsc(v){
