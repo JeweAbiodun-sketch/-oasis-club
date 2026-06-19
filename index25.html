@@ -621,7 +621,7 @@ body.dark .asst-chip{color:#a7e6d0;}
 <script>
 /* Bump this string every time you publish changes to GitHub.
    This is what tells everyone's app that a newer version exists. */
-const APP_VERSION='2026-06-19-4';
+const APP_VERSION='2026-06-19-3';
 const STORE_KEY='oasis-club-data-v1';
 let DATA={members:[
   {
@@ -2221,17 +2221,12 @@ async function syncFromGoogleSheets() {
     if (!resp.ok) throw new Error('Could not reach Google Sheets. Make sure the sheet is published (File → Share → Publish to web).');
     const text = await resp.text();
     const rows = parseGsCsv(text);
-    // Skip title/warning rows and header — find the header row by checking for
-    // 'DATE' and 'DESCRIPTION' anywhere in the row (merged title cells can push
-    // 'DATE' to the end of column A's text, so we don't require an exact match).
+    // Skip title rows and header — find the row where col A = 'DATE'
     let dataStart = 0;
     for (let i = 0; i < rows.length; i++) {
-      const r = rows[i];
-      const colA = (r[0]||'').toUpperCase();
-      const colB = (r[1]||'').toUpperCase();
-      if (colA.endsWith('DATE') && colB === 'DESCRIPTION') { dataStart = i + 1; break; }
+      if ((rows[i][0]||'').toUpperCase() === 'DATE') { dataStart = i + 1; break; }
     }
-    if (!dataStart) throw new Error('Could not find header row in TRANSACTIONS sheet. Make sure a row has DATE in column A and DESCRIPTION in column B.');
+    if (!dataStart) throw new Error('Could not find header row in TRANSACTIONS sheet. Make sure row 3 has DATE in column A.');
 
     const pin = getCurrentAuthPin();
     // Build set of existing (date+desc+amount) to avoid duplicates
@@ -2280,12 +2275,9 @@ async function syncWelfareFromGoogleSheets() {
     const rows = parseGsCsv(text);
     let dataStart = 0;
     for (let i = 0; i < rows.length; i++) {
-      const r = rows[i];
-      const colA = (r[0]||'').toUpperCase();
-      const colB = (r[1]||'').toUpperCase();
-      if (colA.endsWith('DATE') && colB.includes('NAME')) { dataStart = i + 1; break; }
+      if ((rows[i][0]||'').toUpperCase() === 'DATE') { dataStart = i + 1; break; }
     }
-    if (!dataStart) throw new Error('Could not find header row in WELFARE sheet. Make sure a row has DATE in column A and NAME / DESCRIPTION in column B.');
+    if (!dataStart) throw new Error('Could not find header row in WELFARE sheet.');
 
     const existing = loadWelfare();
     // Key by date+name+amount to avoid duplicates
