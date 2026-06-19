@@ -631,7 +631,7 @@ body.dark .asst-chip{color:#a7e6d0;}
 <script>
 /* Bump this string every time you publish changes to GitHub.
    This is what tells everyone's app that a newer version exists. */
-const APP_VERSION='2026-06-19-13';
+const APP_VERSION='2026-06-19-12';
 const STORE_KEY='oasis-club-data-v1';
 let DATA={members:[
   {
@@ -2356,18 +2356,7 @@ function pageFinance(){
       </tr>`).join('')}
     </tbody></table>`:emptyState('No entries yet','Add receipts and expenditure to build the year\u2019s statement automatically.')}
   </div>
-  ${isTreasurerSession()?`<div class="card" style="margin-top:4px;border:1.5px solid var(--teal);">
-    <div class="card-head"><h2>&#128260; Sync everything from Google Sheets</h2><span class="badge badge-active">Treasurer</span></div>
-    <p class="cell-muted" style="margin:0 0 14px;">Pulls new rows from all four sheet tabs in one go: TRANSACTIONS, WELFARE, PLEDGES and ANNUAL DUES. Existing entries are never duplicated.</p>
-    <button type="button" class="btn btn-primary" onclick="syncAllFromGoogleSheets()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-      Sync all sheets now
-    </button>
-    <p class="cell-muted" style="margin:12px 0 0;font-size:11.5px;">
-      &#128279; <a href="https://docs.google.com/spreadsheets/d/1i7qcWpf9l86iE4rgBPNn5OIx5wutmBwh9z0yia7toxk/edit" target="_blank" rel="noopener" style="color:var(--teal);">Open Oasis financial ledger in Google Sheets</a>
-    </p>
-  </div>
-  <div class="card" style="margin-top:4px;">
+  ${isTreasurerSession()?`<div class="card" style="margin-top:4px;">
     <div class="card-head"><h2>&#128202; Transactions spreadsheet</h2><span class="badge badge-active">Treasurer</span></div>
     <p class="cell-muted" style="margin:0 0 14px;">Download the full ledger as CSV, or add new rows directly in Google Sheets and tap <strong>Sync</strong> to import them. Existing rows are never duplicated.</p>
     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
@@ -2454,56 +2443,55 @@ function gsParseDate(raw) {
   return '';
 }
 
-async function syncTransactionsCore() {
-  const resp = await fetch(gsCsvUrl('TRANSACTIONS'));
-  if (!resp.ok) throw new Error('Could not reach Google Sheets (TRANSACTIONS). Make sure the sheet is published.');
-  const text = await resp.text();
-  const rows = parseGsCsv(text);
-  let dataStart = 0;
-  for (let i = 0; i < rows.length; i++) {
-    const r = rows[i];
-    const colA = (r[0]||'').toUpperCase();
-    const colB = (r[1]||'').toUpperCase();
-    if (colA.endsWith('DATE') && colB === 'DESCRIPTION') { dataStart = i + 1; break; }
-  }
-  if (!dataStart) throw new Error('Could not find header row in TRANSACTIONS sheet.');
-
-  const pin = getCurrentAuthPin();
-  const existing = new Set(DATA.transactions.map(t => `${t.date}|${t.desc}|${t.amount}`));
-
-  let added = 0, skipped = 0;
-  const promises = [];
-  for (let i = dataStart; i < rows.length; i++) {
-    const r = rows[i];
-    const date = gsParseDate(r[0]);
-    const desc = (r[1] || '').trim();
-    const type = (r[2] || '').toLowerCase().trim();
-    const amount = Number((r[3] || '0').replace(/,/g, ''));
-    if (!date || !desc || !amount) { skipped++; continue; }
-    if (type !== 'income' && type !== 'expense') { skipped++; continue; }
-    const key = `${date}|${desc}|${amount}`;
-    if (existing.has(key)) { skipped++; continue; }
-    promises.push(
-      sb.rpc('officer_add_transaction', {
-        p_officer_pin: pin, p_id: uid(),
-        p_desc: desc, p_type: type,
-        p_amount: amount, p_date: date
-      }).then(res => { if (!res.error) added++; })
-    );
-  }
-  await Promise.all(promises);
-  return { added, skipped, label: 'Transactions' };
-}
-
 async function syncFromGoogleSheets() {
   const btn = event.currentTarget;
   btn.disabled = true;
   btn.textContent = 'Syncing\u2026';
   try {
-    const result = await syncTransactionsCore();
+    const resp = await fetch(gsCsvUrl('TRANSACTIONS'));
+    if (!resp.ok) throw new Error('Could not reach Google Sheets. Make sure the sheet is published (File → Share → Publish to web).');
+    const text = await resp.text();
+    const rows = parseGsCsv(text);
+    // Skip title/warning rows and header — find the header row by checking for
+    // 'DATE' and 'DESCRIPTION' anywhere in the row (merged title cells can push
+    // 'DATE' to the end of column A's text, so we don't require an exact match).
+    let dataStart = 0;
+    for (let i = 0; i < rows.length; i++) {
+      const r = rows[i];
+      const colA = (r[0]||'').toUpperCase();
+      const colB = (r[1]||'').toUpperCase();
+      if (colA.endsWith('DATE') && colB === 'DESCRIPTION') { dataStart = i + 1; break; }
+    }
+    if (!dataStart) throw new Error('Could not find header row in TRANSACTIONS sheet. Make sure a row has DATE in column A and DESCRIPTION in column B.');
+
+    const pin = getCurrentAuthPin();
+    // Build set of existing (date+desc+amount) to avoid duplicates
+    const existing = new Set(DATA.transactions.map(t => `${t.date}|${t.desc}|${t.amount}`));
+
+    let added = 0, skipped = 0;
+    const promises = [];
+    for (let i = dataStart; i < rows.length; i++) {
+      const r = rows[i];
+      const date = gsParseDate(r[0]);
+      const desc = (r[1] || '').trim();
+      const type = (r[2] || '').toLowerCase().trim();
+      const amount = Number((r[3] || '0').replace(/,/g, ''));
+      if (!date || !desc || !amount) { skipped++; continue; }
+      if (type !== 'income' && type !== 'expense') { skipped++; continue; }
+      const key = `${date}|${desc}|${amount}`;
+      if (existing.has(key)) { skipped++; continue; }
+      promises.push(
+        sb.rpc('officer_add_transaction', {
+          p_officer_pin: pin, p_id: uid(),
+          p_desc: desc, p_type: type,
+          p_amount: amount, p_date: date
+        }).then(res => { if (!res.error) added++; })
+      );
+    }
+    await Promise.all(promises);
     await fetchAllData();
     render();
-    showToast(`\u2713 Sync complete: ${result.added} new entr${result.added===1?'y':'ies'} imported, ${result.skipped} skipped.`);
+    showToast(`\u2713 Sync complete: ${added} new entr${added===1?'y':'ies'} imported, ${skipped} skipped.`);
   } catch(e) {
     showToast('Sync failed: ' + (e.message || 'unknown error'));
   } finally {
@@ -2512,194 +2500,104 @@ async function syncFromGoogleSheets() {
   }
 }
 
-async function syncWelfareCore() {
-  const resp = await fetch(gsCsvUrl('WELFARE'));
-  if (!resp.ok) throw new Error('Could not reach Google Sheets (WELFARE). Make sure the sheet is published.');
-  const text = await resp.text();
-  const rows = parseGsCsv(text);
-  let dataStart = 0;
-  for (let i = 0; i < rows.length; i++) {
-    const r = rows[i];
-    const colA = (r[0]||'').toUpperCase();
-    const colB = (r[1]||'').toUpperCase();
-    if (colA.endsWith('DATE') && colB.includes('NAME')) { dataStart = i + 1; break; }
-  }
-  if (!dataStart) throw new Error('Could not find header row in WELFARE sheet.');
-
-  const existing = loadWelfare();
-  const existingKeys = new Set();
-  for (const w of existing) {
-    for (const c of (w.contributions||[])) {
-      existingKeys.add(`${w.date}|${c.memberId}|${c.amount}`);
-    }
-  }
-
-  const newEntries = [];
-  for (let i = dataStart; i < rows.length; i++) {
-    const r = rows[i];
-    const date = gsParseDate(r[0]);
-    const name = (r[1] || '').trim();
-    const type = (r[2] || '').toLowerCase().trim();
-    const amount = Number((r[3] || '0').replace(/,/g, ''));
-    const purpose = (r[4] || 'Monthly welfare').trim();
-    if (!date || !name || !amount) continue;
-    if (type !== 'contribution' && type !== 'disbursement') continue;
-    newEntries.push({ date, name, type, amount, purpose });
-  }
-
-  let added = 0;
-  const welfare = loadWelfare();
-
-  for (const entry of newEntries) {
-    if (entry.type === 'disbursement') {
-      const alreadyThere = welfare.some(w => w.date === entry.date && w.title === entry.name && w.type === 'other');
-      if (alreadyThere) continue;
-      const newEvent = { id: uid(), date: entry.date, title: entry.name, type: 'other', targetAmount: entry.amount, contributions: [] };
-      newEvent.notes = entry.purpose;
-      welfare.unshift(newEvent);
-      added++;
-    } else {
-      const fyKey = fyLabelForDate(entry.date);
-      let yearEvent = welfare.find(w => w.type === 'levy' && w.title && w.title.startsWith('Welfare Contributions — ') && w.title.endsWith(fyKey));
-      if (!yearEvent) {
-        yearEvent = { id: uid(), date: entry.date, title: `Welfare Contributions — ${fyKey}`, type: 'levy', targetAmount: 0, contributions: [] };
-        welfare.unshift(yearEvent);
-      }
-      if (!Array.isArray(yearEvent.contributions)) yearEvent.contributions = [];
-      const mem = DATA.members.find(m => m.name.toLowerCase() === entry.name.toLowerCase());
-      const memId = mem ? mem.id : ('gs_' + entry.name.replace(/\s+/g,'_').toLowerCase());
-      const contribKey = `${entry.date}|${memId}|${entry.amount}`;
-      if (existingKeys.has(contribKey)) continue;
-      yearEvent.contributions.push({ id: uid(), memberId: memId, amount: entry.amount, paidDate: entry.date });
-      existingKeys.add(contribKey);
-      added++;
-    }
-  }
-
-  saveWelfare(welfare);
-  return { added, skipped: 0, label: 'Welfare' };
-}
-
 async function syncWelfareFromGoogleSheets() {
   const btn = event.currentTarget;
   btn.disabled = true;
   btn.textContent = 'Syncing\u2026';
   try {
-    const result = await syncWelfareCore();
+    const resp = await fetch(gsCsvUrl('WELFARE'));
+    if (!resp.ok) throw new Error('Could not reach Google Sheets. Make sure the sheet is published.');
+    const text = await resp.text();
+    const rows = parseGsCsv(text);
+    let dataStart = 0;
+    for (let i = 0; i < rows.length; i++) {
+      const r = rows[i];
+      const colA = (r[0]||'').toUpperCase();
+      const colB = (r[1]||'').toUpperCase();
+      if (colA.endsWith('DATE') && colB.includes('NAME')) { dataStart = i + 1; break; }
+    }
+    if (!dataStart) throw new Error('Could not find header row in WELFARE sheet. Make sure a row has DATE in column A and NAME / DESCRIPTION in column B.');
+
+    const existing = loadWelfare();
+    // Key by date+memberId+amount to avoid duplicates (contributions is an array of {id,memberId,amount,paidDate})
+    const existingKeys = new Set();
+    for (const w of existing) {
+      for (const c of (w.contributions||[])) {
+        existingKeys.add(`${w.date}|${c.memberId}|${c.amount}`);
+      }
+    }
+
+    // Build a flat list of new entries then group by event-type/date
+    const newEntries = [];
+    for (let i = dataStart; i < rows.length; i++) {
+      const r = rows[i];
+      const date = gsParseDate(r[0]);
+      const name = (r[1] || '').trim();
+      const type = (r[2] || '').toLowerCase().trim();  // contribution / disbursement
+      const amount = Number((r[3] || '0').replace(/,/g, ''));
+      const purpose = (r[4] || 'Monthly welfare').trim();
+      if (!date || !name || !amount) continue;
+      if (type !== 'contribution' && type !== 'disbursement') continue;
+      newEntries.push({ date, name, type, amount, purpose });
+    }
+
+    // Each disbursement row becomes a welfare event;
+    // each contribution row is a standalone entry under a "Monthly welfare" event.
+    let added = 0;
+    const welfare = loadWelfare();
+
+    for (const entry of newEntries) {
+      if (entry.type === 'disbursement') {
+        // Check if already recorded (by date+title+targetAmount)
+        const alreadyThere = welfare.some(w =>
+          w.date === entry.date && w.title === entry.name && w.type === 'other'
+        );
+        if (alreadyThere) continue;
+        const newEvent = {
+          id: uid(), date: entry.date,
+          title: entry.name,
+          type: 'other',
+          targetAmount: entry.amount,
+          contributions: []
+        };
+        newEvent.notes = entry.purpose;
+        welfare.unshift(newEvent);
+        added++;
+      } else {
+        // contribution — find or create a monthly welfare event for that month
+        const monthKey = entry.date.slice(0,7); // YYYY-MM
+        let monthEvent = welfare.find(w => w.date && w.date.startsWith(monthKey) && w.type === 'levy' && w.title && w.title.startsWith('Monthly Welfare'));
+        if (!monthEvent) {
+          monthEvent = {
+            id: uid(),
+            date: entry.date,
+            title: `Monthly Welfare — ${entry.date.slice(0,7)}`,
+            type: 'levy',
+            targetAmount: 0,
+            contributions: []
+          };
+          welfare.unshift(monthEvent);
+        }
+        if (!Array.isArray(monthEvent.contributions)) monthEvent.contributions = [];
+        // Find member by name
+        const mem = DATA.members.find(m => m.name.toLowerCase() === entry.name.toLowerCase());
+        const memId = mem ? mem.id : ('gs_' + entry.name.replace(/\s+/g,'_').toLowerCase());
+        const contribKey = `${entry.date}|${memId}|${entry.amount}`;
+        if (existingKeys.has(contribKey)) continue;
+        monthEvent.contributions.push({ id: uid(), memberId: memId, amount: entry.amount, paidDate: entry.date });
+        existingKeys.add(contribKey);
+        added++;
+      }
+    }
+
+    saveWelfare(welfare);
     render();
-    showToast(`\u2713 Welfare sync complete: ${result.added} new entr${result.added===1?'y':'ies'} imported.`);
+    showToast(`\u2713 Welfare sync complete: ${added} new entr${added===1?'y':'ies'} imported.`);
   } catch(e) {
     showToast('Welfare sync failed: ' + (e.message || 'unknown error'));
   } finally {
     btn.disabled = false;
     btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Sync welfare from Google Sheets';
-  }
-}
-
-async function syncPledgesCore() {
-  const resp = await fetch(gsCsvUrl('PLEDGES'));
-  if (!resp.ok) throw new Error('Could not reach Google Sheets (PLEDGES). Make sure the sheet is published.');
-  const text = await resp.text();
-  const rows = parseGsCsv(text);
-  let dataStart = 0;
-  for (let i = 0; i < rows.length; i++) {
-    const r = rows[i];
-    const colA = (r[0]||'').toUpperCase();
-    const colB = (r[1]||'').toUpperCase();
-    if (colA.endsWith('DATE') && (colB.includes('NAME')||colB==='DESCRIPTION')) { dataStart = i + 1; break; }
-  }
-  if (!dataStart) return { added: 0, skipped: 0, label: 'Pledges', note: 'No PLEDGES tab found — skipped.' };
-
-  const pin = getCurrentAuthPin();
-  const existing = new Set((DATA.pledges||[]).map(p => `${p.pledgeDate}|${p.donorName}|${p.amount}`));
-  let added = 0, skipped = 0;
-  const promises = [];
-  for (let i = dataStart; i < rows.length; i++) {
-    const r = rows[i];
-    const date = gsParseDate(r[0]);
-    const name = (r[1] || '').trim();
-    const amount = Number((r[2] || '0').replace(/,/g, ''));
-    if (!date || !name || !amount) { skipped++; continue; }
-    const key = `${date}|${name}|${amount}`;
-    if (existing.has(key)) { skipped++; continue; }
-    const mem = DATA.members.find(m => m.name.toLowerCase() === name.toLowerCase());
-    promises.push(
-      sb.rpc('add_club_pledge', {
-        p_officer_pin: pin, p_id: uid(), p_donor_name: name,
-        p_member_id: mem ? mem.id : null, p_amount: amount,
-        p_purpose: '', p_pledge_date: date
-      }).then(res => { if (!res.error) added++; })
-    );
-  }
-  await Promise.all(promises);
-  return { added, skipped, label: 'Pledges' };
-}
-
-async function syncAnnualDuesCore() {
-  const resp = await fetch(gsCsvUrl('ANNUAL DUES'));
-  if (!resp.ok) throw new Error('Could not reach Google Sheets (ANNUAL DUES). Make sure the sheet is published.');
-  const text = await resp.text();
-  const rows = parseGsCsv(text);
-  let dataStart = 0, amtCol = -1;
-  for (let i = 0; i < rows.length; i++) {
-    const r = rows[i];
-    const colA = (r[0]||'').toUpperCase();
-    if (colA.endsWith('MEMBER')) {
-      dataStart = i + 1;
-      amtCol = r.findIndex(c => c.toUpperCase().includes('AMT PAID') || c.toUpperCase().includes('AMOUNT PAID'));
-      break;
-    }
-  }
-  if (!dataStart || amtCol === -1) return { added: 0, skipped: 0, label: 'Annual Dues', note: 'No ANNUAL DUES tab found — skipped.' };
-
-  const pin = getCurrentAuthPin();
-  let updated = 0, skipped = 0;
-  const promises = [];
-  for (let i = dataStart; i < rows.length; i++) {
-    const r = rows[i];
-    const name = (r[0] || '').trim();
-    if (!name) continue;
-    const amt = Number((r[amtCol] || '0').replace(/,/g, ''));
-    const mem = DATA.members.find(m => m.name.toLowerCase() === name.toLowerCase());
-    if (!mem) { skipped++; continue; }
-    if (Number(mem.duesPaid||0) === amt) { skipped++; continue; }
-    promises.push(
-      sb.rpc('officer_set_dues_paid', { p_officer_pin: pin, p_member_id: mem.id, p_amount: amt })
-        .then(res => { if (!res.error) updated++; })
-    );
-  }
-  await Promise.all(promises);
-  return { added: updated, skipped, label: 'Annual Dues' };
-}
-
-async function syncAllFromGoogleSheets() {
-  const btn = event.currentTarget;
-  btn.disabled = true;
-  const originalHtml = btn.innerHTML;
-  btn.textContent = 'Syncing all sheets\u2026';
-  const results = [];
-  const errors = [];
-  try {
-    for (const job of [syncTransactionsCore, syncWelfareCore, syncPledgesCore, syncAnnualDuesCore]) {
-      try {
-        results.push(await job());
-      } catch(e) {
-        errors.push(e.message || 'unknown error');
-      }
-    }
-    await fetchAllData();
-    render();
-    const summary = results.map(r => `${r.label}: ${r.added} new`).join(' \u2022 ');
-    if (errors.length) {
-      showToast(`\u2713 Synced with issues \u2014 ${summary}. Errors: ${errors.join('; ')}`);
-    } else {
-      showToast(`\u2713 All sheets synced \u2014 ${summary}`);
-    }
-  } catch(e) {
-    showToast('Sync failed: ' + (e.message || 'unknown error'));
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = originalHtml;
   }
 }
 
@@ -4238,26 +4136,6 @@ function pageWelfare(){
     }
   });
   if(neededFix)saveWelfare(allWelfare);
-
-  // One-time migration: consolidate any old "Monthly Welfare — YYYY-MM" events
-  // (from before this page grouped by financial year) into yearly groups.
-  const monthlyEvents=allWelfare.filter(w=>w.title&&w.title.startsWith('Monthly Welfare — '));
-  if(monthlyEvents.length){
-    monthlyEvents.forEach(mw=>{
-      const fyKey=fyLabelForDate(mw.date);
-      let yearEvent=allWelfare.find(w=>w.type==='levy'&&w.title&&w.title===`Welfare Contributions — ${fyKey}`&&w!==mw);
-      if(!yearEvent){
-        yearEvent={id:uid(),date:mw.date,title:`Welfare Contributions — ${fyKey}`,type:'levy',targetAmount:0,contributions:[]};
-        allWelfare.push(yearEvent);
-      }
-      if(!Array.isArray(yearEvent.contributions))yearEvent.contributions=[];
-      (mw.contributions||[]).forEach(c=>yearEvent.contributions.push(c));
-      const idx=allWelfare.indexOf(mw);
-      if(idx>-1)allWelfare.splice(idx,1);
-    });
-    saveWelfare(allWelfare);
-  }
-
   const wfyLabels=[...new Set(allWelfare.map(w=>fyLabelForDate(w.date)))].sort().reverse();
   const welfare=welfareYearFilter==='all'?allWelfare:allWelfare.filter(w=>fyLabelForDate(w.date)===welfareYearFilter);
   const active=DATA.members.filter(isActiveMember);
