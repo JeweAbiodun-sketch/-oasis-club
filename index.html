@@ -621,7 +621,7 @@ body.dark .asst-chip{color:#a7e6d0;}
 <script>
 /* Bump this string every time you publish changes to GitHub.
    This is what tells everyone's app that a newer version exists. */
-const APP_VERSION='2026-06-18-3';
+const APP_VERSION='2026-06-19-1';
 const STORE_KEY='oasis-club-data-v1';
 let DATA={members:[
   {
@@ -871,7 +871,7 @@ let DATA={members:[
     "desc": "Aborisade Funso (Annual Due)",
     "type": "income",
     "amount": 50000,
-    "date": "2025-10-26"
+    "date": "2025-10-25"
   },
   {
     "id": "t005",
@@ -885,7 +885,7 @@ let DATA={members:[
     "desc": "Olawuyi Abiodun (Annual Due 2025/2026)",
     "type": "income",
     "amount": 50000,
-    "date": "2025-10-11"
+    "date": "2025-11-10"
   },
   {
     "id": "t007",
@@ -902,6 +902,13 @@ let DATA={members:[
     "date": "2025-11-30"
   },
   {
+    "id": "t008b",
+    "desc": "Olatunji Matthew (Annual Due 2025/2026 part payment)",
+    "type": "income",
+    "amount": 20000,
+    "date": "2025-12-05"
+  },
+  {
     "id": "t009",
     "desc": "Olatoye Kunle (Annual due)",
     "type": "income",
@@ -913,6 +920,13 @@ let DATA={members:[
     "desc": "Awoyemi Sunkanmi(Annual Due 2025/2026)",
     "type": "income",
     "amount": 50000,
+    "date": "2025-12-26"
+  },
+  {
+    "id": "t010b",
+    "desc": "Babalola Adewumi (Annual Due 2025/2026)",
+    "type": "income",
+    "amount": 40000,
     "date": "2025-12-26"
   },
   {
@@ -941,42 +955,42 @@ let DATA={members:[
     "desc": "Adebayo Taiwo (Annual Due 2025/2026 part payment)",
     "type": "income",
     "amount": 25000,
-    "date": "2026-07-02"
+    "date": "2026-02-07"
   },
   {
     "id": "t015",
     "desc": "Repair of Oasis roll up banner",
     "type": "expense",
     "amount": 10000,
-    "date": "2026-10-02"
+    "date": "2026-02-10"
   },
   {
     "id": "t016",
     "desc": "Olatunji Matthew (Annual Due 2025/2026 part payment)",
     "type": "income",
     "amount": 10000,
-    "date": "2026-04-03"
+    "date": "2026-03-04"
   },
   {
     "id": "t017",
     "desc": "Olatunji Matthew (Annual Due 2025/2026 part payment)",
     "type": "income",
     "amount": 15000,
-    "date": "2026-08-03"
+    "date": "2026-03-08"
   },
   {
     "id": "t018",
     "desc": "Aina Adewale (Annual Due 2025/2026)",
     "type": "income",
     "amount": 50000,
-    "date": "2026-03-13"
+    "date": "2026-03-08"
   },
   {
     "id": "t019",
     "desc": "Ayorinde Toyin Adeniran (Annual Due 2025/ 2026 part payment)",
     "type": "income",
     "amount": 25000,
-    "date": "2026-03-18"
+    "date": "2026-03-10"
   },
   {
     "id": "t020",
@@ -2113,7 +2127,7 @@ function pageFinance(){
   </div>
   ${isTreasurerSession()?`<div class="card" style="margin-top:4px;">
     <div class="card-head"><h2>&#128202; Transactions spreadsheet</h2><span class="badge badge-active">Treasurer</span></div>
-    <p class="cell-muted" style="margin:0 0 14px;">Download the full ledger as CSV. To add new entries, fill in blank rows at the bottom (leave ID empty \u2014 it will be generated). Existing rows are skipped on upload; you cannot edit or delete entries via CSV.</p>
+    <p class="cell-muted" style="margin:0 0 14px;">Download the full ledger as CSV, or add new rows directly in Google Sheets and tap <strong>Sync</strong> to import them. Existing rows are never duplicated.</p>
     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
       <button type="button" class="btn btn-primary" onclick="downloadTransactionsCSV()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M12 3v13M6 11l6 6 6-6"/><rect x="3" y="19" width="18" height="2" rx="1"/></svg>
@@ -2124,9 +2138,222 @@ function pageFinance(){
         Upload new entries CSV
         <input type="file" accept=".csv,.txt" style="display:none;" onchange="handleTransactionsUpload(this)"/>
       </label>
+      <button type="button" class="btn" style="background:var(--teal);color:#fff;border-color:var(--teal);" onclick="syncFromGoogleSheets()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        Sync from Google Sheets
+      </button>
     </div>
-  </div>`:''}`;
+    <p class="cell-muted" style="margin:12px 0 0;font-size:11.5px;">
+      &#128279; <a href="https://docs.google.com/spreadsheets/d/1i7qcWpf9l86iE4rgBPNn5OIx5wutmBwh9z0yia7toxk/edit" target="_blank" rel="noopener" style="color:var(--teal);">Open Oasis financial ledger in Google Sheets</a>
+      &mdash; add new rows in the TRANSACTIONS sheet, then tap <strong>Sync</strong> to import them here.
+    </p>
+  </div>
+  <div class="card" style="margin-top:4px;">
+    <div class="card-head"><h2>&#10084; Welfare fund</h2><span class="badge badge-active">Treasurer</span></div>
+    <p class="cell-muted" style="margin:0 0 14px;">Welfare contributions and disbursements are tracked in the WELFARE tab of the Google Sheet. Add new rows there, then tap Sync below to import them into the app.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+      <button type="button" class="btn" style="background:var(--teal);color:#fff;border-color:var(--teal);" onclick="syncWelfareFromGoogleSheets()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        Sync welfare from Google Sheets
+      </button>
+    </div>
+    <p class="cell-muted" style="margin:12px 0 0;font-size:11.5px;">
+      &#128279; <a href="https://docs.google.com/spreadsheets/d/1i7qcWpf9l86iE4rgBPNn5OIx5wutmBwh9z0yia7toxk/edit" target="_blank" rel="noopener" style="color:var(--teal);">Open Oasis financial ledger in Google Sheets</a>
+      &mdash; add rows in the WELFARE tab (type: <em>contribution</em> or <em>disbursement</em>), then tap Sync.
+    </p>
+  </div>`:''}\`;
 }
+
+/* ====================== GOOGLE SHEETS SYNC ====================== */
+const GS_SHEET_ID = '1i7qcWpf9l86iE4rgBPNn5OIx5wutmBwh9z0yia7toxk';
+
+function gsCsvUrl(sheetName) {
+  return `https://docs.google.com/spreadsheets/d/${GS_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}`;
+}
+
+function parseGsCsv(text) {
+  const lines = text.split('\n').filter(l => l.trim());
+  return lines.map(line => {
+    const cols = [];
+    let inQ = false, cur = '';
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') { if (inQ && line[i+1] === '"') { cur += '"'; i++; } else inQ = !inQ; }
+      else if (ch === ',' && !inQ) { cols.push(cur.trim()); cur = ''; }
+      else cur += ch;
+    }
+    cols.push(cur.trim());
+    return cols;
+  });
+}
+
+function gsParseDate(raw) {
+  if (!raw) return '';
+  raw = raw.trim();
+  // DD/MM/YYYY
+  const dmy = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (dmy) return `${dmy[3]}-${dmy[2].padStart(2,'0')}-${dmy[1].padStart(2,'0')}`;
+  // YYYY-MM-DD already
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+  // Excel serial
+  const n = Number(raw);
+  if (!isNaN(n) && n > 40000) {
+    const d = new Date((n - 25569) * 86400 * 1000);
+    return d.toISOString().slice(0, 10);
+  }
+  return '';
+}
+
+async function syncFromGoogleSheets() {
+  const btn = event.currentTarget;
+  btn.disabled = true;
+  btn.textContent = 'Syncing\u2026';
+  try {
+    const resp = await fetch(gsCsvUrl('TRANSACTIONS'));
+    if (!resp.ok) throw new Error('Could not reach Google Sheets. Make sure the sheet is published (File → Share → Publish to web).');
+    const text = await resp.text();
+    const rows = parseGsCsv(text);
+    // Skip title rows and header — find the row where col A = 'DATE'
+    let dataStart = 0;
+    for (let i = 0; i < rows.length; i++) {
+      if ((rows[i][0]||'').toUpperCase() === 'DATE') { dataStart = i + 1; break; }
+    }
+    if (!dataStart) throw new Error('Could not find header row in TRANSACTIONS sheet. Make sure row 3 has DATE in column A.');
+
+    const pin = getCurrentAuthPin();
+    // Build set of existing (date+desc+amount) to avoid duplicates
+    const existing = new Set(DATA.transactions.map(t => `${t.date}|${t.desc}|${t.amount}`));
+
+    let added = 0, skipped = 0;
+    const promises = [];
+    for (let i = dataStart; i < rows.length; i++) {
+      const r = rows[i];
+      const date = gsParseDate(r[0]);
+      const desc = (r[1] || '').trim();
+      const type = (r[2] || '').toLowerCase().trim();
+      const amount = Number((r[3] || '0').replace(/,/g, ''));
+      if (!date || !desc || !amount) { skipped++; continue; }
+      if (type !== 'income' && type !== 'expense') { skipped++; continue; }
+      const key = `${date}|${desc}|${amount}`;
+      if (existing.has(key)) { skipped++; continue; }
+      promises.push(
+        sb.rpc('officer_add_transaction', {
+          p_officer_pin: pin, p_id: uid(),
+          p_desc: desc, p_type: type,
+          p_amount: amount, p_date: date
+        }).then(res => { if (!res.error) added++; })
+      );
+    }
+    await Promise.all(promises);
+    await fetchAllData();
+    render();
+    showToast(`\u2713 Sync complete: ${added} new entr${added===1?'y':'ies'} imported, ${skipped} skipped.`);
+  } catch(e) {
+    showToast('Sync failed: ' + (e.message || 'unknown error'));
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Sync from Google Sheets';
+  }
+}
+
+async function syncWelfareFromGoogleSheets() {
+  const btn = event.currentTarget;
+  btn.disabled = true;
+  btn.textContent = 'Syncing\u2026';
+  try {
+    const resp = await fetch(gsCsvUrl('WELFARE'));
+    if (!resp.ok) throw new Error('Could not reach Google Sheets. Make sure the sheet is published.');
+    const text = await resp.text();
+    const rows = parseGsCsv(text);
+    let dataStart = 0;
+    for (let i = 0; i < rows.length; i++) {
+      if ((rows[i][0]||'').toUpperCase() === 'DATE') { dataStart = i + 1; break; }
+    }
+    if (!dataStart) throw new Error('Could not find header row in WELFARE sheet.');
+
+    const existing = loadWelfare();
+    // Key by date+name+amount to avoid duplicates
+    const existingKeys = new Set();
+    for (const w of existing) {
+      for (const [mid, amt] of Object.entries(w.contributions||{})) {
+        existingKeys.add(`${w.date}|${mid}|${amt}`);
+      }
+    }
+
+    // Build a flat list of new entries then group by event-type/date
+    const newEntries = [];
+    for (let i = dataStart; i < rows.length; i++) {
+      const r = rows[i];
+      const date = gsParseDate(r[0]);
+      const name = (r[1] || '').trim();
+      const type = (r[2] || '').toLowerCase().trim();  // contribution / disbursement
+      const amount = Number((r[3] || '0').replace(/,/g, ''));
+      const purpose = (r[4] || 'Monthly welfare').trim();
+      if (!date || !name || !amount) continue;
+      if (type !== 'contribution' && type !== 'disbursement') continue;
+      newEntries.push({ date, name, type, amount, purpose });
+    }
+
+    // Each disbursement row becomes a welfare event;
+    // each contribution row is a standalone entry under a "Monthly welfare" event.
+    let added = 0;
+    const welfare = loadWelfare();
+
+    for (const entry of newEntries) {
+      if (entry.type === 'disbursement') {
+        // Check if already recorded (by date+title+targetAmount)
+        const alreadyThere = welfare.some(w =>
+          w.date === entry.date && w.title === entry.name && w.type === 'other'
+        );
+        if (alreadyThere) continue;
+        const newEvent = {
+          id: uid(), date: entry.date,
+          title: entry.name,
+          type: 'other',
+          targetAmount: entry.amount,
+          contributions: {}
+        };
+        // Mark as disbursed (negative balance notation via notes)
+        newEvent.notes = entry.purpose;
+        welfare.unshift(newEvent);
+        added++;
+      } else {
+        // contribution — find or create a monthly welfare event for that month
+        const monthKey = entry.date.slice(0,7); // YYYY-MM
+        let monthEvent = welfare.find(w => w.date && w.date.startsWith(monthKey) && w.type === 'levy' && w.title && w.title.startsWith('Monthly Welfare'));
+        if (!monthEvent) {
+          monthEvent = {
+            id: uid(),
+            date: entry.date,
+            title: `Monthly Welfare — ${entry.date.slice(0,7)}`,
+            type: 'levy',
+            targetAmount: 0,
+            contributions: {}
+          };
+          welfare.unshift(monthEvent);
+        }
+        // Find member by name
+        const mem = DATA.members.find(m => m.name.toLowerCase() === entry.name.toLowerCase());
+        const memId = mem ? mem.id : ('gs_' + entry.name.replace(/\s+/g,'_').toLowerCase());
+        const contribKey = `${entry.date}|${memId}|${entry.amount}`;
+        if (existingKeys.has(contribKey)) continue;
+        monthEvent.contributions[memId] = (Number(monthEvent.contributions[memId]||0)) + entry.amount;
+        existingKeys.add(contribKey);
+        added++;
+      }
+    }
+
+    saveWelfare(welfare);
+    render();
+    showToast(`\u2713 Welfare sync complete: ${added} new entr${added===1?'y':'ies'} imported.`);
+  } catch(e) {
+    showToast('Welfare sync failed: ' + (e.message || 'unknown error'));
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Sync welfare from Google Sheets';
+  }
+}
+
 function openTxForm(){
   openModal(`
     <h3>Add financial entry</h3>
