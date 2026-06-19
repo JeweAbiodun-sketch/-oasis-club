@@ -621,7 +621,7 @@ body.dark .asst-chip{color:#a7e6d0;}
 <script>
 /* Bump this string every time you publish changes to GitHub.
    This is what tells everyone's app that a newer version exists. */
-const APP_VERSION='2026-06-19-9';
+const APP_VERSION='2026-06-19-8';
 const STORE_KEY='oasis-club-data-v1';
 let DATA={members:[
   {
@@ -2459,11 +2459,11 @@ async function syncWelfareFromGoogleSheets() {
     if (!dataStart) throw new Error('Could not find header row in WELFARE sheet. Make sure a row has DATE in column A and NAME / DESCRIPTION in column B.');
 
     const existing = loadWelfare();
-    // Key by date+memberId+amount to avoid duplicates (contributions is an array of {id,memberId,amount,paidDate})
+    // Key by date+name+amount to avoid duplicates
     const existingKeys = new Set();
     for (const w of existing) {
-      for (const c of (w.contributions||[])) {
-        existingKeys.add(`${w.date}|${c.memberId}|${c.amount}`);
+      for (const [mid, amt] of Object.entries(w.contributions||{})) {
+        existingKeys.add(`${w.date}|${mid}|${amt}`);
       }
     }
 
@@ -2498,8 +2498,9 @@ async function syncWelfareFromGoogleSheets() {
           title: entry.name,
           type: 'other',
           targetAmount: entry.amount,
-          contributions: []
+          contributions: {}
         };
+        // Mark as disbursed (negative balance notation via notes)
         newEvent.notes = entry.purpose;
         welfare.unshift(newEvent);
         added++;
@@ -2514,17 +2515,16 @@ async function syncWelfareFromGoogleSheets() {
             title: `Monthly Welfare — ${entry.date.slice(0,7)}`,
             type: 'levy',
             targetAmount: 0,
-            contributions: []
+            contributions: {}
           };
           welfare.unshift(monthEvent);
         }
-        if (!Array.isArray(monthEvent.contributions)) monthEvent.contributions = [];
         // Find member by name
         const mem = DATA.members.find(m => m.name.toLowerCase() === entry.name.toLowerCase());
         const memId = mem ? mem.id : ('gs_' + entry.name.replace(/\s+/g,'_').toLowerCase());
         const contribKey = `${entry.date}|${memId}|${entry.amount}`;
         if (existingKeys.has(contribKey)) continue;
-        monthEvent.contributions.push({ id: uid(), memberId: memId, amount: entry.amount, paidDate: entry.date });
+        monthEvent.contributions[memId] = (Number(monthEvent.contributions[memId]||0)) + entry.amount;
         existingKeys.add(contribKey);
         added++;
       }
@@ -4049,18 +4049,6 @@ let welfareYearFilter='all';
 function pageWelfare(){
   const isOfc=isOfficerSessionNow();
   const allWelfare=loadWelfare().sort((a,b)=>b.date.localeCompare(a.date));
-  // Defensive fix: contributions must always be an array of {id,memberId,amount,paidDate}.
-  // Older/synced data may have stored it as an object map — normalize it here so a bad
-  // record can never crash this page again.
-  let neededFix=false;
-  allWelfare.forEach(w=>{
-    if(!Array.isArray(w.contributions)){
-      const obj=w.contributions||{};
-      w.contributions=Object.entries(obj).map(([memberId,amount])=>({id:uid(),memberId,amount:Number(amount),paidDate:w.date}));
-      neededFix=true;
-    }
-  });
-  if(neededFix)saveWelfare(allWelfare);
   const wfyLabels=[...new Set(allWelfare.map(w=>fyLabelForDate(w.date)))].sort().reverse();
   const welfare=welfareYearFilter==='all'?allWelfare:allWelfare.filter(w=>fyLabelForDate(w.date)===welfareYearFilter);
   const active=DATA.members.filter(isActiveMember);
