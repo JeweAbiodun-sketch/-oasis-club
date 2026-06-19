@@ -621,7 +621,7 @@ body.dark .asst-chip{color:#a7e6d0;}
 <script>
 /* Bump this string every time you publish changes to GitHub.
    This is what tells everyone's app that a newer version exists. */
-const APP_VERSION='2026-06-19-5';
+const APP_VERSION='2026-06-19-4';
 const STORE_KEY='oasis-club-data-v1';
 let DATA={members:[
   {
@@ -1071,9 +1071,6 @@ function rowsToEvents(rows){
 function rowsToNews(rows){
   return rows.map(r=>({id:r.id,title:r.title,body:r.body,author:r.author||'Club Secretary',createdAt:r.created_at}));
 }
-function rowsToPendingNews(rows){
-  return rows.map(r=>({id:r.id,title:r.title,body:r.body,author:r.author||'',submittedByMemberId:r.submitted_by_member_id,createdAt:r.created_at}));
-}
 function rowsToPolls(rows){
   return rows.map(r=>({id:r.id,question:r.question,options:r.options||[],endsAt:r.ends_at||'',createdBy:r.created_by||'',createdAt:r.created_at}));
 }
@@ -1106,15 +1103,14 @@ async function loadData(){
 
 async function fetchAllData(){
   try{
-    const[membersRes,minutesRes,txRes,metaRes,eventsRes,newsRes,pollsRes,pendingNewsRes]=await Promise.all([
+    const[membersRes,minutesRes,txRes,metaRes,eventsRes,newsRes,pollsRes]=await Promise.all([
       sb.from('members').select('*'),
       sb.from('minutes').select('*'),
       sb.from('transactions').select('*'),
       sb.from('club_meta').select('*').eq('id',1).maybeSingle(),
       sb.from('club_events').select('*').order('created_at',{ascending:false}),
       sb.from('club_news').select('*').order('created_at',{ascending:false}),
-      sb.from('club_polls').select('*').order('created_at',{ascending:false}),
-      sb.from('club_news_pending').select('*').order('created_at',{ascending:false})
+      sb.from('club_polls').select('*').order('created_at',{ascending:false})
     ]);
     if(membersRes.error||minutesRes.error||txRes.error||metaRes.error){
       throw membersRes.error||minutesRes.error||txRes.error||metaRes.error;
@@ -1126,15 +1122,13 @@ async function fetchAllData(){
       meta:rowToMeta(metaRes.data),
       events:rowsToEvents(eventsRes.data||[]),
       news:rowsToNews(newsRes.data||[]),
-      polls:rowsToPolls(pollsRes.data||[]),
-      pendingNews:rowsToPendingNews(pendingNewsRes.data||[])
+      polls:rowsToPolls(pollsRes.data||[])
     };
     // Cache for offline reading
     try{
       localStorage.setItem(EVENTS_STORE,JSON.stringify(DATA.events));
       localStorage.setItem(NEWS_STORE,JSON.stringify(DATA.news));
       localStorage.setItem(POLLS_STORE,JSON.stringify(DATA.polls));
-      localStorage.setItem(PENDING_NEWS_STORE,JSON.stringify(DATA.pendingNews));
     }catch(_){}
     connectionStatus='connected';
     // Refresh chatbot UI now that DATA.meta.chatbotApiKey is known
@@ -1150,7 +1144,6 @@ async function fetchAllData(){
     if(!DATA.events||!DATA.events.length)try{DATA.events=JSON.parse(localStorage.getItem(EVENTS_STORE)||'[]');}catch(_){}
     if(!DATA.news||!DATA.news.length)try{DATA.news=JSON.parse(localStorage.getItem(NEWS_STORE)||'[]');}catch(_){}
     if(!DATA.polls||!DATA.polls.length)try{DATA.polls=JSON.parse(localStorage.getItem(POLLS_STORE)||'[]');}catch(_){}
-    if(!DATA.pendingNews||!DATA.pendingNews.length)try{DATA.pendingNews=JSON.parse(localStorage.getItem(PENDING_NEWS_STORE)||'[]');}catch(_){}
   }
 }
 
@@ -1163,7 +1156,6 @@ function subscribeToRealtime(){
     .on('postgres_changes',{event:'*',schema:'public',table:'club_meta'},handleRealtimeChange)
     .on('postgres_changes',{event:'*',schema:'public',table:'club_events'},handleRealtimeChange)
     .on('postgres_changes',{event:'*',schema:'public',table:'club_news'},handleRealtimeChange)
-    .on('postgres_changes',{event:'*',schema:'public',table:'club_news_pending'},handleRealtimeChange)
     .on('postgres_changes',{event:'*',schema:'public',table:'club_polls'},handleRealtimeChange)
     .subscribe(status=>{
       if(status==='SUBSCRIBED'){connectionStatus='connected';render();}
@@ -1182,9 +1174,6 @@ function handleRealtimeChange(payload){
       sendNotif('New Club Event',payload.new.title||'');
     }else if(payload.table==='club_polls'&&payload.new){
       showToast('New poll: '+(payload.new.question||''));
-    }else if(payload.table==='club_news_pending'&&payload.new&&isProSessionNow()){
-      showToast('New post awaiting your review: '+(payload.new.title||''));
-      sendNotif('Oasis Club — Post for review',payload.new.title||'');
     }
   }
   // Debounced refetch — stays correct even when multiple tables change together
@@ -2110,31 +2099,15 @@ async function deleteMinutes(id){
 }
 
 /* ============ FINANCE ============ */
-function fyLabelForDate(dateStr){
-  // Club financial year runs 1 Oct – 30 Sep. Returns e.g. "2025/2026".
-  const d=new Date(dateStr+'T00:00:00');
-  const y=d.getFullYear(), m=d.getMonth(); // 0-indexed, Oct=9
-  return m>=9?`${y}/${y+1}`:`${y-1}/${y}`;
-}
-let financeYearFilter='all';
 function pageFinance(){
-  const allTxs=[...DATA.transactions].sort((a,b)=>b.date.localeCompare(a.date));
-  const fyLabels=[...new Set(allTxs.map(t=>fyLabelForDate(t.date)))].sort().reverse();
-  const txs=financeYearFilter==='all'?allTxs:allTxs.filter(t=>fyLabelForDate(t.date)===financeYearFilter);
-  const income=txs.filter(t=>t.type==='income').reduce((s,t)=>s+Number(t.amount),0);
-  const expense=txs.filter(t=>t.type==='expense').reduce((s,t)=>s+Number(t.amount),0);
+  const txs=[...DATA.transactions].sort((a,b)=>b.date.localeCompare(a.date));
+  const income=DATA.transactions.filter(t=>t.type==='income').reduce((s,t)=>s+Number(t.amount),0);
+  const expense=DATA.transactions.filter(t=>t.type==='expense').reduce((s,t)=>s+Number(t.amount),0);
   const canEdit=isOfficerSessionNow();
   return `
   <div class="page-head">
     <div><h1>Financial year</h1><div class="sub">1 October &mdash; 30 September &middot; Article 12</div></div>
-    <div style="display:flex;gap:8px;">
-    <button class="btn" onclick="printFinanceStatement()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><path d="M6 9V3h12v6M6 18h12v-6H6v6zM6 14h12"/></svg>Print / Export PDF</button>
     ${canEdit?`<button class="btn btn-primary" onclick="openTxForm()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>Add entry</button>`:''}
-    </div>
-  </div>
-  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
-    <button type="button" class="btn ${financeYearFilter==='all'?'btn-primary':''}" style="padding:6px 14px;font-size:13px;" onclick="setFinanceYearFilter('all')">All years</button>
-    ${fyLabels.map(y=>`<button type="button" class="btn ${financeYearFilter===y?'btn-primary':''}" style="padding:6px 14px;font-size:13px;" onclick="setFinanceYearFilter('${y}')">${y}</button>`).join('')}
   </div>
   <div class="stats">
     <div class="stat"><div class="label">Total receipts</div><div class="value teal">${fmtMoney(income)}</div></div>
@@ -2397,56 +2370,6 @@ async function syncWelfareFromGoogleSheets() {
   }
 }
 
-function printFinanceStatement(){
-  const allTxs=[...DATA.transactions].sort((a,b)=>a.date.localeCompare(b.date));
-  const yearLabel=financeYearFilter;
-  const txs=yearLabel==='all'?allTxs:allTxs.filter(t=>fyLabelForDate(t.date)===yearLabel);
-  const income=txs.filter(t=>t.type==='income').reduce((s,t)=>s+Number(t.amount),0);
-  const expense=txs.filter(t=>t.type==='expense').reduce((s,t)=>s+Number(t.amount),0);
-  let bal=0;
-  const rowsHtml=txs.map(t=>{
-    bal+=(t.type==='income'?Number(t.amount):-Number(t.amount));
-    return `<tr>
-      <td>${fmtDate(t.date)}</td>
-      <td>${escHtml(t.desc)}</td>
-      <td style="text-align:right;">${t.type==='income'?fmtMoney(t.amount):''}</td>
-      <td style="text-align:right;">${t.type==='expense'?fmtMoney(t.amount):''}</td>
-      <td style="text-align:right;">${fmtMoney(bal)}</td>
-    </tr>`;
-  }).join('');
-  const win=window.open('','_blank');
-  win.document.write(`<!DOCTYPE html><html><head><title>Oasis Club Financial Statement</title>
-  <style>
-    body{font-family:Arial,Helvetica,sans-serif;color:#1a1a2e;padding:30px;}
-    h1{font-size:20px;margin:0 0 2px;}
-    .sub{color:#666;font-size:13px;margin-bottom:18px;}
-    table{width:100%;border-collapse:collapse;font-size:12.5px;}
-    th,td{padding:6px 8px;border-bottom:1px solid #ddd;}
-    th{text-align:left;background:#1F3864;color:#fff;}
-    tfoot td{font-weight:bold;border-top:2px solid #1F3864;}
-    .stats{display:flex;gap:24px;margin:16px 0 22px;}
-    .stat{font-size:13px;}
-    .stat b{display:block;font-size:17px;}
-    @media print{body{padding:10px;}}
-  </style></head><body>
-  <h1>Oasis Club Otun Ekiti &mdash; Financial Statement</h1>
-  <div class="sub">${yearLabel==='all'?'All years on record':'Financial year '+yearLabel} &middot; Generated ${new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})}</div>
-  <div class="stats">
-    <div class="stat">Total receipts<b style="color:#2E7D32;">${fmtMoney(income)}</b></div>
-    <div class="stat">Total expenditure<b>${fmtMoney(expense)}</b></div>
-    <div class="stat">Balance<b style="color:#C9A84C;">${fmtMoney(income-expense)}</b></div>
-  </div>
-  <table><thead><tr><th>Date</th><th>Description</th><th style="text-align:right;">Receipts</th><th style="text-align:right;">Expenditure</th><th style="text-align:right;">Balance</th></tr></thead>
-  <tbody>${rowsHtml||'<tr><td colspan="5" style="text-align:center;color:#999;">No entries for this period</td></tr>'}</tbody>
-  </table>
-  <script>window.onload=()=>window.print();</scr` + `ipt>
-  </body></html>`);
-  win.document.close();
-}
-function setFinanceYearFilter(y){
-  financeYearFilter=y;
-  render();
-}
 function openTxForm(){
   openModal(`
     <h3>Add financial entry</h3>
@@ -2899,11 +2822,6 @@ function isSecretaryNow(){
   if(s.startsWith('member:')){const m=DATA.members.find(x=>x.id===s.slice(7));return !!(m&&m.role==='Secretary');}
   return false;
 }
-function isProSessionNow(){
-  const s=sessionStorage.getItem(SESSION_KEY)||'';
-  if(s.startsWith('member:')){const m=DATA.members.find(x=>x.id===s.slice(7));return !!(m&&m.role==='PRO');}
-  return false;
-}
 
 const LAST_LOGIN_STORE='oasis-member-logins';
 
@@ -3116,7 +3034,6 @@ function lockApp(){
 const EVENTS_STORE='oasis-events-v1';
 const NEWS_STORE='oasis-news-v1';
 const POLLS_STORE='oasis-polls-v1';
-const PENDING_NEWS_STORE='oasis-pending-news-v1';
 const SEEN_STORE='oasis-last-seen-v1';
 
 function escHtml(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
@@ -3146,8 +3063,7 @@ function updateBadges(){
   const seenEv=seen.events?new Date(seen.events):new Date(0);
   const seenNw=seen.news?new Date(seen.news):new Date(0);
   const newEv=loadEvents().filter(e=>new Date(e.createdAt)>seenEv).length;
-  let newNw=loadNews().filter(n=>new Date(n.createdAt)>seenNw).length;
-  if(isProSessionNow())newNw+=(DATA.pendingNews||[]).length;
+  const newNw=loadNews().filter(n=>new Date(n.createdAt)>seenNw).length;
   const de=document.getElementById('dot-events');
   const dn=document.getElementById('dot-news');
   if(de){de.textContent=newEv||'';de.classList.toggle('hidden',!newEv);}
@@ -3303,11 +3219,6 @@ function pageNews(){
   markSeen('news');
   const news=loadNews();
   const isOfc=isOfficerSessionNow();
-  const isPro=isProSessionNow();
-  const memberId=getCurrentMemberId();
-  const pending=(DATA.pendingNews||[]).slice().sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
-  const myPending=memberId?pending.filter(p=>p.submittedByMemberId===memberId):[];
-
   function newsCard(item){
     const d=new Date(item.createdAt);
     return '<div class="news-card">'
@@ -3320,40 +3231,10 @@ function pageNews(){
       +'<div class="news-body">'+escHtml(item.body).replace(/\n/g,'<br/>')+'</div>'
       +'</div>';
   }
-
-  function pendingCard(item,forPro){
-    const d=new Date(item.createdAt);
-    const submitter=DATA.members.find(m=>m.id===item.submittedByMemberId);
-    return '<div class="news-card" style="border:1.5px dashed var(--gold);">'
-      +'<div class="news-card-head">'
-      +'<div><div class="news-title">'+escHtml(item.title)+' <span class="badge" style="background:var(--gold);color:#1a1a1a;font-size:10px;margin-left:6px;">Pending review</span></div>'
-      +'<div class="news-meta">'+d.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})+' · Submitted by '+escHtml(submitter?submitter.name:(item.author||'a member'))+'</div></div>'
-      +(forPro?'<div style="display:flex;gap:6px;">'
-        +'<button type="button" class="btn btn-primary" style="font-size:12px;padding:5px 12px;" onclick="approvePendingNews(\''+item.id+'\')">Approve</button>'
-        +'<button type="button" class="btn" style="font-size:12px;padding:5px 12px;" onclick="rejectPendingNews(\''+item.id+'\')">Reject</button>'
-        +'</div>':'')
-      +'</div>'
-      +'<div class="news-body">'+escHtml(item.body).replace(/\n/g,'<br/>')+'</div>'
-      +'</div>';
-  }
-
   let html='<div class="page-head"><div><h1>News &amp; Notices</h1>'
     +'<div class="sub">'+news.length+' post'+(news.length!==1?'s':'')+'</div></div>'
-    +'<div style="display:flex;gap:8px;">'
     +(isOfc?'<button type="button" class="btn btn-primary" onclick="openAddNews()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M12 5v14M5 12h14"/></svg>Post notice</button>':'')
-    +(memberId?'<button type="button" class="btn'+(isOfc?'':' btn-primary')+'" onclick="openSubmitNews()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M12 5v14M5 12h14"/></svg>Submit a post</button>':'')
-    +'</div></div>';
-
-  if(isPro&&pending.length){
-    html+='<div class="card-head" style="margin-top:4px;"><h2>&#128221; Awaiting your review ('+pending.length+')</h2></div>';
-    html+=pending.map(p=>pendingCard(p,true)).join('');
-  }
-
-  if(!isPro&&myPending.length){
-    html+='<div class="card-head" style="margin-top:4px;"><h2>Your submitted posts</h2></div>';
-    html+=myPending.map(p=>pendingCard(p,false)).join('');
-  }
-
+    +'</div>';
   html+=news.length?news.map(newsCard).join('')
     :'<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><div class="title">No notices yet</div><div class="hint">'+(isOfc?'Post your first club notice using the button above.':'No notices from the committee yet.')+'</div></div>';
   return html;
@@ -3396,58 +3277,6 @@ async function deleteNews(id){
     const{error}=await sb.rpc('delete_club_news',{p_officer_pin:pin,p_id:id});
     if(error)throw error;
   }catch(e){showToast('Could not delete: '+(e.message||'unknown error'));}
-}
-
-/* ---------- Member submission (goes to PRO for approval) ---------- */
-function openSubmitNews(){
-  const memberId=getCurrentMemberId();
-  const mem=memberId?DATA.members.find(m=>m.id===memberId):null;
-  openModal('<h3>Submit a Post</h3>'
-    +'<p class="cell-muted" style="margin:0 0 12px;font-size:12.5px;">Your post will be sent to the PRO for review. It will appear on the notice board once approved.</p>'
-    +'<div class="field"><label>Title</label><input type="text" id="mn-title" placeholder="e.g. Congratulations to..."/></div>'
-    +'<div class="field"><label>Message</label><textarea id="mn-body" rows="5" placeholder="Write your post here…"></textarea></div>'
-    +'<div class="modal-actions"><button type="button" class="btn" onclick="closeModal()">Cancel</button><button type="button" class="btn btn-primary" onclick="submitMemberNews()">Send for review</button></div>');
-}
-
-async function submitMemberNews(){
-  const title=(document.getElementById('mn-title').value||'').trim();
-  const body=(document.getElementById('mn-body').value||'').trim();
-  if(!title||!body){showToast('Title and message are required.');return;}
-  const memberId=getCurrentMemberId();
-  const mem=memberId?DATA.members.find(m=>m.id===memberId):null;
-  if(!mem){showToast('You must be logged in as a member to submit a post.');return;}
-  const btn=document.querySelector('#modal-content .btn-primary');
-  if(btn){btn.disabled=true;btn.textContent='Sending…';}
-  try{
-    const{error}=await sb.rpc('submit_member_news',{
-      p_member_pin:mem.pin, p_id:uid(), p_title:title, p_body:body, p_author:mem.name
-    });
-    if(error)throw error;
-    closeModal();
-    showToast('Sent to the PRO for review. You\u2019ll see it here once approved.');
-  }catch(e){
-    if(btn){btn.disabled=false;btn.textContent='Send for review';}
-    showToast('Could not submit: '+(e.message||'unknown error'));
-  }
-}
-
-async function approvePendingNews(id){
-  const pin=getCurrentAuthPin();
-  try{
-    const{error}=await sb.rpc('approve_member_news',{p_officer_pin:pin,p_id:id});
-    if(error)throw error;
-    showToast('Post approved and published.');
-  }catch(e){showToast('Could not approve: '+(e.message||'unknown error'));}
-}
-
-async function rejectPendingNews(id){
-  if(!confirm('Reject this post? The member will not be notified automatically.'))return;
-  const pin=getCurrentAuthPin();
-  try{
-    const{error}=await sb.rpc('reject_member_news',{p_officer_pin:pin,p_id:id});
-    if(error)throw error;
-    showToast('Post rejected.');
-  }catch(e){showToast('Could not reject: '+(e.message||'unknown error'));}
 }
 
 /* ---- Polls / Interactive page ---- */
@@ -3868,12 +3697,9 @@ const WELFARE_STORE='oasis-welfare-v1';
 function loadWelfare(){try{return JSON.parse(localStorage.getItem(WELFARE_STORE)||'[]')}catch{return [];}}
 function saveWelfare(a){localStorage.setItem(WELFARE_STORE,JSON.stringify(a));}
 const WELFARE_LABELS={bereavement:'Bereavement',baby:'New baby',illness:'Illness',levy:'Club levy',other:'Other'};
-let welfareYearFilter='all';
 function pageWelfare(){
   const isOfc=isOfficerSessionNow();
-  const allWelfare=loadWelfare().sort((a,b)=>b.date.localeCompare(a.date));
-  const wfyLabels=[...new Set(allWelfare.map(w=>fyLabelForDate(w.date)))].sort().reverse();
-  const welfare=welfareYearFilter==='all'?allWelfare:allWelfare.filter(w=>fyLabelForDate(w.date)===welfareYearFilter);
+  const welfare=loadWelfare().sort((a,b)=>b.date.localeCompare(a.date));
   const active=DATA.members.filter(isActiveMember);
   function typeClass(t){return'welfare-type welfare-type-'+(t||'other');}
   function welfareCard(w){
@@ -3907,10 +3733,6 @@ function pageWelfare(){
     <div><h1>Welfare &amp; Levies</h1><div class="sub">${welfare.length} event${welfare.length!==1?'s':''} on record</div></div>
     ${isOfc?`<button type="button" class="btn btn-primary" onclick="openAddWelfare()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M12 5v14M5 12h14"/></svg>New entry</button>`:''}
   </div>
-  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
-    <button type="button" class="btn ${welfareYearFilter==='all'?'btn-primary':''}" style="padding:6px 14px;font-size:13px;" onclick="setWelfareYearFilter('all')">All years</button>
-    ${wfyLabels.map(y=>`<button type="button" class="btn ${welfareYearFilter===y?'btn-primary':''}" style="padding:6px 14px;font-size:13px;" onclick="setWelfareYearFilter('${y}')">${y}</button>`).join('')}
-  </div>
   ${welfare.length?welfare.map(welfareCard).join(''):emptyState('No welfare events recorded','Officers can log bereavement, new baby, illness levies and other special contributions.')}
   ${isTreasurerSession()?`<div class="card" style="margin-top:8px;">
     <div class="card-head"><h2>&#128202; Welfare spreadsheet</h2><span class="badge badge-active">Treasurer</span></div>
@@ -3927,10 +3749,6 @@ function pageWelfare(){
       </label>
     </div>
   </div>`:''}`;
-}
-function setWelfareYearFilter(y){
-  welfareYearFilter=y;
-  render();
 }
 function openAddWelfare(){
   openModal(`<h3>New Welfare / Levy Entry</h3>
