@@ -51,6 +51,7 @@ CREATE TABLE IF NOT EXISTS club_meta (
   constitution_url       TEXT    NOT NULL DEFAULT '',
   constitution_uploaded_at TIMESTAMPTZ,
   chatbot_api_key        TEXT    NOT NULL DEFAULT '',
+  chatbot_api_provider   TEXT    NOT NULL DEFAULT 'gemini',
   CONSTRAINT single_row CHECK (id = 1)
 );
 
@@ -59,6 +60,7 @@ ALTER TABLE club_meta ADD COLUMN IF NOT EXISTS term_start             DATE;
 ALTER TABLE club_meta ADD COLUMN IF NOT EXISTS constitution_url       TEXT NOT NULL DEFAULT '';
 ALTER TABLE club_meta ADD COLUMN IF NOT EXISTS constitution_uploaded_at TIMESTAMPTZ;
 ALTER TABLE club_meta ADD COLUMN IF NOT EXISTS chatbot_api_key        TEXT NOT NULL DEFAULT '';
+ALTER TABLE club_meta ADD COLUMN IF NOT EXISTS chatbot_api_provider   TEXT NOT NULL DEFAULT 'gemini';
 
 CREATE TABLE IF NOT EXISTS club_events (
   id          TEXT PRIMARY KEY,
@@ -537,13 +539,44 @@ CREATE OR REPLACE FUNCTION secretary_set_chatbot_key(
   p_secretary_pin TEXT,
   p_api_key       TEXT
 ) RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS $$
+DECLARE
+  v_provider TEXT;
 BEGIN
   -- Only Secretary PIN (4821) may set/clear the chatbot key
   IF p_secretary_pin != '4821' THEN
     RAISE EXCEPTION 'Unauthorized: only the Secretary can configure the chatbot key';
   END IF;
   INSERT INTO club_meta (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
-  UPDATE club_meta SET chatbot_api_key = p_api_key WHERE id = 1;
+  v_provider := CASE
+    WHEN p_api_key ~* '^sk-ant-' THEN 'anthropic'
+    WHEN p_api_key ~* '^(cohere-|co-)' THEN 'cohere'
+    ELSE 'gemini'
+  END;
+  UPDATE club_meta
+     SET chatbot_api_key = p_api_key,
+         chatbot_api_provider = CASE WHEN p_api_key = '' THEN chatbot_api_provider ELSE v_provider END
+   WHERE id = 1;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION secretary_set_chatbot_config(
+  p_secretary_pin TEXT,
+  p_provider      TEXT,
+  p_api_key       TEXT
+) RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS $$
+BEGIN
+  IF p_secretary_pin != '4821' THEN
+    RAISE EXCEPTION 'Unauthorized: only the Secretary can configure the chatbot key';
+  END IF;
+  INSERT INTO club_meta (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
+  UPDATE club_meta
+     SET chatbot_api_key = coalesce(p_api_key, ''),
+         chatbot_api_provider = CASE lower(coalesce(p_provider, ''))
+           WHEN 'anthropic' THEN 'anthropic'
+           WHEN 'cohere' THEN 'cohere'
+           ELSE 'gemini'
+         END
+   WHERE id = 1;
 END;
 $$;
 
@@ -572,13 +605,14 @@ GRANT EXECUTE ON FUNCTION add_club_poll(TEXT,TEXT,TEXT,JSONB,TEXT,TEXT)         
 GRANT EXECUTE ON FUNCTION vote_club_poll(TEXT,TEXT,TEXT,TEXT)                        TO anon;
 GRANT EXECUTE ON FUNCTION delete_club_poll(TEXT,TEXT)                                TO anon;
 GRANT EXECUTE ON FUNCTION secretary_set_chatbot_key(TEXT,TEXT)                       TO anon;
+GRANT EXECUTE ON FUNCTION secretary_set_chatbot_config(TEXT,TEXT,TEXT)               TO anon;
 
 
 -- ── SECTION 12: SEED DATA ────────────────────────────────────────
 
 -- Ensure one club_meta row always exists (app will fail to read settings otherwise)
-INSERT INTO club_meta (id, financial_year_start, annual_due_amount, dues_year_label, quorum_note, chatbot_api_key)
-VALUES (1, '2025-10-01', 50000, '2025/2026', '', '')
+INSERT INTO club_meta (id, financial_year_start, annual_due_amount, dues_year_label, quorum_note, chatbot_api_key, chatbot_api_provider)
+VALUES (1, '2025-10-01', 50000, '2025/2026', '', '', 'gemini')
 ON CONFLICT (id) DO NOTHING;
 
 
