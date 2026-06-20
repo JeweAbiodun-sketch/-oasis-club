@@ -665,7 +665,7 @@ body.dark .asst-chip{color:#a7e6d0;}
 <script>
 /* Bump this string every time you publish changes to GitHub.
    This is what tells everyone's app that a newer version exists. */
-const APP_VERSION='2026-06-19-23';
+const APP_VERSION='2026-06-19-22';
 const STORE_KEY='oasis-club-data-v1';
 let DATA={members:[
   {
@@ -1127,7 +1127,7 @@ function rowsToTransactions(rows){
   return rows.map(r=>({id:r.id,desc:r.desc_text,type:r.type,amount:Number(r.amount),date:r.date}));
 }
 function rowsToEvents(rows){
-  return rows.map(r=>({id:r.id,title:r.title,date:r.date,time:r.time||'',location:r.location||'',type:r.type||'general',description:r.description||'',createdAt:r.created_at,createdByMemberId:r.created_by_member_id||'',meetingLink:r.meeting_link||''}));
+  return rows.map(r=>({id:r.id,title:r.title,date:r.date,time:r.time||'',location:r.location||'',type:r.type||'general',description:r.description||'',createdAt:r.created_at,createdByMemberId:r.created_by_member_id||''}));
 }
 function rowsToNews(rows){
   return rows.map(r=>({id:r.id,title:r.title,body:r.body,author:r.author||'Club Secretary',createdAt:r.created_at,createdByMemberId:r.created_by_member_id||''}));
@@ -3669,7 +3669,6 @@ function pageEvents(){
       +'<div class="ev-title">'+escHtml(ev.title)+'</div>'
       +(ev.location?'<div class="ev-meta">&#128205; '+escHtml(ev.location)+'</div>':'')
       +(ev.description?'<div class="ev-desc">'+escHtml(ev.description)+'</div>':'')
-      +(ev.meetingLink?'<a href="'+escHtml(ev.meetingLink)+'" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="margin-top:8px;display:inline-flex;align-items:center;gap:6px;font-size:13px;padding:7px 14px;text-decoration:none;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="14" height="14"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M16 10l6-3v10l-6-3"/></svg>Join Meeting</a>':'')
       +'</div>'
       +'<div class="ev-actions" style="gap:6px;">'
       +'<button type="button" class="wa-btn" onclick="shareEvent(\''+ev.id+'\')">'+WA_SVG+' Share on WhatsApp</button>'
@@ -3695,7 +3694,6 @@ function openAddEvent(){
     +'<div class="field"><label>Time (optional)</label><input type="time" id="ev-time"/></div>'
     +'</div>'
     +'<div class="field"><label>Location (optional)</label><input type="text" id="ev-loc" placeholder="e.g. Club Hall, Otun Ekiti"/></div>'
-    +'<div class="field"><label>Meeting link (optional)</label><input type="url" id="ev-meeting-link" placeholder="e.g. https://meet.google.com/abc-defg-hij"/></div>'
     +'<div class="field"><label>Type</label><select id="ev-type"><option value="general">General meeting</option><option value="committee">Committee meeting</option><option value="agm">AGM</option><option value="social">Social event</option></select></div>'
     +'<div class="field"><label>Description (optional)</label><textarea id="ev-desc" rows="3"></textarea></div>'
     +'<div class="modal-actions"><button type="button" class="btn" onclick="closeModal()">Cancel</button><button type="button" class="btn btn-primary" onclick="submitAddEvent()">Add event</button></div>');
@@ -3714,8 +3712,7 @@ async function submitAddEvent(){
       p_time:document.getElementById('ev-time').value||'',
       p_location:(document.getElementById('ev-loc').value||'').trim(),
       p_type:document.getElementById('ev-type').value,
-      p_description:(document.getElementById('ev-desc').value||'').trim(),
-      p_meeting_link:(document.getElementById('ev-meeting-link').value||'').trim()||null
+      p_description:(document.getElementById('ev-desc').value||'').trim()
     });
     if(error)throw error;
     reqNotifPermission();
@@ -5128,7 +5125,6 @@ function shareEvent(evId){
   let txt='📅 Oasis Club — Upcoming Event\n\n'+ev.title+'\nDate: '+fmtDate(ev.date);
   if(ev.time)txt+='\nTime: '+ev.time;
   if(ev.location)txt+='\nVenue: '+ev.location;
-  if(ev.meetingLink)txt+='\nJoin online: '+ev.meetingLink;
   if(ev.description)txt+='\n\n'+ev.description;
   shareWhatsApp(txt);
 }
@@ -5466,7 +5462,7 @@ function asstBuildContext(){
     .map(n=>'- ['+new Date(n.createdAt).toISOString().slice(0,10)+'] '+n.title+' (by '+(n.author||'Club Secretary')+'): '+String(n.body||'').replace(/\s+/g,' ').slice(0,300)).join('\n');
 
   const events=(DATA.events||[]).slice().sort((a,b)=>(a.date||'').localeCompare(b.date||''))
-    .map(e=>'- ['+e.date+(e.time?' '+e.time:'')+'] '+e.title+(e.location?' @ '+e.location:'')+(e.meetingLink?' (online: '+e.meetingLink+')':'')+(e.description?': '+String(e.description).replace(/\s+/g,' ').slice(0,200):'')).join('\n');
+    .map(e=>'- ['+e.date+(e.time?' '+e.time:'')+'] '+e.title+(e.location?' @ '+e.location:'')+(e.description?': '+String(e.description).replace(/\s+/g,' ').slice(0,200):'')).join('\n');
 
   const pledges=(DATA.pledges||[]).slice().sort((a,b)=>(b.pledgeDate||'').localeCompare(a.pledgeDate||''));
   const pledgeTotal=pledges.reduce((s,p)=>s+p.amount,0);
@@ -5741,7 +5737,7 @@ function localAsstAnswer(messages){
     const upcoming=events.filter(e=>e.date>=today);
     if(!upcoming.length) return 'No upcoming events scheduled at the moment.';
     const next=upcoming[0];
-    return 'Next event: **'+next.title+'** on '+fmtDate(next.date)+(next.location?' at '+next.location:'')+'.'+(next.meetingLink?' Join online: '+next.meetingLink:'')+' '+upcoming.length+' upcoming event(s) in total.';
+    return 'Next event: **'+next.title+'** on '+fmtDate(next.date)+(next.location?' at '+next.location:'')+'. '+upcoming.length+' upcoming event(s) in total.';
   }
   if(/pledge|building project|donat/.test(q)){
     const pledges=DATA.pledges||[];
