@@ -665,7 +665,7 @@ body.dark .asst-chip{color:#a7e6d0;}
 <script>
 /* Bump this string every time you publish changes to GitHub.
    This is what tells everyone's app that a newer version exists. */
-const APP_VERSION='2026-06-19-21';
+const APP_VERSION='2026-06-19-22';
 const STORE_KEY='oasis-club-data-v1';
 let DATA={members:[
   {
@@ -5440,8 +5440,10 @@ async function loadConstitutionOverride(){
   if(typeof sb==='undefined' || !sb) return;
   try{
     const{data}=sb.storage.from('constitution').getPublicUrl('constitution-assistant.txt');
-    const res=await fetch(data.publicUrl+'?v='+Date.now());
-    if(res.ok){ const t=await res.text(); if(t&&t.trim()) window.__constitutionOverride=t; }
+    // A 400/404 here just means no custom constitution text has been saved
+    // yet (normal on a fresh setup) — fall back to the built-in text quietly.
+    const res=await fetch(data.publicUrl+'?v='+Date.now()).catch(()=>null);
+    if(res&&res.ok){ const t=await res.text(); if(t&&t.trim()) window.__constitutionOverride=t; }
   }catch(e){}
 }
 
