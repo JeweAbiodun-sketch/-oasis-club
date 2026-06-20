@@ -507,8 +507,8 @@ body.dark .asst-chip{color:#a7e6d0;}
 .id-card-logo{width:44px;height:44px;border-radius:10px;margin-bottom:16px;display:block;}
 .id-card-club{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.65);margin-bottom:4px;}
 .id-card-member{font-size:11px;color:rgba(255,255,255,.5);margin-bottom:14px;}
-.id-card-avatar{width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid var(--gold);margin-bottom:14px;display:block;}
-.id-card-avatar-ph{width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,.15);border:3px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;color:#fff;margin-bottom:14px;}
+.id-card-avatar{width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid rgba(255,255,255,.4);margin-bottom:14px;display:block;}
+.id-card-avatar-ph{width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,.15);border:3px solid rgba(255,255,255,.4);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;color:#fff;margin-bottom:14px;}
 .id-card-name{font-size:20px;font-weight:700;font-family:'Source Serif 4',serif;margin-bottom:4px;}
 .id-card-role{font-size:13px;color:rgba(255,255,255,.75);margin-bottom:14px;}
 .id-card-detail-row{display:flex;gap:20px;margin-bottom:8px;flex-wrap:wrap;}
@@ -656,7 +656,13 @@ body.dark .asst-chip{color:#a7e6d0;}
 <div id="ios-install-modal">
   <div class="ios-install-card">
     <button class="ios-install-close" onclick="closeIosInstallModal()" aria-label="Close">&times;</button>
-    <div id="ios-install-modal-body"></div>
+    <h3>Install Oasis Club</h3>
+    <p>To add this app to your Home Screen on iPhone:</p>
+    <ol>
+      <li>Tap the <strong>Share</strong> icon <span class="ios-share-icon">&#x2304;</span> at the bottom of Safari</li>
+      <li>Scroll down and tap <strong>"Add to Home Screen"</strong></li>
+      <li>Tap <strong>"Add"</strong> in the top right</li>
+    </ol>
     <button class="btn btn-primary" style="width:100%;margin-top:8px;" onclick="closeIosInstallModal()">Got it</button>
   </div>
 </div>
@@ -664,7 +670,7 @@ body.dark .asst-chip{color:#a7e6d0;}
 <script>
 /* Bump this string every time you publish changes to GitHub.
    This is what tells everyone's app that a newer version exists. */
-const APP_VERSION='2026-06-19-17';
+const APP_VERSION='2026-06-19-15';
 const STORE_KEY='oasis-club-data-v1';
 let DATA={members:[
   {
@@ -1158,7 +1164,7 @@ function rowsToPolls(rows){
   return rows.map(r=>({id:r.id,question:r.question,options:r.options||[],endsAt:r.ends_at||'',createdBy:r.created_by||'',createdAt:r.created_at}));
 }
 function rowToMeta(r){
-  if(!r)return{financialYearStart:'2025-10-01',annualDueAmount:50000,duesYearLabel:'2025/2026',quorumNote:'',nextAgmDate:'2026-12-26',termStart:'',constitutionUrl:'',constitutionUploadedAt:'',chatbotApiKey:'',chatbotProvider:'anthropic'};
+  if(!r)return{financialYearStart:'2025-10-01',annualDueAmount:50000,duesYearLabel:'2025/2026',quorumNote:'',nextAgmDate:'2026-12-26',termStart:'',constitutionUrl:'',constitutionUploadedAt:'',chatbotApiKey:''};
   return{
     financialYearStart:r.financial_year_start||'2025-10-01',
     annualDueAmount:Number(r.annual_due_amount||50000),
@@ -1168,8 +1174,7 @@ function rowToMeta(r){
     termStart:r.term_start||'',
     constitutionUrl:r.constitution_url||'',
     constitutionUploadedAt:r.constitution_uploaded_at||'',
-    chatbotApiKey:r.chatbot_api_key||'',
-    chatbotProvider:r.chatbot_provider||'anthropic'
+    chatbotApiKey:r.chatbot_api_key||''
   };
 }
 
@@ -2007,20 +2012,6 @@ function clearPendingPhoto(){
 function initials(name){
   if(!name)return'?';
   return name.trim().split(/\s+/).slice(0,2).map(p=>p[0].toUpperCase()).join('');
-}
-function memberDisplayNumber(memberId){
-  // Display-only sequential member numbers (M001, M002, ...). The President
-  // always holds M001, regardless of join date; everyone else is numbered in
-  // join-date order, skipping the slot the President occupies.
-  const all=DATA.members||[];
-  const president=all.find(m=>m.role==='President');
-  if(president&&president.id===memberId)return'M001';
-  const others=all.filter(m=>!president||m.id!==president.id)
-    .slice().sort((a,b)=>(a.joined||'').localeCompare(b.joined||'')||a.id.localeCompare(b.id));
-  const idx=others.findIndex(m=>m.id===memberId);
-  if(idx===-1)return'M???';
-  const num=president?idx+2:idx+1; // leave M001 reserved for the President even if the seat is currently empty
-  return 'M'+String(num).padStart(3,'0');
 }
 function compressImage(dataUrl,maxDim,quality){
   return new Promise(resolve=>{
@@ -4903,7 +4894,7 @@ function openMemberIdCard(memberId){
         <div class="id-card-name">${escHtml(mem.name)}</div>
         <div class="id-card-role">${escHtml(mem.role||'Member')}</div>
         <div class="id-card-detail-row">
-          <div class="id-card-detail"><strong>${escHtml(memberDisplayNumber(mem.id))}</strong>Member ID</div>
+          <div class="id-card-detail"><strong>${escHtml(mem.id.toUpperCase())}</strong>Member ID</div>
           <div class="id-card-detail"><strong>${escHtml((mem.status||'Active').charAt(0).toUpperCase()+(mem.status||'active').slice(1))}</strong>Status</div>
           ${mem.joined?`<div class="id-card-detail"><strong>${escHtml(fmtDate(mem.joined))}</strong>Joined</div>`:''}
         </div>
@@ -4931,8 +4922,8 @@ function printIdCard(){
     +'.id-card-logo{width:44px;height:44px;border-radius:10px;margin-bottom:16px;display:block;}'
     +'.id-card-club{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.65);margin-bottom:4px;}'
     +'.id-card-member{font-size:11px;color:rgba(255,255,255,.5);margin-bottom:14px;}'
-    +'.id-card-avatar{width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid #B8860B;margin-bottom:14px;display:block;}'
-    +'.id-card-avatar-ph{width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,.15);border:3px solid #B8860B;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;color:#fff;margin-bottom:14px;}'
+    +'.id-card-avatar{width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid rgba(255,255,255,.4);margin-bottom:14px;display:block;}'
+    +'.id-card-avatar-ph{width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,.15);border:3px solid rgba(255,255,255,.4);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;color:#fff;margin-bottom:14px;}'
     +'.id-card-name{font-size:20px;font-weight:700;font-family:"Source Serif 4",serif;margin-bottom:4px;}'
     +'.id-card-role{font-size:13px;color:rgba(255,255,255,.75);margin-bottom:14px;}'
     +'.id-card-detail-row{display:flex;gap:20px;margin-bottom:8px;flex-wrap:wrap;}'
@@ -5014,24 +5005,11 @@ window.addEventListener('appinstalled',()=>{
 function maybeShowInstallBanner(){
   if(isStandaloneApp())return; // already installed/running as an app
   if(localStorage.getItem(INSTALL_DISMISSED_KEY)==='1')return;
-  const isIosNonSafari=isIosDevice()&&/crios|fxios|edgios/i.test(window.navigator.userAgent);
-  const isIosSafari=isIosDevice()&&!isIosNonSafari;
-  // Show if: a native Android/Chrome install prompt is ready, OR this is iOS Safari
-  // (which never fires beforeinstallprompt but still supports Add to Home Screen),
-  // OR this is iOS but in Chrome/Firefox/Edge — on iOS those only support installing
-  // via Safari, so we show a banner pointing them there instead of staying silent.
-  if(deferredInstallPrompt||isIosSafari||isIosNonSafari){
-    const banner=document.getElementById('install-banner');
-    const textEl=banner.querySelector('span');
-    const btn=document.getElementById('install-confirm-btn');
-    if(isIosNonSafari){
-      textEl.textContent='To install Oasis Club, open this link in Safari instead of this browser.';
-      btn.textContent='How do I do that?';
-    }else{
-      textEl.textContent='Install Oasis Club on your phone for the full app experience.';
-      btn.textContent='Install';
-    }
-    banner.classList.add('show');
+  // Show if we have a native Android/Chrome prompt ready, OR if this is iOS Safari
+  // (which never fires beforeinstallprompt but still supports Add to Home Screen).
+  const isIosSafari=isIosDevice()&&/safari/i.test(window.navigator.userAgent)&&!/crios|fxios/i.test(window.navigator.userAgent);
+  if(deferredInstallPrompt||isIosSafari){
+    document.getElementById('install-banner').classList.add('show');
   }
 }
 
@@ -5048,26 +5026,6 @@ async function handleInstallClick(){
     deferredInstallPrompt=null;
   }else if(isIosDevice()){
     dismissInstallBanner();
-    const isIosNonSafari=/crios|fxios|edgios/i.test(window.navigator.userAgent);
-    const body=document.getElementById('ios-install-modal-body');
-    if(isIosNonSafari){
-      body.innerHTML=`<h3>Open this in Safari</h3>
-        <p>On iPhone, apps can only be installed from <strong>Safari</strong> &mdash; not from this browser.</p>
-        <ol>
-          <li>Copy this page's link (tap the address bar, then <strong>Copy</strong>)</li>
-          <li>Open the <strong>Safari</strong> app</li>
-          <li>Paste the link and open it there</li>
-          <li>Tap <strong>Share</strong> <span class="ios-share-icon">&#x2304;</span> &rarr; <strong>"Add to Home Screen"</strong></li>
-        </ol>`;
-    }else{
-      body.innerHTML=`<h3>Install Oasis Club</h3>
-        <p>To add this app to your Home Screen on iPhone:</p>
-        <ol>
-          <li>Tap the <strong>Share</strong> icon <span class="ios-share-icon">&#x2304;</span> at the bottom of Safari</li>
-          <li>Scroll down and tap <strong>"Add to Home Screen"</strong></li>
-          <li>Tap <strong>"Add"</strong> in the top right</li>
-        </ol>`;
-    }
     document.getElementById('ios-install-modal').classList.add('show');
   }
 }
@@ -5239,20 +5197,10 @@ function toggleAsstSettings(){
   if(!opening)return;
   const isSecretary=isSecretaryNow();
   const hasKey=asstHasKey();
-  const curProvider=(DATA.meta.chatbotProvider||'anthropic');
   if(isSecretary){
-    const providers=[
-      {v:'anthropic',label:'Anthropic (Claude)'},
-      {v:'openai',label:'OpenAI (ChatGPT)'},
-      {v:'cohere',label:'Cohere'},
-      {v:'gemini',label:'Google Gemini'}
-    ];
     p.innerHTML=`<div class="aset-title">AI key — Secretary only</div>
-      <div class="aset-body">Choose your AI provider and paste its API key. Once saved it activates AI for <em>all members on all devices</em>.</div>
-      <select id="asst-provider" class="aset-input" style="margin-bottom:8px;">
-        ${providers.map(pr=>`<option value="${pr.v}" ${curProvider===pr.v?'selected':''}>${pr.label}</option>`).join('')}
-      </select>
-      <input type="password" id="asst-api-key" class="aset-input" placeholder="Paste API key…" autocomplete="off" value="${escHtml(DATA.meta.chatbotApiKey||'')}"/>
+      <div class="aset-body">Paste an <strong>Anthropic</strong> (<code>sk-ant-…</code>) or <strong>Google Gemini</strong> key. Once saved it activates AI for <em>all members on all devices</em>.</div>
+      <input type="password" id="asst-api-key" class="aset-input" placeholder="sk-ant-… or Gemini key…" autocomplete="off" value="${escHtml(DATA.meta.chatbotApiKey||'')}"/>
       <div class="aset-actions">
         <button type="button" class="aset-save" onclick="saveAsstKey()">Save &amp; enable</button>
         <button type="button" class="aset-clear" onclick="clearAsstKey()">Remove key</button>
@@ -5269,13 +5217,12 @@ function toggleAsstSettings(){
 async function saveAsstKey(){
   if(!isSecretaryNow()){showToast('Only the Secretary can change the AI key.');return;}
   const key=(document.getElementById('asst-api-key').value||'').trim();
-  const provider=(document.getElementById('asst-provider').value||'anthropic');
   const btn=document.querySelector('#asst-settings-panel .aset-save');
   if(btn){btn.disabled=true;btn.textContent='Saving…';}
   try{
-    const{error}=await sb.rpc('secretary_set_chatbot_key',{p_secretary_pin:'4821',p_api_key:key,p_provider:provider});
+    const{error}=await sb.rpc('secretary_set_chatbot_key',{p_secretary_pin:'4821',p_api_key:key});
     if(error)throw error;
-    if(DATA&&DATA.meta){DATA.meta.chatbotApiKey=key;DATA.meta.chatbotProvider=provider;}
+    if(DATA&&DATA.meta)DATA.meta.chatbotApiKey=key;
     document.getElementById('asst-settings-panel').classList.remove('show');
     asstHistory=[];document.getElementById('asst-body').innerHTML='';
     asstUpdateUI();asstGreet();
@@ -5291,7 +5238,7 @@ async function clearAsstKey(){
   const btn=document.querySelector('#asst-settings-panel .aset-clear');
   if(btn){btn.disabled=true;btn.textContent='Removing…';}
   try{
-    const{error}=await sb.rpc('secretary_set_chatbot_key',{p_secretary_pin:'4821',p_api_key:'',p_provider:DATA.meta.chatbotProvider||'anthropic'});
+    const{error}=await sb.rpc('secretary_set_chatbot_key',{p_secretary_pin:'4821',p_api_key:''});
     if(error)throw error;
     if(DATA&&DATA.meta)DATA.meta.chatbotApiKey='';
     document.getElementById('asst-settings-panel').classList.remove('show');
@@ -5329,48 +5276,6 @@ async function callAnthropic(apiKey,systemPrompt,messages){
   if(!resp.ok){ const err=await resp.json().catch(()=>({})); throw new Error(err.error?.message||'Anthropic error '+resp.status); }
   const data=await resp.json();
   return data.content?.[0]?.text||'';
-}
-
-async function callOpenAI(apiKey,systemPrompt,messages){
-  const resp=await fetch('https://api.openai.com/v1/chat/completions',{
-    method:'POST',
-    headers:{
-      'Content-Type':'application/json',
-      'Authorization':'Bearer '+apiKey
-    },
-    body:JSON.stringify({
-      model:'gpt-4o-mini',
-      max_tokens:1024,
-      messages:[{role:'system',content:systemPrompt},...messages]
-    })
-  });
-  if(!resp.ok){ const err=await resp.json().catch(()=>({})); throw new Error(err.error?.message||'OpenAI error '+resp.status); }
-  const data=await resp.json();
-  return data.choices?.[0]?.message?.content||'';
-}
-
-async function callCohere(apiKey,systemPrompt,messages){
-  // Cohere's chat API takes the latest user message separately from history.
-  const last=messages[messages.length-1];
-  const history=messages.slice(0,-1).map(m=>({role:m.role==='assistant'?'CHATBOT':'USER',message:m.content}));
-  const resp=await fetch('https://api.cohere.com/v1/chat',{
-    method:'POST',
-    headers:{
-      'Content-Type':'application/json',
-      'Authorization':'Bearer '+apiKey
-    },
-    body:JSON.stringify({
-      model:'command-r',
-      preamble:systemPrompt,
-      chat_history:history,
-      message:last?.content||'',
-      max_tokens:1024,
-      temperature:0.3
-    })
-  });
-  if(!resp.ok){ const err=await resp.json().catch(()=>({})); throw new Error(err.message||'Cohere error '+resp.status); }
-  const data=await resp.json();
-  return data.text||'';
 }
 
 function localAsstAnswer(messages){
@@ -5440,13 +5345,9 @@ function localAsstAnswer(messages){
 
 async function asstCall(system,messages){
   const key=((DATA&&DATA.meta&&DATA.meta.chatbotApiKey)||'').trim();
-  const provider=((DATA&&DATA.meta&&DATA.meta.chatbotProvider)||'anthropic').trim();
-  if(key){
-    if(provider==='openai')return await callOpenAI(key,system,messages);
-    if(provider==='cohere')return await callCohere(key,system,messages);
-    if(provider==='gemini')return await callGemini(key,system,messages);
-    return await callAnthropic(key,system,messages);
-  }
+  if(key) return key.startsWith('sk-ant-')
+    ? await callAnthropic(key,system,messages)
+    : await callGemini(key,system,messages);
   return localAsstAnswer(messages);
 }
 function toggleAsst(){
