@@ -621,8 +621,7 @@ body.dark .asst-chip{color:#a7e6d0;}
   <button type="button" class="navlink" data-page="interactive"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Polls &amp; voting</button>
   <button type="button" class="navlink" data-page="welfare"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>Welfare contributions</button>
   <button type="button" class="navlink" data-page="pledges"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Pledges</button>
-  <button type="button" class="navlink" id="nav-loans" data-page="loans"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="7" width="20" height="13" rx="2"/><path d="M2 10h20"/><circle cx="12" cy="14.5" r="2.2"/></svg>Welfare loans</button>
-  <button type="button" class="navlink" id="nav-committees" data-page="committees"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="7" r="3"/><circle cx="17" cy="7" r="3"/><path d="M2 21v-1a6 6 0 016-6h2a6 6 0 016 6v1"/><path d="M15 14h2a6 6 0 016 6v1"/></svg>Committees</button>
+  <button type="button" class="navlink" data-page="loans"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="7" width="20" height="13" rx="2"/><path d="M2 10h20"/><circle cx="12" cy="14.5" r="2.2"/></svg>Welfare loans</button>
   <button type="button" class="navlink" data-page="projects"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/><path d="M12 12v5M9.5 14.5l2.5-2.5 2.5 2.5"/></svg>Projects</button>
 
   <div class="nav-divider"></div>
@@ -665,7 +664,7 @@ body.dark .asst-chip{color:#a7e6d0;}
 <script>
 /* Bump this string every time you publish changes to GitHub.
    This is what tells everyone's app that a newer version exists. */
-const APP_VERSION='2026-06-19-19';
+const APP_VERSION='2026-06-19-17';
 const STORE_KEY='oasis-club-data-v1';
 let DATA={members:[
   {
@@ -1155,12 +1154,6 @@ function rowsToWelfarePurse(rows){
 function rowsToPledges(rows){
   return rows.map(r=>({id:r.id,memberId:r.member_id,donorName:r.donor_name,amount:Number(r.amount),purpose:r.purpose||'',pledgeDate:r.pledge_date,recordedBy:r.recorded_by,createdAt:r.created_at}));
 }
-function rowsToCommittees(rows){
-  return rows.map(r=>({id:r.id,name:r.name,description:r.description||'',createdAt:r.created_at}));
-}
-function rowsToCommitteeMembers(rows){
-  return rows.map(r=>({id:r.id,committeeId:r.committee_id,memberId:r.member_id,isChair:!!r.is_chair,addedAt:r.added_at}));
-}
 function rowsToPolls(rows){
   return rows.map(r=>({id:r.id,question:r.question,options:r.options||[],endsAt:r.ends_at||'',createdBy:r.created_by||'',createdAt:r.created_at}));
 }
@@ -1194,7 +1187,7 @@ async function loadData(){
 
 async function fetchAllData(){
   try{
-    const[membersRes,minutesRes,txRes,metaRes,eventsRes,newsRes,pollsRes,pendingNewsRes,paymentClaimsRes,loansRes,repaymentsRes,purseRes,pledgesRes,committeesRes,committeeMembersRes]=await Promise.all([
+    const[membersRes,minutesRes,txRes,metaRes,eventsRes,newsRes,pollsRes,pendingNewsRes,paymentClaimsRes,loansRes,repaymentsRes,purseRes,pledgesRes]=await Promise.all([
       sb.from('members').select('*'),
       sb.from('minutes').select('*'),
       sb.from('transactions').select('*'),
@@ -1207,9 +1200,7 @@ async function fetchAllData(){
       sb.from('welfare_loans').select('*').order('created_at',{ascending:false}),
       sb.from('welfare_loan_repayments').select('*').order('created_at',{ascending:false}),
       sb.from('welfare_purse_entries').select('*').order('created_at',{ascending:false}),
-      sb.from('club_pledges').select('*').order('created_at',{ascending:false}),
-      sb.from('committees').select('*').order('created_at',{ascending:true}),
-      sb.from('committee_members').select('*')
+      sb.from('club_pledges').select('*').order('created_at',{ascending:false})
     ]);
     if(membersRes.error||minutesRes.error||txRes.error||metaRes.error){
       throw membersRes.error||minutesRes.error||txRes.error||metaRes.error;
@@ -1227,9 +1218,7 @@ async function fetchAllData(){
       welfareLoans:rowsToWelfareLoans(loansRes.data||[]),
       loanRepayments:rowsToLoanRepayments(repaymentsRes.data||[]),
       welfarePurse:rowsToWelfarePurse(purseRes.data||[]),
-      pledges:rowsToPledges(pledgesRes.data||[]),
-      committees:rowsToCommittees(committeesRes.data||[]),
-      committeeMembers:rowsToCommitteeMembers(committeeMembersRes.data||[])
+      pledges:rowsToPledges(pledgesRes.data||[])
     };
     // Cache for offline reading
     try{
@@ -1242,8 +1231,6 @@ async function fetchAllData(){
       localStorage.setItem(LOAN_REPAYMENTS_STORE,JSON.stringify(DATA.loanRepayments));
       localStorage.setItem(WELFARE_PURSE_STORE,JSON.stringify(DATA.welfarePurse));
       localStorage.setItem(PLEDGES_STORE,JSON.stringify(DATA.pledges));
-      localStorage.setItem(COMMITTEES_STORE,JSON.stringify(DATA.committees));
-      localStorage.setItem(COMMITTEE_MEMBERS_STORE,JSON.stringify(DATA.committeeMembers));
     }catch(_){}
     connectionStatus='connected';
     // Refresh chatbot UI now that DATA.meta.chatbotApiKey is known
@@ -1265,8 +1252,6 @@ async function fetchAllData(){
     if(!DATA.loanRepayments||!DATA.loanRepayments.length)try{DATA.loanRepayments=JSON.parse(localStorage.getItem(LOAN_REPAYMENTS_STORE)||'[]');}catch(_){}
     if(!DATA.welfarePurse||!DATA.welfarePurse.length)try{DATA.welfarePurse=JSON.parse(localStorage.getItem(WELFARE_PURSE_STORE)||'[]');}catch(_){}
     if(!DATA.pledges||!DATA.pledges.length)try{DATA.pledges=JSON.parse(localStorage.getItem(PLEDGES_STORE)||'[]');}catch(_){}
-    if(!DATA.committees||!DATA.committees.length)try{DATA.committees=JSON.parse(localStorage.getItem(COMMITTEES_STORE)||'[]');}catch(_){}
-    if(!DATA.committeeMembers||!DATA.committeeMembers.length)try{DATA.committeeMembers=JSON.parse(localStorage.getItem(COMMITTEE_MEMBERS_STORE)||'[]');}catch(_){}
   }
 }
 
@@ -1285,8 +1270,6 @@ function subscribeToRealtime(){
     .on('postgres_changes',{event:'*',schema:'public',table:'welfare_loan_repayments'},handleRealtimeChange)
     .on('postgres_changes',{event:'*',schema:'public',table:'welfare_purse_entries'},handleRealtimeChange)
     .on('postgres_changes',{event:'*',schema:'public',table:'club_pledges'},handleRealtimeChange)
-    .on('postgres_changes',{event:'*',schema:'public',table:'committees'},handleRealtimeChange)
-    .on('postgres_changes',{event:'*',schema:'public',table:'committee_members'},handleRealtimeChange)
     .on('postgres_changes',{event:'*',schema:'public',table:'club_polls'},handleRealtimeChange)
     .subscribe(status=>{
       if(status==='SUBSCRIBED'){connectionStatus='connected';render();}
@@ -3485,11 +3468,8 @@ function getCurrentMemberId(){
 }
 function updateNavForSession(){
   const navProfile=document.getElementById('nav-profile');
-  if(navProfile)navProfile.style.display=getCurrentMemberId()?'':'none';
-  const navLoans=document.getElementById('nav-loans');
-  if(navLoans)navLoans.style.display=(isWelfareCommitteeNow()||canReviewPaymentClaims())?'':'none';
-  const navCommittees=document.getElementById('nav-committees');
-  if(navCommittees)navCommittees.style.display=isOfficerSessionNow()?'':'none';
+  if(!navProfile)return;
+  navProfile.style.display=getCurrentMemberId()?'':'none';
 }
 function lockApp(){
   sessionStorage.removeItem(SESSION_KEY);
@@ -3511,8 +3491,6 @@ const WELFARE_LOANS_STORE='oasis-welfare-loans-v1';
 const LOAN_REPAYMENTS_STORE='oasis-loan-repayments-v1';
 const WELFARE_PURSE_STORE='oasis-welfare-purse-v1';
 const PLEDGES_STORE='oasis-pledges-v1';
-const COMMITTEES_STORE='oasis-committees-v1';
-const COMMITTEE_MEMBERS_STORE='oasis-committee-members-v1';
 const SEEN_STORE='oasis-last-seen-v1';
 
 function escHtml(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
@@ -3977,20 +3955,10 @@ function canReviewPaymentClaims(){
   if(s.startsWith('member:')){const m=DATA.members.find(x=>x.id===s.slice(7));return !!(m&&(m.role==='Treasurer'||m.role==='Financial Secretary'));}
   return false;
 }
-function isMemberOfCommittee(committeeName,memberId){
-  const committee=(DATA.committees||[]).find(c=>c.name===committeeName);
-  if(!committee)return false;
-  return (DATA.committeeMembers||[]).some(cm=>cm.committeeId===committee.id&&cm.memberId===memberId);
-}
 function isWelfareCommitteeNow(){
   const s=sessionStorage.getItem(SESSION_KEY)||'';
-  if(!s.startsWith('member:'))return false;
-  const memberId=s.slice(7);
-  if(isMemberOfCommittee('Welfare Committee',memberId))return true;
-  // Legacy fallback: members still only tagged via the old role label
-  // (e.g. before the committees system existed) keep their access.
-  const m=DATA.members.find(x=>x.id===memberId);
-  return !!(m&&m.role==='Welfare Committee');
+  if(s.startsWith('member:')){const m=DATA.members.find(x=>x.id===s.slice(7));return !!(m&&m.role==='Welfare Committee');}
+  return false;
 }
 function getCurrentMemberRecord(){
   const id=getCurrentMemberId();
@@ -4475,140 +4443,9 @@ async function deletePledge(id){
   }catch(e){showToast('Could not delete: '+(e.message||'unknown error'));}
 }
 
-/* ---------- Committees (add/remove committees and their members) ---------- */
-function pageCommittees(){
-  if(!isOfficerSessionNow()){
-    return `<div class="page-head"><div><h1>Committees</h1></div></div>
-    ${emptyState('This page is restricted','Only club officers can manage committees and their membership.')}`;
-  }
-  const committees=(DATA.committees||[]).slice().sort((a,b)=>a.name.localeCompare(b.name));
-  function committeeCard(c){
-    const members=(DATA.committeeMembers||[]).filter(cm=>cm.committeeId===c.id);
-    const chair=members.find(m=>m.isChair);
-    return `<div class="card" style="margin-bottom:14px;">
-      <div class="card-head">
-        <h2>${escHtml(c.name)}</h2>
-        <button type="button" class="icon-btn" onclick="deleteCommitteeConfirm('${c.id}','${escHtml(c.name).replace(/'/g,"&#39;")}')" aria-label="Delete committee"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2m2 0v14a1 1 0 01-1 1H6a1 1 0 01-1-1V6z"/></svg></button>
-      </div>
-      ${c.description?`<p class="cell-muted" style="margin:0 0 12px;">${escHtml(c.description)}</p>`:''}
-      <div style="margin-bottom:10px;">
-        ${members.length?members.map(cm=>{
-          const mem=DATA.members.find(m=>m.id===cm.memberId);
-          return `<div class="welfare-member-row">
-            <span style="flex:1;font-size:13.5px;">${escHtml(mem?mem.name:'Unknown member')}${cm.isChair?' <span class="badge badge-active" style="font-size:10px;margin-left:4px;">Chair</span>':''}</span>
-            ${!cm.isChair?`<button type="button" class="btn" style="font-size:11.5px;padding:3px 8px;margin-right:6px;" onclick="setCommitteeChair('${c.id}','${cm.memberId}')">Make chair</button>`:''}
-            <button type="button" class="icon-btn" onclick="removeCommitteeMemberConfirm('${c.id}','${cm.memberId}')" aria-label="Remove"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
-          </div>`;
-        }).join(''):'<p class="cell-muted" style="font-size:13px;">No members assigned yet.</p>'}
-      </div>
-      <button type="button" class="btn" style="font-size:12.5px;padding:6px 14px;" onclick="openAddCommitteeMember('${c.id}')">+ Add member</button>
-    </div>`;
-  }
-  return `<div class="page-head">
-    <div><h1>Committees</h1><div class="sub">Add or remove committees and assign members</div></div>
-    <button type="button" class="btn btn-primary" onclick="openAddCommittee()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M12 5v14M5 12h14"/></svg>New committee</button>
-  </div>
-  ${committees.length?committees.map(committeeCard).join(''):emptyState('No committees yet','Create your first committee, e.g. Welfare Committee or Project Committee.')}`;
-}
-
-function openAddCommittee(){
-  openModal(`<h3>New Committee</h3>
-    <div class="field"><label>Name</label><input type="text" id="cm-name" placeholder="e.g. Building Committee"/></div>
-    <div class="field"><label>Description (optional)</label><textarea id="cm-desc" rows="3" placeholder="What does this committee do?"></textarea></div>
-    <div class="modal-actions"><button type="button" class="btn" onclick="closeModal()">Cancel</button><button type="button" class="btn btn-primary" onclick="submitAddCommittee()">Create</button></div>`);
-}
-
-async function submitAddCommittee(){
-  const name=(document.getElementById('cm-name').value||'').trim();
-  const desc=(document.getElementById('cm-desc').value||'').trim();
-  if(!name){showToast('Committee name is required.');return;}
-  const pin=getCurrentAuthPin();
-  const btn=document.querySelector('#modal-content .btn-primary');
-  if(btn){btn.disabled=true;btn.textContent='Creating\u2026';}
-  try{
-    const{error}=await sb.rpc('add_committee',{p_officer_pin:pin,p_id:uid(),p_name:name,p_description:desc});
-    if(error)throw error;
-    closeModal();
-    showToast('Committee created.');
-  }catch(e){
-    if(btn){btn.disabled=false;btn.textContent='Create';}
-    showToast('Could not create: '+(e.message||'unknown error'));
-  }
-}
-
-function deleteCommitteeConfirm(id,name){
-  if(!confirm(`Delete "${name}"? This removes all of its members too. This cannot be undone.`))return;
-  deleteCommittee(id);
-}
-async function deleteCommittee(id){
-  const pin=getCurrentAuthPin();
-  try{
-    const{error}=await sb.rpc('delete_committee',{p_officer_pin:pin,p_id:id});
-    if(error)throw error;
-    showToast('Committee deleted.');
-  }catch(e){showToast('Could not delete: '+(e.message||'unknown error'));}
-}
-
-function openAddCommitteeMember(committeeId){
-  const existingIds=new Set((DATA.committeeMembers||[]).filter(cm=>cm.committeeId===committeeId).map(cm=>cm.memberId));
-  const available=DATA.members.filter(m=>isActiveMember(m)&&!existingIds.has(m.id));
-  if(!available.length){showToast('All active members are already on this committee.');return;}
-  openModal(`<h3>Add Committee Member</h3>
-    <div class="field"><label>Member</label>
-      <select id="cm-member">${available.map(m=>`<option value="${m.id}">${escHtml(m.name)}</option>`).join('')}</select>
-    </div>
-    <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin-top:4px;">
-      <input type="checkbox" id="cm-is-chair" style="width:auto;"/> Make this member the chairperson
-    </label>
-    <div class="modal-actions"><button type="button" class="btn" onclick="closeModal()">Cancel</button><button type="button" class="btn btn-primary" onclick="submitAddCommitteeMember('${committeeId}')">Add</button></div>`);
-}
-
-async function submitAddCommitteeMember(committeeId){
-  const memberId=document.getElementById('cm-member').value;
-  const isChair=document.getElementById('cm-is-chair').checked;
-  const pin=getCurrentAuthPin();
-  const btn=document.querySelector('#modal-content .btn-primary');
-  if(btn){btn.disabled=true;btn.textContent='Adding\u2026';}
-  try{
-    const{error}=await sb.rpc('add_committee_member',{p_officer_pin:pin,p_id:uid(),p_committee_id:committeeId,p_member_id:memberId,p_is_chair:isChair});
-    if(error)throw error;
-    closeModal();
-    showToast('Member added.');
-  }catch(e){
-    if(btn){btn.disabled=false;btn.textContent='Add';}
-    showToast('Could not add: '+(e.message||'unknown error'));
-  }
-}
-
-function removeCommitteeMemberConfirm(committeeId,memberId){
-  if(!confirm('Remove this member from the committee?'))return;
-  removeCommitteeMember(committeeId,memberId);
-}
-async function removeCommitteeMember(committeeId,memberId){
-  const pin=getCurrentAuthPin();
-  try{
-    const{error}=await sb.rpc('remove_committee_member',{p_officer_pin:pin,p_committee_id:committeeId,p_member_id:memberId});
-    if(error)throw error;
-    showToast('Member removed.');
-  }catch(e){showToast('Could not remove: '+(e.message||'unknown error'));}
-}
-
-async function setCommitteeChair(committeeId,memberId){
-  const pin=getCurrentAuthPin();
-  try{
-    const{error}=await sb.rpc('add_committee_member',{p_officer_pin:pin,p_id:uid(),p_committee_id:committeeId,p_member_id:memberId,p_is_chair:true});
-    if(error)throw error;
-    showToast('Chairperson updated.');
-  }catch(e){showToast('Could not update: '+(e.message||'unknown error'));}
-}
-
 function pageWelfareLoansStandalone(){
   const isWc=isWelfareCommitteeNow();
   const canRelease=canReviewPaymentClaims(); // Treasurer / Financial Secretary
-  if(!isWc&&!canRelease){
-    return `<div class="page-head"><div><h1>Welfare loans</h1></div></div>
-    ${emptyState('This page is restricted','Only Welfare Committee members and the Treasurer/Financial Secretary can view welfare loan details. Contact the Welfare Committee if you have questions about a loan.')}`;
-  }
   const myId=getCurrentMemberId();
   const loans=(DATA.welfareLoans||[]).slice().sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
   const purse=(DATA.welfarePurse||[]).slice().sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
@@ -5125,7 +4962,6 @@ function render(){
   else if(currentPage==='welfare')main.innerHTML=pageWelfare();
   else if(currentPage==='pledges')main.innerHTML=pagePledges();
   else if(currentPage==='loans')main.innerHTML=pageWelfareLoansStandalone();
-  else if(currentPage==='committees')main.innerHTML=pageCommittees();
   else if(currentPage==='projects')main.innerHTML=pageProjects();
 }
 
@@ -5369,49 +5205,9 @@ function asstBuildContext(){
   const minutes=(DATA.minutes||[]).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(x=>'- ['+x.date+'] '+x.title+' ('+(x.type||'meeting')+'): '+String(x.notes||'').replace(/\s+/g,' ').slice(0,800)).join('\n');
   const members=DATA.members.map(m=>'- '+m.name+' \u2014 '+m.role+' ('+m.status+'); dues paid '+fmtMoney(m.duesPaid||0)).join('\n');
   const fin='Account balance: '+fmtMoney(balance)+'. Annual dues ('+(DATA.meta.duesYearLabel||'')+'): '+fmtMoney(expected)+'. Members fully paid up: '+paid+'. Members in arrears: '+overdue+'. Next AGM: '+(DATA.meta.nextAgmDate||'not set')+'.';
-
-  const news=(DATA.news||[]).slice().sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||'')).slice(0,15)
-    .map(n=>'- ['+new Date(n.createdAt).toISOString().slice(0,10)+'] '+n.title+' (by '+(n.author||'Club Secretary')+'): '+String(n.body||'').replace(/\s+/g,' ').slice(0,300)).join('\n');
-
-  const events=(DATA.events||[]).slice().sort((a,b)=>(a.date||'').localeCompare(b.date||''))
-    .map(e=>'- ['+e.date+(e.time?' '+e.time:'')+'] '+e.title+(e.location?' @ '+e.location:'')+(e.description?': '+String(e.description).replace(/\s+/g,' ').slice(0,200):'')).join('\n');
-
-  const pledges=(DATA.pledges||[]).slice().sort((a,b)=>(b.pledgeDate||'').localeCompare(a.pledgeDate||''));
-  const pledgeTotal=pledges.reduce((s,p)=>s+p.amount,0);
-  const pledgeList=pledges.map(p=>'- ['+p.pledgeDate+'] '+p.donorName+': '+fmtMoney(p.amount)+(p.purpose?' ('+p.purpose+')':'')).join('\n');
-  const pledgeSummary='Total pledged: '+fmtMoney(pledgeTotal)+' across '+pledges.length+' entries.';
-
-  const welfare=(DATA.welfareLoans||[]);
-  const activeLoans=welfare.filter(l=>l.status==='active');
-  const overdueLoans=activeLoans.filter(l=>l.dueDate&&l.dueDate<new Date().toISOString().slice(0,10)&&l.amountRepaid<l.amountDue);
-  const purse=(DATA.welfarePurse||[]);
-  const totalReleased=purse.filter(p=>p.entryType==='release').reduce((s,p)=>s+p.amount,0);
-  const totalExpenses=purse.filter(p=>p.entryType==='expense').reduce((s,p)=>s+p.amount,0);
-  const loanList=welfare.map(l=>{
-    const mem=DATA.members.find(m=>m.id===l.memberId);
-    return '- '+(mem?mem.name:'Member')+': '+fmtMoney(l.principal)+' principal, '+l.interestRate+'% interest, status: '+l.status+', repaid '+fmtMoney(l.amountRepaid)+' of '+fmtMoney(l.amountDue);
-  }).join('\n');
-  const welfareSummary='Welfare fund released to date: '+fmtMoney(totalReleased)+'. Non-loan welfare expenses: '+fmtMoney(totalExpenses)+'. Active loans: '+activeLoans.length+' (overdue: '+overdueLoans.length+').';
-
-  const welfareEvents=loadWelfare();
-  const welfareContribSummary=welfareEvents.length
-    ?welfareEvents.map(w=>{
-      const total=(w.contributions||[]).reduce((s,c)=>s+Number(c.amount||0),0);
-      return '- '+w.title+' ('+w.date+'): '+fmtMoney(total)+' collected';
-    }).join('\n')
-    :'No welfare contribution events on record.';
-
-  return '=== CONSTITUTION ===\n'+getConstitutionText()
-    +'\n\n=== MEETING MINUTES (newest first) ===\n'+(minutes||'No minutes on record.')
-    +'\n\n=== FINANCE SUMMARY ===\n'+fin
-    +'\n\n=== MEMBER DIRECTORY ===\n'+members
-    +'\n\n=== NEWS & NOTICES (most recent 15) ===\n'+(news||'No notices on record.')
-    +'\n\n=== UPCOMING/PAST EVENTS ===\n'+(events||'No events on record.')
-    +'\n\n=== BUILDING PROJECT PLEDGES ===\n'+pledgeSummary+'\n'+(pledgeList||'No pledges on record.')
-    +'\n\n=== WELFARE CONTRIBUTIONS ===\n'+welfareContribSummary
-    +'\n\n=== WELFARE COMMITTEE LOANS ===\n'+welfareSummary+'\n'+(loanList||'No loans on record.');
+  return '=== CONSTITUTION ===\n'+getConstitutionText()+'\n\n=== MEETING MINUTES (newest first) ===\n'+(minutes||'No minutes on record.')+'\n\n=== FINANCE SUMMARY ===\n'+fin+'\n\n=== MEMBER DIRECTORY ===\n'+members;
 }
-const ASST_PREAMBLE='You are the Oasis Assistant for the Oasis Club of Otun Ekiti. Answer the member\u2019s questions using ONLY the club information provided below (constitution, meeting minutes, finance summary, member directory, news, events, pledges, welfare contributions, and welfare committee loans). Rules: if the answer is not in the data, say you do not have it on record and suggest contacting the relevant officer (e.g. the Secretary or Treasurer). Be concise, warm and clear \u2014 two or three sentences is usually enough. When you state a fact, briefly note its source, e.g. "(Article 4)" or "(per the April minutes)". Never invent names, figures or dates. Use Naira (\u20a6) for money.';
+const ASST_PREAMBLE='You are the Oasis Assistant for the Oasis Club of Otun Ekiti. Answer the member\u2019s questions using ONLY the club information provided below (constitution, meeting minutes, finance summary, member directory). Rules: if the answer is not in the data, say you do not have it on record and suggest contacting the relevant officer (e.g. the Secretary or Treasurer). Be concise, warm and clear \u2014 two or three sentences is usually enough. When you state a fact, briefly note its source, e.g. "(Article 4)" or "(per the April minutes)". Never invent names, figures or dates. Use Naira (\u20a6) for money.';
 const ASST_SUGGESTIONS=['When is the next meeting?','Maximum number of members?','How much is in the account?','Who are the officers?','What are the dues this year?'];
 
 /* ---- Oasis Assistant — Gemini AI + local fallback ---- */
@@ -5637,42 +5433,9 @@ function localAsstAnswer(messages){
     const last=mins[0];
     return 'Most recent: **'+last.title+'** ('+last.date+'). '+mins.length+' meeting(s) on record total.';
   }
-  if(/news|notice|announcement|post/.test(q)){
-    const news=(DATA.news||[]).slice().sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
-    if(!news.length) return 'No notices have been posted yet.';
-    const last=news[0];
-    return 'Latest notice: **'+last.title+'** (by '+(last.author||'Club Secretary')+'). '+news.length+' notice(s) on record. See the News & Notices page for all of them.';
-  }
-  if(/\bevent\b|upcoming|programme|program(?!me)|outing/.test(q)){
-    const events=(DATA.events||[]).slice().sort((a,b)=>(a.date||'').localeCompare(b.date||''));
-    const today=new Date().toISOString().slice(0,10);
-    const upcoming=events.filter(e=>e.date>=today);
-    if(!upcoming.length) return 'No upcoming events scheduled at the moment.';
-    const next=upcoming[0];
-    return 'Next event: **'+next.title+'** on '+fmtDate(next.date)+(next.location?' at '+next.location:'')+'. '+upcoming.length+' upcoming event(s) in total.';
-  }
-  if(/pledge|building project|donat/.test(q)){
-    const pledges=DATA.pledges||[];
-    if(!pledges.length) return 'No pledges have been recorded yet.';
-    const total=pledges.reduce((s,p)=>s+p.amount,0);
-    return 'Total pledged towards the building project: **'+fmt(total)+'** across **'+pledges.length+'** entries. See the Pledges page for the full list.';
-  }
-  if(/welfare.*loan|loan.*welfare|borrow|loan.*status/.test(q)){
-    const loans=DATA.welfareLoans||[];
-    if(!loans.length) return 'No welfare loans have been recorded.';
-    const active2=loans.filter(l=>l.status==='active');
-    const overdue2=active2.filter(l=>l.dueDate&&l.dueDate<new Date().toISOString().slice(0,10)&&l.amountRepaid<l.amountDue);
-    return '**'+loans.length+'** welfare loan(s) on record \u2014 **'+active2.length+'** currently active, **'+overdue2.length+'** overdue. See the Welfare Loans page for details. Note: loan details are only visible to the Welfare Committee.';
-  }
-  if(/welfare.*contribut|welfare.*fund|welfare.*levy/.test(q)){
-    const welfare=loadWelfare();
-    if(!welfare.length) return 'No welfare contributions have been recorded yet.';
-    const totalCollected=welfare.reduce((s,w)=>s+(w.contributions||[]).reduce((s2,c)=>s2+Number(c.amount||0),0),0);
-    return 'Total welfare contributions on record: **'+fmt(totalCollected)+'** across **'+welfare.length+'** event(s). See the Welfare Contributions page for details.';
-  }
   if(/\b(hi|hello|hey)\b|good (morning|afternoon|evening)/.test(q))
-    return "Hello! I'm the Oasis Assistant. Ask me about dues, finances, members, meetings, news, events, pledges, or welfare.";
-  return "I don't have a specific answer for that. Try: **dues**, **account balance**, **officers**, **next meeting**, **quorum**, **news**, **events**, **pledges**, or **welfare**.";
+    return "Hello! I'm the Oasis Assistant. Ask me about dues, finances, members, meetings, or the constitution.";
+  return "I don't have a specific answer for that. Try: **dues**, **account balance**, **officers**, **next meeting**, **quorum**, or **AGM**.";
 }
 
 async function asstCall(system,messages){
