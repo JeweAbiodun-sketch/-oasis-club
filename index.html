@@ -3457,6 +3457,7 @@ async function submitFirstPin(){
   member.pin=a;
   sessionStorage.setItem(SESSION_KEY,v);
   recordLogin(member.id);
+  void setMemberOnlineAfterLogin(member);
   document.getElementById('pin-gate').classList.remove('show');
   errEl.textContent='';
   updateNavForSession();
@@ -3505,10 +3506,12 @@ function checkPin(){
   if(member.pin===pin){
     sessionStorage.setItem(SESSION_KEY,value);
     recordLogin(member.id);
+    void setMemberOnlineAfterLogin(member);
     document.getElementById('pin-gate').classList.remove('show');
     errEl.textContent='';
     updateNavForSession();
     showToast('Welcome, '+member.name);
+    render();
   }else{
     errEl.textContent='Incorrect PIN. Please try again.';
     document.getElementById('pin-input').value='';document.getElementById('pin-input').focus();
@@ -4072,16 +4075,37 @@ function getCurrentMemberRecord(){
   return id?DATA.members.find(m=>m.id===id):null;
 }
 
+function setMemberOnlineLocally(memberId,isOnline){
+  const mem=DATA.members.find(m=>m.id===memberId);
+  if(mem)mem.isOnline=!!isOnline;
+}
+
+async function setMemberOnlineAfterLogin(member){
+  if(!member||!member.pin)return;
+  setMemberOnlineLocally(member.id,true);
+  try{
+    const{error}=await sb.rpc('set_member_online_status',{p_member_pin:member.pin,p_is_online:true});
+    if(error)throw error;
+  }catch(e){
+    showToast('Could not set online status: '+(e.message||'unknown error'));
+  }
+}
+
 async function toggleMyOnlineStatus(isOnline){
   const mem=getCurrentMemberRecord();
   if(!mem)return;
+  const prevState=!!mem.isOnline;
+  setMemberOnlineLocally(mem.id,isOnline);
+  const toggle=document.getElementById('pf-online-toggle');
+  if(toggle)toggle.checked=!!isOnline;
   try{
     const{error}=await sb.rpc('set_member_online_status',{p_member_pin:mem.pin,p_is_online:isOnline});
     if(error)throw error;
+    render();
   }catch(e){
+    setMemberOnlineLocally(mem.id,prevState);
     showToast('Could not update status: '+(e.message||'unknown error'));
-    const toggle=document.getElementById('pf-online-toggle');
-    if(toggle)toggle.checked=!isOnline;
+    if(toggle)toggle.checked=prevState;
   }
 }
 
