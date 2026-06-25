@@ -1,11 +1,17 @@
 // Bump this to match APP_VERSION in index.html every time you publish an update.
 // Changing this string is what makes the browser treat this as a "new" service worker.
-const APP_VERSION = '2026-06-20-01';
+const APP_VERSION = '2026-06-25-1';
 const CACHE_NAME = 'oasis-club-cache-' + APP_VERSION;
 
 const PRECACHE_URLS = [
   './',
-  './index.html'
+  './index.html',
+  './manifest.webmanifest',
+  './icons/icon-192.png',
+  './icons/icon-512.png',
+  './icons/icon-maskable-192.png',
+  './icons/icon-maskable-512.png',
+  './icons/apple-touch-icon.png'
 ];
 
 self.addEventListener('install', (event) => {

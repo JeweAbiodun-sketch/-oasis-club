@@ -12,6 +12,10 @@ create table if not exists club_news_pending (
   submitted_by_member_id text not null,
   created_at timestamptz not null default now()
 );
+alter table club_news_pending add column if not exists attachment_url text;
+alter table club_news_pending add column if not exists attachment_name text;
+alter table club_news_pending add column if not exists attachment_mime text;
+alter table club_news_pending add column if not exists attachment_path text;
 
 alter table club_news_pending enable row level security;
 
@@ -33,7 +37,11 @@ create or replace function submit_member_news(
   p_id text,
   p_title text,
   p_body text,
-  p_author text
+  p_author text,
+  p_attachment_url text default null,
+  p_attachment_name text default null,
+  p_attachment_mime text default null,
+  p_attachment_path text default null
 ) returns void
 language plpgsql
 security definer
@@ -46,8 +54,8 @@ begin
     raise exception 'Invalid member PIN';
   end if;
 
-  insert into club_news_pending (id, title, body, author, submitted_by_member_id)
-  values (p_id, p_title, p_body, p_author, v_member_id);
+  insert into club_news_pending (id, title, body, author, submitted_by_member_id, attachment_url, attachment_name, attachment_mime, attachment_path)
+  values (p_id, p_title, p_body, p_author, v_member_id, p_attachment_url, p_attachment_name, p_attachment_mime, p_attachment_path);
 end;
 $$;
 
@@ -81,8 +89,8 @@ begin
     raise exception 'Post not found';
   end if;
 
-  insert into club_news (id, title, body, author, created_at)
-  values (v_row.id, v_row.title, v_row.body, v_row.author, v_row.created_at);
+  insert into club_news (id, title, body, author, created_at, attachment_url, attachment_name, attachment_mime, attachment_path)
+  values (v_row.id, v_row.title, v_row.body, v_row.author, v_row.created_at, v_row.attachment_url, v_row.attachment_name, v_row.attachment_mime, v_row.attachment_path);
 
   delete from club_news_pending where id = p_id;
 end;
@@ -116,7 +124,7 @@ $$;
 -- ------------------------------------------------------------
 -- 5. Allow the anon/authenticated client roles to call these functions.
 -- ------------------------------------------------------------
-grant execute on function submit_member_news(text, text, text, text, text) to anon, authenticated;
+grant execute on function submit_member_news(text, text, text, text, text, text, text, text, text) to anon, authenticated;
 grant execute on function approve_member_news(text, text) to anon, authenticated;
 grant execute on function reject_member_news(text, text) to anon, authenticated;
 

@@ -24,6 +24,10 @@ create table if not exists club_news (
   author text default 'Club Secretary',
   created_at timestamptz not null default now()
 );
+alter table club_news add column if not exists attachment_url text;
+alter table club_news add column if not exists attachment_name text;
+alter table club_news add column if not exists attachment_mime text;
+alter table club_news add column if not exists attachment_path text;
 
 create table if not exists club_polls (
   id text primary key,
@@ -120,7 +124,11 @@ create or replace function add_club_news(
   p_id text,
   p_title text,
   p_body text,
-  p_author text
+  p_author text,
+  p_attachment_url text default null,
+  p_attachment_name text default null,
+  p_attachment_mime text default null,
+  p_attachment_path text default null
 ) returns void
 language plpgsql
 security definer
@@ -129,8 +137,8 @@ begin
   if not is_officer_pin(p_officer_pin) then
     raise exception 'Not authorized to post notices';
   end if;
-  insert into club_news (id, title, body, author)
-  values (p_id, p_title, p_body, coalesce(p_author,'Club Secretary'));
+  insert into club_news (id, title, body, author, attachment_url, attachment_name, attachment_mime, attachment_path)
+  values (p_id, p_title, p_body, coalesce(p_author,'Club Secretary'), p_attachment_url, p_attachment_name, p_attachment_mime, p_attachment_path);
 end;
 $$;
 
@@ -252,7 +260,7 @@ $$;
 grant execute on function is_officer_pin(text) to anon, authenticated;
 grant execute on function add_club_event(text, text, text, date, text, text, text, text) to anon, authenticated;
 grant execute on function delete_club_event(text, text) to anon, authenticated;
-grant execute on function add_club_news(text, text, text, text, text) to anon, authenticated;
+grant execute on function add_club_news(text, text, text, text, text, text, text, text, text) to anon, authenticated;
 grant execute on function delete_club_news(text, text) to anon, authenticated;
 grant execute on function add_club_poll(text, text, text, jsonb, text, text) to anon, authenticated;
 grant execute on function delete_club_poll(text, text) to anon, authenticated;

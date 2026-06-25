@@ -24,6 +24,10 @@ CREATE TABLE IF NOT EXISTS club_news (
   author     TEXT NOT NULL DEFAULT 'Club Secretary',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+ALTER TABLE club_news ADD COLUMN IF NOT EXISTS attachment_url  TEXT;
+ALTER TABLE club_news ADD COLUMN IF NOT EXISTS attachment_name TEXT;
+ALTER TABLE club_news ADD COLUMN IF NOT EXISTS attachment_mime TEXT;
+ALTER TABLE club_news ADD COLUMN IF NOT EXISTS attachment_path TEXT;
 
 CREATE TABLE IF NOT EXISTS club_polls (
   id         TEXT PRIMARY KEY,
@@ -39,6 +43,30 @@ CREATE TABLE IF NOT EXISTS club_polls (
 ALTER TABLE club_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE club_news   ENABLE ROW LEVEL SECURITY;
 ALTER TABLE club_polls  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE club_news ADD COLUMN IF NOT EXISTS attachment_url  TEXT;
+ALTER TABLE club_news ADD COLUMN IF NOT EXISTS attachment_name TEXT;
+ALTER TABLE club_news ADD COLUMN IF NOT EXISTS attachment_mime TEXT;
+ALTER TABLE club_news ADD COLUMN IF NOT EXISTS attachment_path TEXT;
+
+-- News attachments bucket used by notice posts
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('news-attachments', 'news-attachments', true)
+ON CONFLICT (id) DO NOTHING;
+
+DO $$ BEGIN
+  CREATE POLICY "news_attachments_select" ON storage.objects
+    FOR SELECT USING (bucket_id = 'news-attachments');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "news_attachments_insert" ON storage.objects
+    FOR INSERT WITH CHECK (bucket_id = 'news-attachments');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "news_attachments_update" ON storage.objects
+    FOR UPDATE USING (bucket_id = 'news-attachments');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- Everyone can read (anon key is used in the app)
 DO $$ BEGIN
@@ -103,14 +131,18 @@ CREATE OR REPLACE FUNCTION add_club_news(
   p_id          TEXT,
   p_title       TEXT,
   p_body        TEXT,
-  p_author      TEXT DEFAULT 'Club Secretary'
+  p_author      TEXT DEFAULT 'Club Secretary',
+  p_attachment_url  TEXT DEFAULT NULL,
+  p_attachment_name TEXT DEFAULT NULL,
+  p_attachment_mime TEXT DEFAULT NULL,
+  p_attachment_path TEXT DEFAULT NULL
 ) RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS $$
 BEGIN
   IF NOT is_officer_pin(p_officer_pin) THEN
     RAISE EXCEPTION 'Unauthorized: invalid officer PIN';
   END IF;
-  INSERT INTO club_news(id, title, body, author)
-  VALUES (p_id, p_title, p_body, p_author)
+  INSERT INTO club_news(id, title, body, author, attachment_url, attachment_name, attachment_mime, attachment_path)
+  VALUES (p_id, p_title, p_body, p_author, p_attachment_url, p_attachment_name, p_attachment_mime, p_attachment_path)
   ON CONFLICT (id) DO NOTHING;
 END;
 $$;
@@ -210,7 +242,7 @@ $$;
 GRANT EXECUTE ON FUNCTION is_officer_pin(TEXT)                              TO anon;
 GRANT EXECUTE ON FUNCTION add_club_event(TEXT,TEXT,TEXT,TEXT,TEXT,TEXT,TEXT,TEXT) TO anon;
 GRANT EXECUTE ON FUNCTION delete_club_event(TEXT,TEXT)                      TO anon;
-GRANT EXECUTE ON FUNCTION add_club_news(TEXT,TEXT,TEXT,TEXT,TEXT)           TO anon;
+GRANT EXECUTE ON FUNCTION add_club_news(TEXT,TEXT,TEXT,TEXT,TEXT,TEXT,TEXT,TEXT,TEXT) TO anon;
 GRANT EXECUTE ON FUNCTION delete_club_news(TEXT,TEXT)                       TO anon;
 GRANT EXECUTE ON FUNCTION add_club_poll(TEXT,TEXT,TEXT,JSONB,TEXT,TEXT)     TO anon;
 GRANT EXECUTE ON FUNCTION vote_club_poll(TEXT,TEXT,TEXT,TEXT)               TO anon;
