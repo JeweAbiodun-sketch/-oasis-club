@@ -172,6 +172,8 @@ tr:hover td{background:var(--cream);}
 .task-card-actions{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;}
 .task-move-btn{font-size:11px;font-weight:500;padding:5px 9px;border-radius:6px;border:1px solid var(--line-soft);background:#FAF7F0;color:var(--ink);cursor:pointer;}
 .task-move-btn:hover{background:var(--teal-light);border-color:var(--teal);color:var(--teal-dark);}
+.welfare-member-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line-soft);}
+.welfare-member-row:last-child{border-bottom:none;}
 
 /* dues grid */
 .dues-grid{overflow-x:auto;}
@@ -297,6 +299,7 @@ tr:hover td{background:var(--cream);}
   <button class="navlink" data-page="minutes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Meeting minutes</button>
   <button class="navlink" data-page="finance"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 17l5-5 4 4 8-8"/><path d="M14 7h6v6"/></svg>Financial year</button>
   <button class="navlink" data-page="committee"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l3 6 6.5.6-5 4.4 1.5 6.4L12 16l-6 3.4L7.5 13l-5-4.4L9 8z"/></svg>Committee &amp; quorum</button>
+  <button class="navlink" id="nav-committees" data-page="committees" style="display:none;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="7" r="3"/><circle cx="17" cy="7" r="2.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M14.5 14.2c2.5.3 4.5 2.3 4.5 5.8"/></svg>Committees</button>
   <button class="navlink" data-page="constitution"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2h9l5 5v15H6z"/><path d="M15 2v5h5"/><path d="M9 13h6M9 17h6M9 9h2"/></svg>Constitution</button>
 
   <div class="nav-divider"></div>
@@ -324,7 +327,7 @@ tr:hover td{background:var(--cream);}
 <script>
 /* Bump this string every time you publish changes to GitHub.
    This is what tells everyone's app that a newer version exists. */
-const APP_VERSION='2026-06-25-3';
+const APP_VERSION='2026-06-26-1';
 const STORE_KEY='oasis-club-data-v1';
 let DATA={members:[
   {
@@ -723,7 +726,7 @@ let DATA={members:[
     "amount": 25000,
     "date": "2026-03-30"
   }
-],meta:{financialYearStart:'2025-10-01',annualDueAmount:50000,duesYearLabel:'2025/2026',quorumNote:'',nextAgmDate:'2026-12-26'},newsPosts:[],tasks:[],paymentSubmissions:[]};
+],meta:{financialYearStart:'2025-10-01',annualDueAmount:50000,duesYearLabel:'2025/2026',quorumNote:'',nextAgmDate:'2026-12-26'},newsPosts:[],tasks:[],paymentSubmissions:[],committees:[],committeeMembers:[]};
 let currentPage='overview';
 const MONTHS=['Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep'];
 const MONTH_KEYS=['2025-10','2025-11','2025-12','2026-01','2026-02','2026-03','2026-04','2026-05','2026-06','2026-07','2026-08','2026-09'];
@@ -797,6 +800,12 @@ function rowsToPaymentSubmissions(rows){
     createdAt:r.created_at
   })).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
 }
+function rowsToCommittees(rows){
+  return rows.map(r=>({id:r.id,name:r.name,description:r.description||'',createdAt:r.created_at}));
+}
+function rowsToCommitteeMembers(rows){
+  return rows.map(r=>({id:r.id,committeeId:r.committee_id,memberId:r.member_id,isChair:!!r.is_chair,addedAt:r.added_at}));
+}
 function rowToMeta(r){
   if(!r)return{financialYearStart:'2025-10-01',annualDueAmount:50000,duesYearLabel:'2025/2026',quorumNote:'',nextAgmDate:'2026-12-26',termStart:'',constitutionUrl:'',constitutionUploadedAt:''};
   return{
@@ -815,7 +824,7 @@ async function loadData(){
   if(typeof window.supabase==='undefined'){
     console.error('Supabase library failed to load \u2014 check internet connection.');
     connectionStatus='offline';
-    DATA={members:[],minutes:[],transactions:[],meta:rowToMeta(null),newsPosts:[],tasks:[],paymentSubmissions:[]};
+    DATA={members:[],minutes:[],transactions:[],meta:rowToMeta(null),newsPosts:[],tasks:[],paymentSubmissions:[],committees:[],committeeMembers:[]};
     return;
   }
   sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
@@ -825,17 +834,19 @@ async function loadData(){
 
 async function fetchAllData(){
   try{
-    const[membersRes,minutesRes,txRes,metaRes,newsRes,tasksRes,paymentsRes]=await Promise.all([
+    const[membersRes,minutesRes,txRes,metaRes,newsRes,tasksRes,paymentsRes,committeesRes,committeeMembersRes]=await Promise.all([
       sb.from('members').select('*'),
       sb.from('minutes').select('*'),
       sb.from('transactions').select('*'),
       sb.from('club_meta').select('*').eq('id',1).maybeSingle(),
       sb.from('news_posts').select('*'),
       sb.from('tasks').select('*'),
-      sb.from('payment_submissions').select('*')
+      sb.from('payment_submissions').select('*'),
+      sb.from('committees').select('*').order('created_at',{ascending:true}),
+      sb.from('committee_members').select('*')
     ]);
-    if(membersRes.error||minutesRes.error||txRes.error||metaRes.error||newsRes.error||tasksRes.error||paymentsRes.error){
-      throw membersRes.error||minutesRes.error||txRes.error||metaRes.error||newsRes.error||tasksRes.error||paymentsRes.error;
+    if(membersRes.error||minutesRes.error||txRes.error||metaRes.error||newsRes.error||tasksRes.error||paymentsRes.error||committeesRes.error||committeeMembersRes.error){
+      throw membersRes.error||minutesRes.error||txRes.error||metaRes.error||newsRes.error||tasksRes.error||paymentsRes.error||committeesRes.error||committeeMembersRes.error;
     }
     DATA={
       members:rowsToMembers(membersRes.data||[]),
@@ -844,13 +855,15 @@ async function fetchAllData(){
       meta:rowToMeta(metaRes.data),
       newsPosts:rowsToNewsPosts(newsRes.data||[]),
       tasks:rowsToTasks(tasksRes.data||[]),
-      paymentSubmissions:rowsToPaymentSubmissions(paymentsRes.data||[])
+      paymentSubmissions:rowsToPaymentSubmissions(paymentsRes.data||[]),
+      committees:rowsToCommittees(committeesRes.data||[]),
+      committeeMembers:rowsToCommitteeMembers(committeeMembersRes.data||[])
     };
     connectionStatus='connected';
   }catch(e){
     console.error('Failed to load from Supabase:',e);
     connectionStatus='offline';
-    if(!DATA||!DATA.members)DATA={members:[],minutes:[],transactions:[],meta:rowToMeta(null),newsPosts:[],tasks:[],paymentSubmissions:[]};
+    if(!DATA||!DATA.members)DATA={members:[],minutes:[],transactions:[],meta:rowToMeta(null),newsPosts:[],tasks:[],paymentSubmissions:[],committees:[],committeeMembers:[]};
   }
 }
 
@@ -864,6 +877,8 @@ function subscribeToRealtime(){
     .on('postgres_changes',{event:'*',schema:'public',table:'news_posts'},handleRealtimeChange)
     .on('postgres_changes',{event:'*',schema:'public',table:'tasks'},handleRealtimeChange)
     .on('postgres_changes',{event:'*',schema:'public',table:'payment_submissions'},handleRealtimeChange)
+    .on('postgres_changes',{event:'*',schema:'public',table:'committees'},handleRealtimeChange)
+    .on('postgres_changes',{event:'*',schema:'public',table:'committee_members'},handleRealtimeChange)
     .subscribe(status=>{
       if(status==='SUBSCRIBED'){connectionStatus='connected';render();}
       else if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'||status==='CLOSED'){connectionStatus='offline';render();}
@@ -1916,6 +1931,135 @@ function pageCommittee(){
 }
 function addYears(dateStr,years){
   const d=new Date(dateStr+'T00:00:00');d.setFullYear(d.getFullYear()+years);return d.toISOString().slice(0,10);
+}
+
+/* ============ SUB-COMMITTEES ============ */
+// Distinct from the officer roster page above ("Committee"). This lets
+// officers create named sub-committees (e.g. "Welfare Committee") and
+// assign active members to them, with one chairperson each. Other
+// features (Welfare Loans) check membership of these via
+// isMemberOfCommittee() for access.
+function isMemberOfCommittee(committeeName,memberId){
+  const committee=(DATA.committees||[]).find(c=>c.name===committeeName);
+  if(!committee)return false;
+  return (DATA.committeeMembers||[]).some(cm=>cm.committeeId===committee.id&&cm.memberId===memberId);
+}
+function pageCommittees(){
+  if(!isOfficerSessionNow()){
+    return `<div class="page-head"><div><h1>Committees</h1></div></div>
+    ${emptyState('This page is restricted','Only club officers can manage committees and their membership.')}`;
+  }
+  const committees=(DATA.committees||[]).slice().sort((a,b)=>a.name.localeCompare(b.name));
+  function committeeCard(c){
+    const members=(DATA.committeeMembers||[]).filter(cm=>cm.committeeId===c.id);
+    return `<div class="card" style="margin-bottom:14px;">
+      <div class="card-head">
+        <h2>${escHtml(c.name)}</h2>
+        <button type="button" class="icon-btn" onclick="deleteCommitteeConfirm('${c.id}','${escHtml(c.name).replace(/'/g,"&#39;")}')" aria-label="Delete committee"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2m2 0v14a1 1 0 01-1 1H6a1 1 0 01-1-1V6z"/></svg></button>
+      </div>
+      ${c.description?`<p class="cell-muted" style="margin:0 0 12px;">${escHtml(c.description)}</p>`:''}
+      <div style="margin-bottom:10px;">
+        ${members.length?members.map(cm=>{
+          const mem=DATA.members.find(m=>m.id===cm.memberId);
+          return `<div class="welfare-member-row">
+            <span style="flex:1;font-size:13.5px;">${escHtml(mem?mem.name:'Unknown member')}${cm.isChair?' <span class="badge badge-active" style="font-size:10px;margin-left:4px;">Chair</span>':''}</span>
+            ${!cm.isChair?`<button type="button" class="btn" style="font-size:11.5px;padding:3px 8px;margin-right:6px;" onclick="setCommitteeChair('${c.id}','${cm.memberId}')">Make chair</button>`:''}
+            <button type="button" class="icon-btn" onclick="removeCommitteeMemberConfirm('${c.id}','${cm.memberId}')" aria-label="Remove"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+          </div>`;
+        }).join(''):'<p class="cell-muted" style="font-size:13px;">No members assigned yet.</p>'}
+      </div>
+      <button type="button" class="btn" style="font-size:12.5px;padding:6px 14px;" onclick="openAddCommitteeMember('${c.id}')">+ Add member</button>
+    </div>`;
+  }
+  return `<div class="page-head">
+    <div><h1>Committees</h1><div class="sub">Add or remove committees and assign members</div></div>
+    <button type="button" class="btn btn-primary" onclick="openAddCommittee()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M12 5v14M5 12h14"/></svg>New committee</button>
+  </div>
+  ${committees.length?committees.map(committeeCard).join(''):emptyState('No committees yet','Create your first committee, e.g. Welfare Committee or Project Committee.')}`;
+}
+function openAddCommittee(){
+  openModal(`<h3>New Committee</h3>
+    <div class="field"><label>Name</label><input type="text" id="cm-name" placeholder="e.g. Building Committee"/></div>
+    <div class="field"><label>Description (optional)</label><textarea id="cm-desc" rows="3" placeholder="What does this committee do?"></textarea></div>
+    <div class="modal-actions"><button type="button" class="btn" onclick="closeModal()">Cancel</button><button type="button" class="btn btn-primary" onclick="submitAddCommittee()">Create</button></div>`);
+}
+async function submitAddCommittee(){
+  const name=(document.getElementById('cm-name').value||'').trim();
+  const desc=(document.getElementById('cm-desc').value||'').trim();
+  if(!name){showToast('Committee name is required.');return;}
+  const pin=getCurrentAuthPin();
+  const btn=document.querySelector('#modal-content .btn-primary');
+  if(btn){btn.disabled=true;btn.textContent='Creating\u2026';}
+  try{
+    const{error}=await sb.rpc('add_committee',{p_officer_pin:pin,p_id:uid(),p_name:name,p_description:desc});
+    if(error)throw error;
+    closeModal();
+    showToast('Committee created.');
+  }catch(e){
+    if(btn){btn.disabled=false;btn.textContent='Create';}
+    showToast('Could not create: '+(e.message||'unknown error'));
+  }
+}
+function deleteCommitteeConfirm(id,name){
+  if(!confirm(`Delete "${name}"? This removes all of its members too. This cannot be undone.`))return;
+  deleteCommittee(id);
+}
+async function deleteCommittee(id){
+  const pin=getCurrentAuthPin();
+  try{
+    const{error}=await sb.rpc('delete_committee',{p_officer_pin:pin,p_id:id});
+    if(error)throw error;
+    showToast('Committee deleted.');
+  }catch(e){showToast('Could not delete: '+(e.message||'unknown error'));}
+}
+function openAddCommitteeMember(committeeId){
+  const existingIds=new Set((DATA.committeeMembers||[]).filter(cm=>cm.committeeId===committeeId).map(cm=>cm.memberId));
+  const available=DATA.members.filter(m=>isActiveMember(m)&&!existingIds.has(m.id));
+  if(!available.length){showToast('All active members are already on this committee.');return;}
+  openModal(`<h3>Add Committee Member</h3>
+    <div class="field"><label>Member</label>
+      <select id="cm-member">${available.map(m=>`<option value="${m.id}">${escHtml(m.name)}</option>`).join('')}</select>
+    </div>
+    <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin-top:4px;">
+      <input type="checkbox" id="cm-is-chair" style="width:auto;"/> Make this member the chairperson
+    </label>
+    <div class="modal-actions"><button type="button" class="btn" onclick="closeModal()">Cancel</button><button type="button" class="btn btn-primary" onclick="submitAddCommitteeMember('${committeeId}')">Add</button></div>`);
+}
+async function submitAddCommitteeMember(committeeId){
+  const memberId=document.getElementById('cm-member').value;
+  const isChair=document.getElementById('cm-is-chair').checked;
+  const pin=getCurrentAuthPin();
+  const btn=document.querySelector('#modal-content .btn-primary');
+  if(btn){btn.disabled=true;btn.textContent='Adding\u2026';}
+  try{
+    const{error}=await sb.rpc('add_committee_member',{p_officer_pin:pin,p_id:uid(),p_committee_id:committeeId,p_member_id:memberId,p_is_chair:isChair});
+    if(error)throw error;
+    closeModal();
+    showToast('Member added.');
+  }catch(e){
+    if(btn){btn.disabled=false;btn.textContent='Add';}
+    showToast('Could not add: '+(e.message||'unknown error'));
+  }
+}
+function removeCommitteeMemberConfirm(committeeId,memberId){
+  if(!confirm('Remove this member from the committee?'))return;
+  removeCommitteeMember(committeeId,memberId);
+}
+async function removeCommitteeMember(committeeId,memberId){
+  const pin=getCurrentAuthPin();
+  try{
+    const{error}=await sb.rpc('remove_committee_member',{p_officer_pin:pin,p_committee_id:committeeId,p_member_id:memberId});
+    if(error)throw error;
+    showToast('Member removed.');
+  }catch(e){showToast('Could not remove: '+(e.message||'unknown error'));}
+}
+async function setCommitteeChair(committeeId,memberId){
+  const pin=getCurrentAuthPin();
+  try{
+    const{error}=await sb.rpc('add_committee_member',{p_officer_pin:pin,p_id:uid(),p_committee_id:committeeId,p_member_id:memberId,p_is_chair:true});
+    if(error)throw error;
+    showToast('Chairperson updated.');
+  }catch(e){showToast('Could not update: '+(e.message||'unknown error'));}
 }
 
 /* ============ CONSTITUTION ============ */
@@ -2993,6 +3137,8 @@ function updateNavForSession(){
   if(navProfile)navProfile.style.display=getCurrentMemberId()?'':'none';
   const navPaymentReview=document.getElementById('nav-payment-review');
   if(navPaymentReview)navPaymentReview.style.display=(isTreasurerSessionNow()||isFinancialSecretarySessionNow())?'':'none';
+  const navCommittees=document.getElementById('nav-committees');
+  if(navCommittees)navCommittees.style.display=isOfficerSessionNow()?'':'none';
 }
 function lockApp(){
   sessionStorage.removeItem(SESSION_KEY);
@@ -3018,6 +3164,7 @@ function render(){
   else if(currentPage==='news'){main.innerHTML=pageNews();setupNewsPage();}
   else if(currentPage==='tasks'){main.innerHTML=pageTasks();setupTasksPage();}
   else if(currentPage==='payment-review')main.innerHTML=pagePaymentReview();
+  else if(currentPage==='committees')main.innerHTML=pageCommittees();
   updateNewsBadge();
   updatePaymentBadge();
 }
