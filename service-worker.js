@@ -1,6 +1,6 @@
 // Bump this to match APP_VERSION in index.html every time you publish an update.
 // Changing this string is what makes the browser treat this as a "new" service worker.
-const APP_VERSION = '2026-06-27-4';
+const APP_VERSION = '2026-06-27-5';
 const CACHE_NAME = 'oasis-club-cache-' + APP_VERSION;
 
 const PRECACHE_URLS = [
@@ -16,7 +16,21 @@ const PRECACHE_URLS = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_URLS))
+    caches.open(CACHE_NAME).then((cache) =>
+      // cache.addAll() is all-or-nothing: if even one precache URL 404s
+      // (e.g. an icon variant that hasn't been uploaded yet), the whole
+      // install step rejects and this worker never becomes active --
+      // and without an active service worker, Chrome/Android won't offer
+      // the install prompt at all. Caching each file individually means
+      // one missing icon can't silently block installability for everyone.
+      Promise.all(
+        PRECACHE_URLS.map((url) =>
+          cache.add(url).catch((err) => {
+            console.warn('[service-worker] skipping precache for', url, err);
+          })
+        )
+      )
+    )
   );
   // Don't auto-activate yet — wait for the page to confirm via the Update button,
   // unless the page sends SKIP_WAITING (see message listener below).
