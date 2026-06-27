@@ -1,6 +1,6 @@
 // Bump this to match APP_VERSION in index.html every time you publish an update.
 // Changing this string is what makes the browser treat this as a "new" service worker.
-const APP_VERSION = '2026-06-26-1';
+const APP_VERSION = '2026-06-27-2';
 const CACHE_NAME = 'oasis-club-cache-' + APP_VERSION;
 
 const PRECACHE_URLS = [
