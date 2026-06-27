@@ -712,7 +712,7 @@ body.dark .asst-chip{color:#a7e6d0;}
 <script>
 /* Bump this string every time you publish changes to GitHub.
    This is what tells everyone's app that a newer version exists. */
-const APP_VERSION='2026-06-27-2';
+const APP_VERSION='2026-06-27-3';
 const STORE_KEY='oasis-club-data-v1';
 let DATA={members:[
   {
@@ -5973,15 +5973,49 @@ function asstBuildContext(){
   const members=DATA.members.map(m=>'- '+m.name+' \u2014 '+m.role+' ('+m.status+'); dues paid '+fmtMoney(m.duesPaid||0)).join('\n');
   const fin='Account balance: '+fmtMoney(balance)+'. Annual dues ('+(DATA.meta.duesYearLabel||'')+'): '+fmtMoney(expected)+'. Members fully paid up: '+paid+'. Members in arrears: '+overdue+'. Next AGM: '+(DATA.meta.nextAgmDate||'not set')+'.';
 
-  const news=(DATA.newsPosts||[]).filter(n=>n.status==='approved').slice().sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||'')).slice(0,15)
+  // Published notices only (pending/rejected drafts are not yet public).
+  const approvedNews=(DATA.newsPosts||[]).filter(n=>n.status==='approved').slice().sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
+  const news=approvedNews.slice(0,40)
     .map(n=>{
       const author=DATA.members.find(m=>m.id===n.authorId);
       const plainBody=String(n.bodyHtml||'').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim();
-      return '- ['+new Date(n.createdAt).toISOString().slice(0,10)+'] '+n.title+' (by '+(author?author.name:'a member')+'): '+plainBody.slice(0,300);
+      return '- ['+new Date(n.createdAt).toISOString().slice(0,10)+'] '+n.title+' (by '+(author?author.name:'a member')+'): '+plainBody.slice(0,400)+(n.attachmentName?' [attachment: '+n.attachmentName+']':'');
     }).join('\n');
+  const newsSummary='Total published notices: '+approvedNews.length+'.';
 
   const events=(DATA.events||[]).slice().sort((a,b)=>(a.date||'').localeCompare(b.date||''))
     .map(e=>'- ['+e.date+(e.time?' '+e.time:'')+'] '+e.title+(e.location?' @ '+e.location:'')+(e.meetingLink?' (online: '+e.meetingLink+')':'')+(e.description?': '+String(e.description).replace(/\s+/g,' ').slice(0,200):'')).join('\n');
+
+  const committeeList=(DATA.committees||[]).map(c=>{
+    const mems=(DATA.committeeMembers||[]).filter(cm=>cm.committeeId===c.id)
+      .map(cm=>{const mem=DATA.members.find(m=>m.id===cm.memberId);return (mem?mem.name:'Unknown member')+(cm.isChair?' (Chair)':'');});
+    return '- '+c.name+(c.description?' \u2014 '+c.description:'')+': '+(mems.length?mems.join(', '):'no members assigned yet');
+  }).join('\n');
+
+  const taskList=(DATA.tasks||[]).slice().sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||'')).slice(0,30).map(t=>{
+    const assignee=DATA.members.find(m=>m.id===t.assigneeId);
+    return '- ['+t.status+'] '+t.title+(t.category?' ('+t.category+')':'')+(assignee?' \u2014 assigned to '+assignee.name:' \u2014 unassigned');
+  }).join('\n');
+
+  const pollList=(DATA.polls||[]).slice().sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||'')).slice(0,20).map(p=>{
+    const opts=(p.options||[]);
+    const total=opts.reduce((s,o)=>s+(o.votes||[]).length,0);
+    const optStr=opts.map(o=>o.text+': '+(o.votes||[]).length+' vote(s)').join(', ');
+    return '- '+p.question+(p.endsAt?' (ends '+fmtDate(String(p.endsAt).slice(0,10))+')':'')+' \u2014 '+total+' total vote(s) \u2014 '+(optStr||'no options');
+  }).join('\n');
+
+  const attendanceByMinute={};
+  (DATA.meetingAttendance||[]).forEach(a=>{(attendanceByMinute[a.minuteId]=attendanceByMinute[a.minuteId]||[]).push(a.memberId);});
+  const attendanceList=(DATA.minutes||[]).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,20).map(m=>{
+    const ids=attendanceByMinute[m.id]||[];
+    const names=ids.map(id=>{const mem=DATA.members.find(x=>x.id===id);return mem?mem.name:null;}).filter(Boolean);
+    return '- '+m.title+' ('+m.date+'): '+names.length+' present'+(names.length?' \u2014 '+names.join(', '):'');
+  }).join('\n');
+
+  const paymentSubsList=(DATA.paymentSubmissions||[]).slice(0,30).map(p=>{
+    const mem=DATA.members.find(m=>m.id===p.memberId);
+    return '- '+(mem?mem.name:'A member')+': '+fmtMoney(p.amount)+' ('+p.paymentType+') \u2014 status: '+p.status+(p.rejectionReason?' \u2014 reason: '+p.rejectionReason:'');
+  }).join('\n');
 
   const pledges=(DATA.pledges||[]).slice().sort((a,b)=>(b.pledgeDate||'').localeCompare(a.pledgeDate||''));
   const pledgeTotal=pledges.reduce((s,p)=>s+p.amount,0);
@@ -5996,9 +6030,14 @@ function asstBuildContext(){
   const totalExpenses=purse.filter(p=>p.entryType==='expense').reduce((s,p)=>s+p.amount,0);
   const loanList=welfare.map(l=>{
     const mem=DATA.members.find(m=>m.id===l.memberId);
-    return '- '+(mem?mem.name:'Member')+': '+fmtMoney(l.principal)+' principal, '+l.interestRate+'% interest, status: '+l.status+', repaid '+fmtMoney(l.amountRepaid)+' of '+fmtMoney(l.amountDue);
+    const repayCount=(DATA.loanRepayments||[]).filter(r=>r.loanId===l.id).length;
+    return '- '+(mem?mem.name:'Member')+': '+fmtMoney(l.principal)+' principal, '+l.interestRate+'% interest, status: '+l.status+', repaid '+fmtMoney(l.amountRepaid)+' of '+fmtMoney(l.amountDue)+' across '+repayCount+' repayment(s)'+(l.dueDate?', due '+fmtDate(l.dueDate):'');
   }).join('\n');
   const welfareSummary='Welfare fund released to date: '+fmtMoney(totalReleased)+'. Non-loan welfare expenses: '+fmtMoney(totalExpenses)+'. Active loans: '+activeLoans.length+' (overdue: '+overdueLoans.length+').';
+
+  const releaseList=(DATA.welfareReleaseRequests||[]).slice(0,30).map(r=>{
+    return '- '+fmtMoney(r.amount)+(r.description?' \u2014 '+r.description:'')+' \u2014 status: '+r.status+(r.entryDate?' (for '+fmtDate(r.entryDate)+')':'')+(r.rejectionReason?' \u2014 reason: '+r.rejectionReason:'');
+  }).join('\n');
 
   const welfareEvents=loadWelfare();
   const welfareContribSummary=welfareEvents.length
@@ -6010,15 +6049,21 @@ function asstBuildContext(){
 
   return '=== CONSTITUTION ===\n'+getConstitutionText()
     +'\n\n=== MEETING MINUTES (newest first) ===\n'+(minutes||'No minutes on record.')
+    +'\n\n=== MEETING ATTENDANCE ===\n'+(attendanceList||'No attendance records on file.')
     +'\n\n=== FINANCE SUMMARY ===\n'+fin
     +'\n\n=== MEMBER DIRECTORY ===\n'+members
-    +'\n\n=== NEWS & NOTICES (most recent 15) ===\n'+(news||'No notices on record.')
+    +'\n\n=== COMMITTEES ===\n'+(committeeList||'No committees set up yet.')
+    +'\n\n=== NEWS & NOTICES === \n'+newsSummary+'\n'+(news||'No notices on record.')
     +'\n\n=== UPCOMING/PAST EVENTS ===\n'+(events||'No events on record.')
+    +'\n\n=== POLLS ===\n'+(pollList||'No polls on record.')
+    +'\n\n=== TASKS ===\n'+(taskList||'No tasks on record.')
+    +'\n\n=== PAYMENT EVIDENCE SUBMISSIONS ===\n'+(paymentSubsList||'No payment evidence submitted.')
     +'\n\n=== BUILDING PROJECT PLEDGES ===\n'+pledgeSummary+'\n'+(pledgeList||'No pledges on record.')
     +'\n\n=== WELFARE CONTRIBUTIONS ===\n'+welfareContribSummary
-    +'\n\n=== WELFARE COMMITTEE LOANS ===\n'+welfareSummary+'\n'+(loanList||'No loans on record.');
+    +'\n\n=== WELFARE COMMITTEE LOANS ===\n'+welfareSummary+'\n'+(loanList||'No loans on record.')
+    +'\n\n=== WELFARE RELEASE REQUESTS ===\n'+(releaseList||'No welfare fund release requests on record.');
 }
-const ASST_PREAMBLE='You are the Oasis Assistant for the Oasis Club of Otun Ekiti. Answer the member\u2019s questions using ONLY the club information provided below (constitution, meeting minutes, finance summary, member directory, news, events, pledges, welfare contributions, and welfare committee loans). Rules: if the answer is not in the data, say you do not have it on record and suggest contacting the relevant officer (e.g. the Secretary or Treasurer). Be concise, warm and clear \u2014 two or three sentences is usually enough. When you state a fact, briefly note its source, e.g. "(Article 4)" or "(per the April minutes)". Never invent names, figures or dates. Use Naira (\u20a6) for money.';
+const ASST_PREAMBLE='You are the Oasis Assistant for the Oasis Club of Otun Ekiti. Answer the member\u2019s questions using ONLY the club information provided below \u2014 this covers the constitution, meeting minutes and attendance, finances, the member directory, committees, news & notices, events, polls, tasks, payment evidence, building-project pledges, welfare contributions, welfare committee loans, and welfare fund release requests. Rules: if the answer is not in the data, say you do not have it on record and suggest contacting the relevant officer (e.g. the Secretary or Treasurer). Be concise, warm and clear \u2014 two or three sentences is usually enough. When you state a fact, briefly note its source, e.g. "(Article 4)", "(per the April minutes)", or "(per the notice posted on 12 March)". Never invent names, figures or dates. Use Naira (\u20a6) for money.';
 const ASST_SUGGESTIONS=['When is the next meeting?','Maximum number of members?','How much is in the account?','Who are the officers?','What are the dues this year?'];
 
 /* ---- Oasis Assistant — Gemini AI + local fallback ---- */
@@ -6247,9 +6292,39 @@ function localAsstAnswer(messages){
   if(/news|notice|announcement|post/.test(q)){
     const news=(DATA.newsPosts||[]).filter(n=>n.status==='approved').slice().sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
     if(!news.length) return 'No notices have been posted yet.';
+    // If the question echoes words from a specific notice's title, quote that one instead of just the latest.
+    const qWords=q.replace(/[^a-z0-9\s]/g,' ').split(/\s+/).filter(w=>w.length>3);
+    const match=qWords.length?news.find(n=>{const title=(n.title||'').toLowerCase();return qWords.some(w=>title.includes(w));}):null;
+    if(match){
+      const author=DATA.members.find(m=>m.id===match.authorId);
+      const plainBody=String(match.bodyHtml||'').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim();
+      return '**'+match.title+'** (by '+(author?author.name:'a member')+', '+fmtDate(match.createdAt.slice(0,10))+'): '+plainBody.slice(0,280)+(match.attachmentName?' [has attachment: '+match.attachmentName+']':'');
+    }
     const last=news[0];
     const lastAuthor=DATA.members.find(m=>m.id===last.authorId);
-    return 'Latest notice: **'+last.title+'** (by '+(lastAuthor?lastAuthor.name:'a member')+'). '+news.length+' notice(s) on record. See the News & Notices page for all of them.';
+    return 'Latest notice: **'+last.title+'** (by '+(lastAuthor?lastAuthor.name:'a member')+', '+fmtDate(last.createdAt.slice(0,10))+'). '+news.length+' notice(s) on record. See the News & Notices page for all of them.';
+  }
+  if(/committee/.test(q)&&!/welfare/.test(q)){
+    const committees=DATA.committees||[];
+    if(!committees.length) return 'No committees have been set up yet.';
+    const list=committees.map(c=>{
+      const mems=(DATA.committeeMembers||[]).filter(cm=>cm.committeeId===c.id).map(cm=>{const mem=DATA.members.find(m=>m.id===cm.memberId);return mem?mem.name+(cm.isChair?' (Chair)':''):null;}).filter(Boolean);
+      return '**'+c.name+'**'+(mems.length?': '+mems.join(', '):' (no members assigned)');
+    });
+    return 'Committees on record: '+list.join('; ')+'.';
+  }
+  if(/\btask\b|to.?do|action item/.test(q)){
+    const tasks=DATA.tasks||[];
+    if(!tasks.length) return 'No tasks have been logged yet.';
+    const open=tasks.filter(t=>t.status!=='done'&&t.status!=='completed');
+    return '**'+tasks.length+'** task(s) on record \u2014 **'+open.length+'** still open. See the Tasks page for details.';
+  }
+  if(/\bpoll\b|\bvote\b|voting/.test(q)){
+    const polls=(DATA.polls||[]).slice().sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
+    if(!polls.length) return 'No polls have been created yet.';
+    const latest=polls[0];
+    const total=(latest.options||[]).reduce((s,o)=>s+(o.votes||[]).length,0);
+    return 'Latest poll: **'+latest.question+'** \u2014 '+total+' vote(s) so far. '+polls.length+' poll(s) on record. See the Polls page for full results.';
   }
   if(/\bevent\b|upcoming|programme|program(?!me)|outing/.test(q)){
     const events=(DATA.events||[]).slice().sort((a,b)=>(a.date||'').localeCompare(b.date||''));
@@ -6279,8 +6354,8 @@ function localAsstAnswer(messages){
     return 'Total welfare contributions on record: **'+fmt(totalCollected)+'** across **'+welfare.length+'** event(s). See the Welfare Contributions page for details.';
   }
   if(/\b(hi|hello|hey)\b|good (morning|afternoon|evening)/.test(q))
-    return "Hello! I'm the Oasis Assistant. Ask me about dues, finances, members, meetings, news, events, pledges, or welfare.";
-  return "I don't have a specific answer for that. Try: **dues**, **account balance**, **officers**, **next meeting**, **quorum**, **news**, **events**, **pledges**, or **welfare**.";
+    return "Hello! I'm the Oasis Assistant. Ask me about dues, finances, members, meetings, committees, tasks, polls, news, events, pledges, or welfare.";
+  return "I don't have a specific answer for that. Try: **dues**, **account balance**, **officers**, **next meeting**, **quorum**, **committees**, **tasks**, **polls**, **news**, **events**, **pledges**, or **welfare**.";
 }
 
 async function asstCall(system,messages){
