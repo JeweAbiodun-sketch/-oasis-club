@@ -782,10 +782,11 @@ body.dark .asst-chip{color:#a7e6d0;}
   </div>
 </div>
 
+<script src="welfare-ledger-seed.js"></script>
 <script>
 /* Bump this string every time you publish changes to GitHub.
    This is what tells everyone's app that a newer version exists. */
-const APP_VERSION='2026-06-28-7';
+const APP_VERSION='2026-06-28-8';
 const STORE_KEY='oasis-club-data-v1';
 let DATA={members:[
   {
@@ -4459,7 +4460,15 @@ function todaysBirthdays(){
 
 /* ====================== WELFARE REGISTER ====================== */
 const WELFARE_STORE='oasis-welfare-v1';
-function loadWelfare(){try{return JSON.parse(localStorage.getItem(WELFARE_STORE)||'[]')}catch{return [];}}
+function loadWelfare(){
+  try{
+    const stored=JSON.parse(localStorage.getItem(WELFARE_STORE)||'[]');
+    if(Array.isArray(stored)&&stored.length)return stored;
+  }catch(_){}
+  const seed=(window.WELFARE_LEDGER_SEED&&Array.isArray(window.WELFARE_LEDGER_SEED.events))
+    ?window.WELFARE_LEDGER_SEED.events:[];
+  return JSON.parse(JSON.stringify(seed));
+}
 function saveWelfare(a){localStorage.setItem(WELFARE_STORE,JSON.stringify(a));}
 const WELFARE_LABELS={bereavement:'Bereavement',baby:'New baby',illness:'Illness',levy:'Club levy',other:'Other'};
 let welfareYearFilter='all';

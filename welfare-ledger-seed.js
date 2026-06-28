@@ -1,1 +1,234 @@
-window.WELFARE_LEDGER_SEED = {"title": "MONTHLY WELFARE CONTRIBUTION (JAN 2023 to 25th Nov 2025)", "subtitle": "MONTHLY WELFARE CONTRIBUTION (JAN 2023 to 25th Nov 2025)", "entries": [{"date": "2023-02-26", "name": "Ayorinde Toyin Adeniran", "contribution": 1000, "expense": 0, "balance": 1000}, {"date": "2023-02-26", "name": "Ayodeji Olabisi", "contribution": 11000, "expense": 0, "balance": 12000}, {"date": "2023-02-26", "name": "Babalola Adewumi", "contribution": 1000, "expense": 0, "balance": 13000}, {"date": "2023-02-26", "name": "Akanni Babatunde", "contribution": 12000, "expense": 0, "balance": 25000}, {"date": "2023-03-02", "name": "Adebayo Taiwo", "contribution": 1000, "expense": 0, "balance": 26000}, {"date": "2023-03-10", "name": "Adebayo Olanrewaju", "contribution": 12000, "expense": 0, "balance": 38000}, {"date": "2023-03-25", "name": "Ayodeji Olabisi", "contribution": 1000, "expense": 0, "balance": 39000}, {"date": "2023-04-02", "name": "Olawuyi Abiodun", "contribution": 1000, "expense": 0, "balance": 40000}, {"date": "2023-04-02", "name": "Ayorinde Toyin Adeniran", "contribution": 1000, "expense": 0, "balance": 41000}, {"date": "2023-04-04", "name": "Awoyemi Sunkanmi", "contribution": 1000, "expense": 0, "balance": 42000}, {"date": "2023-04-07", "name": "Issued out to complete the contribution towards Abiodun's grandma burial", "contribution": 0, "expense": 8000, "balance": 34000}, {"date": "2023-04-12", "name": "Adebayo Taiwo", "contribution": 2000, "expense": 0, "balance": 36000}, {"date": "2023-04-15", "name": "Olatunde kunle", "contribution": 4000, "expense": 0, "balance": 40000}, {"date": "2023-04-23", "name": "Olatoye Kunle", "contribution": 4000, "expense": 0, "balance": 44000}, {"date": "2023-04-28", "name": "Ayorinde Toyin Adeniran", "contribution": 1000, "expense": 0, "balance": 45000}, {"date": "2023-04-30", "name": "Babalola Adewumi", "contribution": 2000, "expense": 0, "balance": 47000}, {"date": "2023-04-30", "name": "Olawuyi Abiodun", "contribution": 1000, "expense": 0, "balance": 48000}, {"date": "2023-05-04", "name": "Adebayo Taiwo", "contribution": 2000, "expense": 0, "balance": 50000}, {"date": "2023-05-28", "name": "Ayorinde Toyin Adeniran", "contribution": 1000, "expense": 0, "balance": 51000}, {"date": "2023-05-28", "name": "Atolani Femi", "contribution": 1000, "expense": 0, "balance": 52000}, {"date": "2023-07-04", "name": "Adebayo Taiwo", "contribution": 3000, "expense": 0, "balance": 55000}, {"date": "2023-07-20", "name": "Issued out to Adebayo Lanre for his inlaw burial", "contribution": 0, "expense": 20000, "balance": 35000}, {"date": "2023-08-04", "name": "Adebayo Taiwo", "contribution": 4000, "expense": 0, "balance": 39000}, {"date": "2023-08-27", "name": "Olawuyi Abiodun", "contribution": 2000, "expense": 0, "balance": 41000}, {"date": "2023-10-02", "name": "Issued out to Olatunde Kunles for his inlaw burial", "contribution": 0, "expense": 20000, "balance": 21000}, {"date": "2023-12-21", "name": "Issued to Olatude Kunle as Assitance for hosting of AGM", "contribution": 0, "expense": 30000, "balance": -9000}, {"date": "2024-01-26", "name": "Ayorinde Toyin Adeniran", "contribution": 2000, "expense": 0, "balance": -7000}, {"date": "2024-03-28", "name": "Olatunji Matthew", "contribution": 6000, "expense": 0, "balance": -1000}, {"date": "2024-03-29", "name": "Adebayo Taiwo", "contribution": 1000, "expense": 0, "balance": 0}, {"date": "2024-04-16", "name": "Adetoyi Dare", "contribution": 2000, "expense": 0, "balance": 2000}, {"date": "2024-04-21", "name": "Issued out to Ayodeji Bisi for his brother's wedding", "contribution": 0, "expense": 20000, "balance": -18000}, {"date": "2024-05-26", "name": "Olawuyi Abiodun", "contribution": 12000, "expense": 0, "balance": -6000}, {"date": "2024-05-26", "name": "Olatunde kunle", "contribution": 2000, "expense": 0, "balance": -4000}, {"date": "2024-06-14", "name": "Onifade Moji Okeniyi", "contribution": 5000, "expense": 0, "balance": 1000}, {"date": "2024-06-29", "name": "Onifade Moji Okeniyi", "contribution": 5000, "expense": 0, "balance": 6000}, {"date": "2024-06-29", "name": "Ayorinde Toyin Adeniran", "contribution": 4000, "expense": 0, "balance": 10000}, {"date": "2024-06-30", "name": "Adebayo Olanrewaju", "contribution": 12000, "expense": 0, "balance": 22000}, {"date": "2024-07-12", "name": "Adebayo Taiwo", "contribution": 5000, "expense": 0, "balance": 27000}, {"date": "2024-07-26", "name": "Awoyemi Sunkanmi", "contribution": 2500, "expense": 0, "balance": 29500}, {"date": "2024-07-27", "name": "Olatunji Matthew", "contribution": 6000, "expense": 0, "balance": 35500}, {"date": "2024-08-18", "name": "Adebayo Taiwo", "contribution": 10000, "expense": 0, "balance": 45500}, {"date": "2024-09-17", "name": "Olatoye Kunle", "contribution": 10000, "expense": 0, "balance": 55500}, {"date": "2024-09-18", "name": "Adebayo Taiwo", "contribution": 8000, "expense": 0, "balance": 63500}, {"date": "2024-09-20", "name": "Olatunji Matthew", "contribution": 6000, "expense": 0, "balance": 69500}, {"date": "2024-10-21", "name": "Adebayo Olanrewaju Father's burial support", "contribution": 0, "expense": 20000, "balance": 49500}, {"date": "2024-12-18", "name": "Extra balance from contributions towards AGM", "contribution": 4400, "expense": 0, "balance": 53900}, {"date": "2024-12-27", "name": "Olawuyi Abiodun", "contribution": 8000, "expense": 0, "balance": 61900}, {"date": "2025-01-02", "name": "Atolani Femi Accident Hospital Bill Assistance", "contribution": 0, "expense": 10000, "balance": 51900}, {"date": "2025-01-16", "name": "Issued to Olatude Kunle as extra expenses AGM 2024", "contribution": 0, "expense": 16500, "balance": 35400}, {"date": "2025-02-22", "name": "Adebayo Olanrewaju", "contribution": 24000, "expense": 0, "balance": 59400}, {"date": "2025-02-23", "name": "Ayodeji Olabisi", "contribution": 20000, "expense": 0, "balance": 79400}, {"date": "2025-02-23", "name": "Ayorinde Toyin Adeniran", "contribution": 10000, "expense": 0, "balance": 89400}, {"date": "2025-02-23", "name": "Ayodeji Olabisi", "contribution": 4000, "expense": 0, "balance": 93400}, {"date": "2025-04-27", "name": "Issued to Adebayo Taiwo as his Uncle's burial support", "contribution": 0, "expense": 30000, "balance": 63400}, {"date": "2025-06-16", "name": "Adebayo Taiwo", "contribution": 10000, "expense": 0, "balance": 73400}, {"date": "2025-07-13", "name": "Adebayo Taiwo", "contribution": 14000, "expense": 0, "balance": 87400}, {"date": "2025-07-26", "name": "Olawuyi Abiodun", "contribution": 20000, "expense": 0, "balance": 107400}, {"date": "2025-08-13", "name": "Awoyemi Sunkanmi", "contribution": 5000, "expense": 0, "balance": 112400}, {"date": "2025-12-26", "name": "Ayorinde Toyin Adeniran", "contribution": 14000, "expense": 0, "balance": 126400}, {"date": "2026-03-13", "name": "Aina Adewale 2025/2026", "contribution": 48000, "expense": 0, "balance": 174400}, {"date": "2026-03-15", "name": "awoyemi Sunkanmi", "contribution": 24000, "expense": 0, "balance": 198400}, {"date": "2026-03-29", "name": "Adebayo Lanre", "contribution": 24000, "expense": 0, "balance": 222400}, {"date": "2026-10-06", "name": "Adebayo Taiwo", "contribution": 10000, "expense": 0, "balance": 232400}]};
+window.WELFARE_LEDGER_SEED = {
+  "title": "Oasis welfare from oasis-welfare-2026-06-28.csv",
+  "events": [
+    {
+      "id": "mqlbam9ybfo3",
+      "title": "Welfare Contributions — 2025/2026",
+      "type": "levy",
+      "date": "2025-12-26",
+      "targetAmount": "",
+      "contributions": [
+        {
+          "id": "mqlbam9ybfo3-1",
+          "memberId": "m004",
+          "amount": 96000,
+          "paidDate": "2026-03-29"
+        },
+        {
+          "id": "mqlbam9ybfo3-2",
+          "memberId": "m009",
+          "amount": 14000,
+          "paidDate": "2025-12-26"
+        },
+        {
+          "id": "mqlbam9ybfo3-3",
+          "memberId": "m002",
+          "amount": 96000,
+          "paidDate": "2026-03-15"
+        }
+      ],
+      "createdAt": "2026-06-28T00:00:00.000Z"
+    },
+    {
+      "id": "mql7zz481pz2",
+      "title": "Issued to Adebayo Taiwo — uncle's burial support",
+      "type": "other",
+      "date": "2025-05-13",
+      "targetAmount": "30000",
+      "contributions": [],
+      "createdAt": "2026-06-28T00:00:00.000Z"
+    },
+    {
+      "id": "mql7zz48bkro",
+      "title": "Issued to Olatunde Kunle — extra AGM 2024 expenses",
+      "type": "other",
+      "date": "2025-01-17",
+      "targetAmount": "16500",
+      "contributions": [],
+      "createdAt": "2026-06-28T00:00:00.000Z"
+    },
+    {
+      "id": "mql7zz48i82n",
+      "title": "Atolani Femi — Accident hospital bill assistance",
+      "type": "other",
+      "date": "2025-01-02",
+      "targetAmount": "10000",
+      "contributions": [],
+      "createdAt": "2026-06-28T00:00:00.000Z"
+    },
+    {
+      "id": "mqlbam9ytx7b",
+      "title": "Welfare Contributions — 2024/2025",
+      "type": "levy",
+      "date": "2024-12-18",
+      "targetAmount": "",
+      "contributions": [
+        {
+          "id": "mqlbam9ytx7b-1",
+          "memberId": "m007",
+          "amount": 66000,
+          "paidDate": "2025-07-30"
+        },
+        {
+          "id": "mqlbam9ytx7b-2",
+          "memberId": "m009",
+          "amount": 40000,
+          "paidDate": "2025-02-23"
+        },
+        {
+          "id": "mqlbam9ytx7b-3",
+          "memberId": "m001",
+          "amount": 112000,
+          "paidDate": "2025-07-26"
+        },
+        {
+          "id": "mqlbam9ytx7b-4",
+          "memberId": "m002",
+          "amount": 5000,
+          "paidDate": "2025-08-13"
+        }
+      ],
+      "createdAt": "2026-06-28T00:00:00.000Z"
+    },
+    {
+      "id": "mql7zz48msq3",
+      "title": "Issued — Adebayo Olanrewaju father's burial support",
+      "type": "other",
+      "date": "2024-10-21",
+      "targetAmount": "20000",
+      "contributions": [],
+      "createdAt": "2026-06-28T00:00:00.000Z"
+    },
+    {
+      "id": "mql7zz48y664",
+      "title": "Issued out — Ayodeji Bisi brother's wedding",
+      "type": "other",
+      "date": "2024-04-21",
+      "targetAmount": "20000",
+      "contributions": [],
+      "createdAt": "2026-06-28T00:00:00.000Z"
+    },
+    {
+      "id": "mqlbam9ypz4m",
+      "title": "Welfare Contributions — 2023/2024",
+      "type": "levy",
+      "date": "2024-01-26",
+      "targetAmount": "",
+      "contributions": [
+        {
+          "id": "mqlbam9ypz4m-1",
+          "memberId": "m007",
+          "amount": 51000,
+          "paidDate": "2024-09-16"
+        },
+        {
+          "id": "mqlbam9ypz4m-2",
+          "memberId": "m008",
+          "amount": 54000,
+          "paidDate": "2024-09-18"
+        },
+        {
+          "id": "mqlbam9ypz4m-3",
+          "memberId": "m009",
+          "amount": 18000,
+          "paidDate": "2024-06-28"
+        },
+        {
+          "id": "mqlbam9ypz4m-4",
+          "memberId": "m001",
+          "amount": 12000,
+          "paidDate": "2024-05-26"
+        },
+        {
+          "id": "mqlbam9ypz4m-5",
+          "memberId": "m002",
+          "amount": 10000,
+          "paidDate": "2024-07-26"
+        }
+      ],
+      "createdAt": "2026-06-28T00:00:00.000Z"
+    },
+    {
+      "id": "mql7zz484kli",
+      "title": "Issued to Olatunde Kunle — AGM hosting assistance",
+      "type": "other",
+      "date": "2023-11-20",
+      "targetAmount": "30000",
+      "contributions": [],
+      "createdAt": "2026-06-28T00:00:00.000Z"
+    },
+    {
+      "id": "mql7zz48ym9n",
+      "title": "Issued out — Olatunde Kunle in-law burial",
+      "type": "other",
+      "date": "2023-09-13",
+      "targetAmount": "20000",
+      "contributions": [],
+      "createdAt": "2026-06-28T00:00:00.000Z"
+    },
+    {
+      "id": "mql7zz48k1vm",
+      "title": "Issued out — Adebayo Lanre in-law burial",
+      "type": "other",
+      "date": "2023-07-20",
+      "targetAmount": "20000",
+      "contributions": [],
+      "createdAt": "2026-06-28T00:00:00.000Z"
+    },
+    {
+      "id": "mql7zz48gq1j",
+      "title": "Issued out — Abiodun's grandma burial",
+      "type": "other",
+      "date": "2023-04-09",
+      "targetAmount": "8000",
+      "contributions": [],
+      "createdAt": "2026-06-28T00:00:00.000Z"
+    },
+    {
+      "id": "mqlbam9y76m2",
+      "title": "Welfare Contributions — 2022/2023",
+      "type": "levy",
+      "date": "2023-02-26",
+      "targetAmount": "",
+      "contributions": [
+        {
+          "id": "mqlbam9y76m2-1",
+          "memberId": "m007",
+          "amount": 18000,
+          "paidDate": "2023-08-04"
+        },
+        {
+          "id": "mqlbam9y76m2-2",
+          "memberId": "m013",
+          "amount": 12000,
+          "paidDate": "2023-02-26"
+        },
+        {
+          "id": "mqlbam9y76m2-3",
+          "memberId": "m009",
+          "amount": 10000,
+          "paidDate": "2023-05-28"
+        },
+        {
+          "id": "mqlbam9y76m2-4",
+          "memberId": "m016",
+          "amount": 9000,
+          "paidDate": "2023-04-30"
+        },
+        {
+          "id": "mqlbam9y76m2-5",
+          "memberId": "m001",
+          "amount": 13000,
+          "paidDate": "2023-08-27"
+        },
+        {
+          "id": "mqlbam9y76m2-6",
+          "memberId": "m002",
+          "amount": 4000,
+          "paidDate": "2023-04-04"
+        }
+      ],
+      "createdAt": "2026-06-28T00:00:00.000Z"
+    }
+  ]
+};
