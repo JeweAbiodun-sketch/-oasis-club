@@ -785,7 +785,7 @@ body.dark .asst-chip{color:#a7e6d0;}
 <script>
 /* Bump this string every time you publish changes to GitHub.
    This is what tells everyone's app that a newer version exists. */
-const APP_VERSION='2026-06-28-1';
+const APP_VERSION='2026-06-28-2';
 const STORE_KEY='oasis-club-data-v1';
 let DATA={members:[
   {
@@ -4310,14 +4310,22 @@ function parseCSVFile(text){
   // break column matching depending on how that cell is normalized. Strip it
   // unconditionally so an upload never fails for this reason.
   if(text.charCodeAt(0)===0xFEFF)text=text.slice(1);
-  const lines=text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n');
+  const lines=text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n').filter(l=>l.trim());
+  if(!lines.length)return rows;
+  // Excel's "CSV" export actually uses whatever the OS's regional "list
+  // separator" is set to -- which is a semicolon in many non-US locales --
+  // regardless of the file still being labelled/extensioned as CSV. Detect
+  // the delimiter from the header line instead of assuming a comma, so an
+  // upload doesn't fail just because of someone's Windows region settings.
+  const headerLine=lines[0];
+  const counts={',':(headerLine.match(/,/g)||[]).length,';':(headerLine.match(/;/g)||[]).length,'\t':(headerLine.match(/\t/g)||[]).length};
+  const delim=Object.keys(counts).reduce((a,b)=>counts[b]>counts[a]?b:a,',');
   for(const line of lines){
-    if(!line.trim())continue;
     const cells=[];let cur='',inQ=false;
     for(let i=0;i<line.length;i++){
       const c=line[i];
       if(inQ){if(c==='"'&&line[i+1]==='"'){cur+='"';i++;}else if(c==='"'){inQ=false;}else cur+=c;}
-      else{if(c==='"'){inQ=true;}else if(c===','){cells.push(cur.trim());cur='';}else cur+=c;}
+      else{if(c==='"'){inQ=true;}else if(c===delim){cells.push(cur.trim());cur='';}else cur+=c;}
     }
     cells.push(cur.trim());rows.push(cells);
   }
