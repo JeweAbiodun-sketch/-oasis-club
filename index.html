@@ -785,7 +785,7 @@ body.dark .asst-chip{color:#a7e6d0;}
 <script>
 /* Bump this string every time you publish changes to GitHub.
    This is what tells everyone's app that a newer version exists. */
-const APP_VERSION='2026-06-28-5';
+const APP_VERSION='2026-06-28-6';
 const STORE_KEY='oasis-club-data-v1';
 let DATA={members:[
   {
@@ -2551,20 +2551,9 @@ function pageFinance(){
       </tr>`).join('')}
     </tbody></table>`:emptyState('No entries yet','Add receipts and expenditure to build the year\u2019s statement automatically.')}
   </div>
-  ${isTreasurerSession()?`<div class="card" style="margin-top:4px;border:1.5px solid var(--teal);">
-    <div class="card-head"><h2>&#128260; Sync everything from Google Sheets</h2><span class="badge badge-active">Treasurer</span></div>
-    <p class="cell-muted" style="margin:0 0 14px;">Pulls new rows from all four sheet tabs in one go: TRANSACTIONS, WELFARE, PLEDGES and ANNUAL DUES. Existing entries are never duplicated.</p>
-    <button type="button" class="btn btn-primary" onclick="syncAllFromGoogleSheets()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-      Sync all sheets now
-    </button>
-    <p class="cell-muted" style="margin:12px 0 0;font-size:11.5px;">
-      &#128279; <a href="https://docs.google.com/spreadsheets/d/1i7qcWpf9l86iE4rgBPNn5OIx5wutmBwh9z0yia7toxk/edit" target="_blank" rel="noopener" style="color:var(--teal);">Open Oasis financial ledger in Google Sheets</a>
-    </p>
-  </div>
-  <div class="card" style="margin-top:4px;">
+  ${isTreasurerSession()?`<div class="card" style="margin-top:4px;">
     <div class="card-head"><h2>&#128202; Transactions spreadsheet</h2><span class="badge badge-active">Treasurer</span></div>
-    <p class="cell-muted" style="margin:0 0 14px;">Download the full ledger as CSV, or add new rows directly in Google Sheets and tap <strong>Sync</strong> to import them. Rows are skipped as duplicates only when their date, description, and amount match exactly \u2014 if a row's date is formatted or typed differently in the sheet than it already is here, it won't be recognised as the same entry and will be added again. Double-check date formatting in the sheet before syncing.</p>
+    <p class="cell-muted" style="margin:0 0 14px;">Download the full ledger as CSV or Excel to edit, or upload a file of new rows to add them in bulk.</p>
     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
       <button type="button" class="btn btn-primary" onclick="downloadTransactionsCSV()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M12 3v13M6 11l6 6 6-6"/><rect x="3" y="19" width="18" height="2" rx="1"/></svg>
@@ -2575,10 +2564,6 @@ function pageFinance(){
         Upload new entries CSV or Excel
         <input type="file" accept=".csv,.txt,.xlsx,.xls" style="display:none;" onchange="handleTransactionsUpload(this)"/>
       </label>
-      <button type="button" class="btn" style="background:var(--teal);color:#fff;border-color:var(--teal);" onclick="syncFromGoogleSheets()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-        Sync from Google Sheets
-      </button>
       <button type="button" class="btn btn-danger" onclick="findAndRemoveDuplicateTransactions()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2m2 0v14a1 1 0 01-1 1H6a1 1 0 01-1-1V6z"/></svg>
         Find &amp; remove duplicates
@@ -2591,322 +2576,7 @@ function pageFinance(){
       </button>
       <p class="cell-muted" style="margin:6px 0 0;font-size:11.5px;">Last resort: wipes every transaction so you can re-import a clean file from scratch. Use this only when duplicates are too tangled to fix individually (e.g. mismatched dates from two different sources).</p>
     </div>
-    <p class="cell-muted" style="margin:12px 0 0;font-size:11.5px;">
-      &#128279; <a href="https://docs.google.com/spreadsheets/d/1i7qcWpf9l86iE4rgBPNn5OIx5wutmBwh9z0yia7toxk/edit" target="_blank" rel="noopener" style="color:var(--teal);">Open Oasis financial ledger in Google Sheets</a>
-      &mdash; add new rows in the TRANSACTIONS sheet, then tap <strong>Sync</strong> to import them here.
-    </p>
-  </div>
-  <div class="card" style="margin-top:4px;">
-    <div class="card-head"><h2>&#10084; Welfare fund</h2><span class="badge badge-active">Treasurer</span></div>
-    <p class="cell-muted" style="margin:0 0 14px;">Welfare contributions and disbursements are tracked in the WELFARE tab of the Google Sheet. Add new rows there, then tap Sync below to import them into the app.</p>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-      <button type="button" class="btn" style="background:var(--teal);color:#fff;border-color:var(--teal);" onclick="syncWelfareFromGoogleSheets()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-        Sync welfare from Google Sheets
-      </button>
-    </div>
-    <p class="cell-muted" style="margin:12px 0 0;font-size:11.5px;">
-      &#128279; <a href="https://docs.google.com/spreadsheets/d/1i7qcWpf9l86iE4rgBPNn5OIx5wutmBwh9z0yia7toxk/edit" target="_blank" rel="noopener" style="color:var(--teal);">Open Oasis financial ledger in Google Sheets</a>
-      &mdash; add rows in the WELFARE tab (type: <em>contribution</em> or <em>disbursement</em>), then tap Sync.
-    </p>
   </div>`:''}`;
-}
-
-/* ====================== GOOGLE SHEETS SYNC ====================== */
-const GS_SHEET_ID = '1i7qcWpf9l86iE4rgBPNn5OIx5wutmBwh9z0yia7toxk';
-
-function gsCsvUrl(sheetName) {
-  return `https://docs.google.com/spreadsheets/d/${GS_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}`;
-}
-
-function parseGsCsv(text) {
-  const rows = [];
-  let row = [], cur = '', inQ = false;
-  for (let i = 0; i < text.length; i++) {
-    const ch = text[i];
-    if (inQ) {
-      if (ch === '"') {
-        if (text[i+1] === '"') { cur += '"'; i++; }
-        else inQ = false;
-      } else {
-        cur += ch;
-      }
-    } else {
-      if (ch === '"') inQ = true;
-      else if (ch === ',') { row.push(cur.trim()); cur = ''; }
-      else if (ch === '\r') { /* ignore */ }
-      else if (ch === '\n') { row.push(cur.trim()); cur = ''; rows.push(row); row = []; }
-      else cur += ch;
-    }
-  }
-  if (cur !== '' || row.length) { row.push(cur.trim()); rows.push(row); }
-  return rows.filter(r => r.some(c => c !== ''));
-}
-
-function gsParseDate(raw) {
-  if (!raw) return '';
-  raw = raw.trim();
-  // DD/MM/YYYY
-  const dmy = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (dmy) return `${dmy[3]}-${dmy[2].padStart(2,'0')}-${dmy[1].padStart(2,'0')}`;
-  // YYYY-MM-DD already
-  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
-  // Excel serial
-  const n = Number(raw);
-  if (!isNaN(n) && n > 40000) {
-    const d = new Date((n - 25569) * 86400 * 1000);
-    return d.toISOString().slice(0, 10);
-  }
-  return '';
-}
-
-async function syncTransactionsCore() {
-  const resp = await fetch(gsCsvUrl('TRANSACTIONS'));
-  if (!resp.ok) throw new Error('Could not reach Google Sheets (TRANSACTIONS). Make sure the sheet is published.');
-  const text = await resp.text();
-  const rows = parseGsCsv(text);
-  let dataStart = 0;
-  for (let i = 0; i < rows.length; i++) {
-    const r = rows[i];
-    const colA = (r[0]||'').toUpperCase();
-    const colB = (r[1]||'').toUpperCase();
-    if (colA.endsWith('DATE') && colB === 'DESCRIPTION') { dataStart = i + 1; break; }
-  }
-  if (!dataStart) throw new Error('Could not find header row in TRANSACTIONS sheet.');
-
-  const pin = getCurrentAuthPin();
-  const existing = new Set(DATA.transactions.map(t => `${t.date}|${t.desc}|${t.amount}`));
-
-  let added = 0, skipped = 0;
-  const promises = [];
-  for (let i = dataStart; i < rows.length; i++) {
-    const r = rows[i];
-    const date = gsParseDate(r[0]);
-    const desc = (r[1] || '').trim();
-    const type = (r[2] || '').toLowerCase().trim();
-    const amount = Number((r[3] || '0').replace(/,/g, ''));
-    if (!date || !desc || !amount) { skipped++; continue; }
-    if (type !== 'income' && type !== 'expense') { skipped++; continue; }
-    const key = `${date}|${desc}|${amount}`;
-    if (existing.has(key)) { skipped++; continue; }
-    promises.push(
-      sb.rpc('officer_add_transaction', {
-        p_officer_pin: pin, p_id: uid(),
-        p_desc: desc, p_type: type,
-        p_amount: amount, p_date: date
-      }).then(res => { if (!res.error) added++; })
-    );
-  }
-  await Promise.all(promises);
-  return { added, skipped, label: 'Transactions' };
-}
-
-async function syncFromGoogleSheets() {
-  const btn = event.currentTarget;
-  btn.disabled = true;
-  btn.textContent = 'Syncing\u2026';
-  try {
-    const result = await syncTransactionsCore();
-    await fetchAllData();
-    render();
-    showToast(`\u2713 Sync complete: ${result.added} new entr${result.added===1?'y':'ies'} imported, ${result.skipped} skipped.`);
-  } catch(e) {
-    showToast('Sync failed: ' + (e.message || 'unknown error'));
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Sync from Google Sheets';
-  }
-}
-
-async function syncWelfareCore() {
-  const resp = await fetch(gsCsvUrl('WELFARE'));
-  if (!resp.ok) throw new Error('Could not reach Google Sheets (WELFARE). Make sure the sheet is published.');
-  const text = await resp.text();
-  const rows = parseGsCsv(text);
-  let dataStart = 0;
-  for (let i = 0; i < rows.length; i++) {
-    const r = rows[i];
-    const colA = (r[0]||'').toUpperCase();
-    const colB = (r[1]||'').toUpperCase();
-    if (colA.endsWith('DATE') && colB.includes('NAME')) { dataStart = i + 1; break; }
-  }
-  if (!dataStart) throw new Error('Could not find header row in WELFARE sheet.');
-
-  const existing = loadWelfare();
-  const existingKeys = new Set();
-  for (const w of existing) {
-    for (const c of (w.contributions||[])) {
-      existingKeys.add(`${w.date}|${c.memberId}|${c.amount}`);
-    }
-  }
-
-  const newEntries = [];
-  for (let i = dataStart; i < rows.length; i++) {
-    const r = rows[i];
-    const date = gsParseDate(r[0]);
-    const name = (r[1] || '').trim();
-    const type = (r[2] || '').toLowerCase().trim();
-    const amount = Number((r[3] || '0').replace(/,/g, ''));
-    const purpose = (r[4] || 'Monthly welfare').trim();
-    if (!date || !name || !amount) continue;
-    if (type !== 'contribution' && type !== 'disbursement') continue;
-    newEntries.push({ date, name, type, amount, purpose });
-  }
-
-  let added = 0;
-  const welfare = loadWelfare();
-
-  for (const entry of newEntries) {
-    if (entry.type === 'disbursement') {
-      const alreadyThere = welfare.some(w => w.date === entry.date && w.title === entry.name && w.type === 'other');
-      if (alreadyThere) continue;
-      const newEvent = { id: uid(), date: entry.date, title: entry.name, type: 'other', targetAmount: entry.amount, contributions: [] };
-      newEvent.notes = entry.purpose;
-      welfare.unshift(newEvent);
-      added++;
-    } else {
-      const fyKey = fyLabelForDate(entry.date);
-      let yearEvent = welfare.find(w => w.type === 'levy' && w.title && w.title.startsWith('Welfare Contributions — ') && w.title.endsWith(fyKey));
-      if (!yearEvent) {
-        yearEvent = { id: uid(), date: entry.date, title: `Welfare Contributions — ${fyKey}`, type: 'levy', targetAmount: 0, contributions: [] };
-        welfare.unshift(yearEvent);
-      }
-      if (!Array.isArray(yearEvent.contributions)) yearEvent.contributions = [];
-      const mem = DATA.members.find(m => m.name.toLowerCase() === entry.name.toLowerCase());
-      const memId = mem ? mem.id : ('gs_' + entry.name.replace(/\s+/g,'_').toLowerCase());
-      const contribKey = `${entry.date}|${memId}|${entry.amount}`;
-      if (existingKeys.has(contribKey)) continue;
-      yearEvent.contributions.push({ id: uid(), memberId: memId, amount: entry.amount, paidDate: entry.date });
-      existingKeys.add(contribKey);
-      added++;
-    }
-  }
-
-  saveWelfare(welfare);
-  return { added, skipped: 0, label: 'Welfare' };
-}
-
-async function syncWelfareFromGoogleSheets() {
-  const btn = event.currentTarget;
-  btn.disabled = true;
-  btn.textContent = 'Syncing\u2026';
-  try {
-    const result = await syncWelfareCore();
-    render();
-    showToast(`\u2713 Welfare sync complete: ${result.added} new entr${result.added===1?'y':'ies'} imported.`);
-  } catch(e) {
-    showToast('Welfare sync failed: ' + (e.message || 'unknown error'));
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Sync welfare from Google Sheets';
-  }
-}
-
-async function syncPledgesCore() {
-  const resp = await fetch(gsCsvUrl('PLEDGES'));
-  if (!resp.ok) throw new Error('Could not reach Google Sheets (PLEDGES). Make sure the sheet is published.');
-  const text = await resp.text();
-  const rows = parseGsCsv(text);
-  let dataStart = 0;
-  for (let i = 0; i < rows.length; i++) {
-    const r = rows[i];
-    const colA = (r[0]||'').toUpperCase();
-    const colB = (r[1]||'').toUpperCase();
-    if (colA.endsWith('DATE') && (colB.includes('NAME')||colB==='DESCRIPTION')) { dataStart = i + 1; break; }
-  }
-  if (!dataStart) return { added: 0, skipped: 0, label: 'Pledges', note: 'No PLEDGES tab found — skipped.' };
-
-  const pin = getCurrentAuthPin();
-  const existing = new Set((DATA.pledges||[]).map(p => `${p.pledgeDate}|${p.donorName}|${p.amount}`));
-  let added = 0, skipped = 0;
-  const promises = [];
-  for (let i = dataStart; i < rows.length; i++) {
-    const r = rows[i];
-    const date = gsParseDate(r[0]);
-    const name = (r[1] || '').trim();
-    const amount = Number((r[2] || '0').replace(/,/g, ''));
-    if (!date || !name || !amount) { skipped++; continue; }
-    const key = `${date}|${name}|${amount}`;
-    if (existing.has(key)) { skipped++; continue; }
-    const mem = DATA.members.find(m => m.name.toLowerCase() === name.toLowerCase());
-    promises.push(
-      sb.rpc('add_club_pledge', {
-        p_officer_pin: pin, p_id: uid(), p_donor_name: name,
-        p_member_id: mem ? mem.id : null, p_amount: amount,
-        p_purpose: '', p_pledge_date: date
-      }).then(res => { if (!res.error) added++; })
-    );
-  }
-  await Promise.all(promises);
-  return { added, skipped, label: 'Pledges' };
-}
-
-async function syncAnnualDuesCore() {
-  const resp = await fetch(gsCsvUrl('ANNUAL DUES'));
-  if (!resp.ok) throw new Error('Could not reach Google Sheets (ANNUAL DUES). Make sure the sheet is published.');
-  const text = await resp.text();
-  const rows = parseGsCsv(text);
-  let dataStart = 0, amtCol = -1;
-  for (let i = 0; i < rows.length; i++) {
-    const r = rows[i];
-    const colA = (r[0]||'').toUpperCase();
-    if (colA.endsWith('MEMBER')) {
-      dataStart = i + 1;
-      amtCol = r.findIndex(c => c.toUpperCase().includes('AMT PAID') || c.toUpperCase().includes('AMOUNT PAID'));
-      break;
-    }
-  }
-  if (!dataStart || amtCol === -1) return { added: 0, skipped: 0, label: 'Annual Dues', note: 'No ANNUAL DUES tab found — skipped.' };
-
-  const pin = getCurrentAuthPin();
-  let updated = 0, skipped = 0;
-  const promises = [];
-  for (let i = dataStart; i < rows.length; i++) {
-    const r = rows[i];
-    const name = (r[0] || '').trim();
-    if (!name) continue;
-    const amt = Number((r[amtCol] || '0').replace(/,/g, ''));
-    const mem = DATA.members.find(m => m.name.toLowerCase() === name.toLowerCase());
-    if (!mem) { skipped++; continue; }
-    if (Number(mem.duesPaid||0) === amt) { skipped++; continue; }
-    promises.push(
-      sb.rpc('officer_set_dues_paid', { p_officer_pin: pin, p_member_id: mem.id, p_amount: amt })
-        .then(res => { if (!res.error) updated++; })
-    );
-  }
-  await Promise.all(promises);
-  return { added: updated, skipped, label: 'Annual Dues' };
-}
-
-async function syncAllFromGoogleSheets() {
-  const btn = event.currentTarget;
-  btn.disabled = true;
-  const originalHtml = btn.innerHTML;
-  btn.textContent = 'Syncing all sheets\u2026';
-  const results = [];
-  const errors = [];
-  try {
-    for (const job of [syncTransactionsCore, syncWelfareCore, syncPledgesCore, syncAnnualDuesCore]) {
-      try {
-        results.push(await job());
-      } catch(e) {
-        errors.push(e.message || 'unknown error');
-      }
-    }
-    await fetchAllData();
-    render();
-    const summary = results.map(r => `${r.label}: ${r.added} new`).join(' \u2022 ');
-    if (errors.length) {
-      showToast(`\u2713 Synced with issues \u2014 ${summary}. Errors: ${errors.join('; ')}`);
-    } else {
-      showToast(`\u2713 All sheets synced \u2014 ${summary}`);
-    }
-  } catch(e) {
-    showToast('Sync failed: ' + (e.message || 'unknown error'));
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = originalHtml;
-  }
 }
 
 function printFinanceStatement(){
@@ -4910,7 +4580,82 @@ function pagePledges(){
   </div>
   <div class="card">
     ${pledges.length?`<table><thead><tr><th>Date</th><th>Donor</th><th>Purpose</th><th style="text-align:right;">Amount</th>${canEdit?'<th></th>':''}</tr></thead><tbody>${pledges.map(pledgeRow).join('')}</tbody></table>`:emptyState('No pledges recorded','Executive Officers can record building project pledges here, separate from welfare contributions.')}
-  </div>`;
+  </div>
+  ${canEdit?`<div class="card" style="margin-top:8px;">
+    <div class="card-head"><h2>&#128202; Pledges spreadsheet</h2></div>
+    <p class="cell-muted" style="margin:0 0 14px;">Download the full pledge list as CSV or Excel, or upload a file of new pledges to add them in bulk. Rows matching an existing pledge's date, donor, and amount exactly are skipped.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+      <button type="button" class="btn btn-primary" onclick="downloadPledgesCSV()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M12 3v13M6 11l6 6 6-6"/><rect x="3" y="19" width="18" height="2" rx="1"/></svg>
+        Download pledges CSV
+      </button>
+      <label class="btn" style="cursor:pointer;margin:0;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M12 21V8M6 14l6-6 6 6"/><rect x="3" y="3" width="18" height="2" rx="1"/></svg>
+        Upload new pledges CSV or Excel
+        <input type="file" accept=".csv,.txt,.xlsx,.xls" style="display:none;" onchange="handlePledgesUpload(this)"/>
+      </label>
+    </div>
+  </div>`:''}`;
+}
+function downloadPledgesCSV(){
+  const header=['ID','Date','Donor Name','Member ID','Amount (₦)','Purpose'];
+  const rows=(DATA.pledges||[]).slice().sort((a,b)=>(a.pledgeDate||'').localeCompare(b.pledgeDate||''))
+    .map(p=>[p.id,p.pledgeDate,p.donorName,p.memberId||'',p.amount,p.purpose||'']);
+  rows.push(['','YYYY-MM-DD','Example Donor','','','Example purpose']);
+  downloadCSVFile('oasis-pledges-'+new Date().toISOString().slice(0,10)+'.csv',header,rows);
+}
+async function handlePledgesUpload(input){
+  const file=input.files[0];if(!file)return;
+  let rows;
+  try{rows=await readUploadedRows(file);}
+  catch(e){showToast('Could not read that file. Make sure it\u2019s a valid CSV or Excel file.');input.value='';return;}
+  if(rows.length<2){showToast('File appears to be empty.');input.value='';return;}
+  const h=csvHeaderMap(rows[0]);
+  const dateCol=h['date']??-1;
+  const nameCol=h['donorname']??h['donor']??h['name']??-1;
+  const memIdCol=h['memberid']??-1;
+  const amtCol=h['amount₦']??h['amount']??-1;
+  const purposeCol=h['purpose']??-1;
+  if(dateCol<0||nameCol<0||amtCol<0){
+    showToast('Cannot find required columns (Date, Donor Name, Amount). Please use the downloaded template.');
+    input.value='';return;
+  }
+  const existing=new Set((DATA.pledges||[]).map(p=>`${p.pledgeDate}|${p.donorName}|${p.amount}`));
+  const pin=getCurrentAuthPin();
+  let added=0,skipped=0,fail=0;const errs=[];
+  for(let i=1;i<rows.length;i++){
+    const row=rows[i];
+    const date=(row[dateCol]||'').trim();
+    const name=(row[nameCol]||'').trim();
+    const rawAmt=(row[amtCol]||'').replace(/[₦,\s]/g,'');
+    const amount=Number(rawAmt);
+    if(!date||date==='YYYY-MM-DD'||!name||!rawAmt||isNaN(amount)||amount===0)continue;
+    const contentKey=`${date}|${name}|${amount}`;
+    if(existing.has(contentKey)){skipped++;continue;}
+    const memId=memIdCol>=0?(row[memIdCol]||'').trim():'';
+    const purpose=purposeCol>=0?(row[purposeCol]||'').trim():'';
+    try{
+      const{error}=await sb.rpc('add_club_pledge',{
+        p_officer_pin:pin,p_id:uid(),p_donor_name:name,p_member_id:memId||null,
+        p_amount:amount,p_purpose:purpose,p_pledge_date:date
+      });
+      if(error)throw error;
+      added++;
+      existing.add(contentKey);
+    }catch(e){errs.push('Row '+(i+1)+': '+(e.message||'error'));fail++;}
+  }
+  input.value='';
+  const summary=added+' pledge'+(added===1?'':'s')+' added'
+    +(skipped?' · '+skipped+' already existed (skipped)':'')
+    +(fail?' · '+fail+' failed':'');
+  if(errs.length){
+    openModal('<h3>Pledges upload results</h3><p class="cell-muted">'+summary+'</p>'
+      +'<div style="max-height:40vh;overflow-y:auto;font-size:12.5px;color:var(--red);line-height:1.7;">'+errs.map(escHtml).join('<br/>')+'</div>'
+      +'<div class="modal-actions"><button type="button" class="btn" onclick="closeModal()">Close</button></div>');
+  }else{
+    await fetchAllData();render();
+    showToast('✓ '+summary);
+  }
 }
 
 function openAddPledge(){
