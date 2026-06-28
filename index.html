@@ -785,7 +785,7 @@ body.dark .asst-chip{color:#a7e6d0;}
 <script>
 /* Bump this string every time you publish changes to GitHub.
    This is what tells everyone's app that a newer version exists. */
-const APP_VERSION='2026-06-27-6';
+const APP_VERSION='2026-06-28-1';
 const STORE_KEY='oasis-club-data-v1';
 let DATA={members:[
   {
@@ -4302,6 +4302,14 @@ function downloadCSVFile(filename,headerRow,dataRows){
 }
 function parseCSVFile(text){
   const rows=[];
+  // Some spreadsheet apps (older Excel on Windows, some Numbers/Sheets exports)
+  // save CSV with a UTF-8 byte-order-mark at the very start of the file. Most
+  // browsers strip this automatically, but not reliably across every browser
+  // and OS combination -- if it survives, it silently glues itself onto the
+  // first header cell (e.g. "Member ID" becomes "\uFEFFMember ID"), which can
+  // break column matching depending on how that cell is normalized. Strip it
+  // unconditionally so an upload never fails for this reason.
+  if(text.charCodeAt(0)===0xFEFF)text=text.slice(1);
   const lines=text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n');
   for(const line of lines){
     if(!line.trim())continue;
