@@ -785,7 +785,7 @@ body.dark .asst-chip{color:#a7e6d0;}
 <script>
 /* Bump this string every time you publish changes to GitHub.
    This is what tells everyone's app that a newer version exists. */
-const APP_VERSION='2026-06-28-3';
+const APP_VERSION='2026-06-28-4';
 const STORE_KEY='oasis-club-data-v1';
 let DATA={members:[
   {
@@ -2578,6 +2578,10 @@ function pageFinance(){
       <button type="button" class="btn" style="background:var(--teal);color:#fff;border-color:var(--teal);" onclick="syncFromGoogleSheets()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
         Sync from Google Sheets
+      </button>
+      <button type="button" class="btn btn-danger" onclick="findAndRemoveDuplicateTransactions()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2m2 0v14a1 1 0 01-1 1H6a1 1 0 01-1-1V6z"/></svg>
+        Find &amp; remove duplicates
       </button>
     </div>
     <p class="cell-muted" style="margin:12px 0 0;font-size:11.5px;">
@@ -4423,6 +4427,57 @@ async function handleDuesUpload(input){
 }
 
 /* ---- Transactions ---- */
+function findDuplicateTransactionGroups(){
+  // Groups by exact content match. Real duplicates from a repeat upload are
+  // byte-for-byte identical across every field (that's *why* they're
+  // duplicates), so matching on all four fields together is both safe and
+  // precise -- it won't merge two genuinely different transactions that
+  // simply happen to share one or two fields.
+  const groups={};
+  for(const t of DATA.transactions){
+    const key=`${t.date}|${t.desc}|${t.type}|${t.amount}`;
+    (groups[key]=groups[key]||[]).push(t);
+  }
+  return Object.values(groups).filter(g=>g.length>1);
+}
+async function findAndRemoveDuplicateTransactions(){
+  const groups=findDuplicateTransactionGroups();
+  if(!groups.length){showToast('No duplicate transactions found \u2014 your ledger looks clean.');return;}
+  const toRemove=groups.flatMap(g=>g.slice(1)); // keep one copy per group, remove the rest
+  const totalExtra=toRemove.reduce((s,t)=>s+Number(t.amount),0);
+  const rowsHtml=groups.map(g=>{
+    const t=g[0];
+    return `<tr><td>${escHtml(fmtDate(t.date))}</td><td>${escHtml(t.desc)}</td><td style="text-transform:capitalize;">${escHtml(t.type)}</td><td style="text-align:right;">${fmtMoney(t.amount)}</td><td style="text-align:center;">&times;${g.length}</td></tr>`;
+  }).join('');
+  openModal(`<h3>Found ${groups.length} duplicated entr${groups.length===1?'y':'ies'}</h3>
+    <p class="cell-muted" style="margin-bottom:12px;">
+      These ${toRemove.length} extra row${toRemove.length===1?'':'s'} (totalling ${fmtMoney(totalExtra)}) exactly match an entry that's already on record. One copy of each will be kept; the rest will be permanently deleted. Review the list below before confirming.
+    </p>
+    <div style="max-height:40vh;overflow-y:auto;">
+      <table><thead><tr><th>Date</th><th>Description</th><th>Type</th><th style="text-align:right;">Amount</th><th style="text-align:center;">Copies found</th></tr></thead><tbody>${rowsHtml}</tbody></table>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn" onclick="closeModal()">Cancel</button>
+      <button type="button" class="btn btn-danger" onclick="confirmRemoveDuplicateTransactions()">Delete ${toRemove.length} duplicate row${toRemove.length===1?'':'s'}</button>
+    </div>`);
+}
+async function confirmRemoveDuplicateTransactions(){
+  const groups=findDuplicateTransactionGroups();
+  const toRemove=groups.flatMap(g=>g.slice(1));
+  closeModal();
+  showToast('Removing duplicates\u2026');
+  const pin=getCurrentAuthPin();
+  let ok=0,fail=0;
+  for(const t of toRemove){
+    try{
+      const{error}=await sb.rpc('officer_delete_transaction',{p_officer_pin:pin,p_id:t.id});
+      if(error)throw error;
+      ok++;
+    }catch(e){fail++;}
+  }
+  await fetchAllData();render();
+  showToast('✓ Removed '+ok+' duplicate'+(ok===1?'':'s')+(fail?' · '+fail+' failed \u2014 you may need to delete those manually':''));
+}
 function downloadTransactionsCSV(){
   const header=['ID','Date','Description','Type','Amount (₦)'];
   const rows=[...DATA.transactions]
@@ -4450,6 +4505,14 @@ async function handleTransactionsUpload(input){
     input.value='';return;
   }
   const existingIds=new Set(DATA.transactions.map(t=>t.id));
+  // Matches by ID alone only catches re-uploads that happen to carry the same
+  // ID back -- a freshly generated CSV (ID column blank, as the app's own
+  // template leaves it) looks "new" on every single upload otherwise, and a
+  // repeat upload silently re-adds the entire file as duplicates. Compare by
+  // content too -- same pattern the Google Sheets sync already uses -- so a
+  // row that matches an existing transaction's date+description+amount is
+  // always skipped, regardless of what (if anything) its ID column says.
+  const existingContent=new Set(DATA.transactions.map(t=>`${t.date}|${t.desc}|${t.amount}`));
   const pin=getCurrentAuthPin();
   let added=0,skipped=0,fail=0;const errs=[];
   for(let i=1;i<rows.length;i++){
@@ -4460,7 +4523,8 @@ async function handleTransactionsUpload(input){
     const rawAmt=(row[amtCol]||'').replace(/[₦,\s]/g,'');
     const amount=Number(rawAmt);
     if(!date||date==='YYYY-MM-DD'||!desc||!rawAmt||isNaN(amount)||amount===0)continue;
-    if(id&&existingIds.has(id)){skipped++;continue;}
+    const contentKey=`${date}|${desc}|${Math.abs(amount)}`;
+    if((id&&existingIds.has(id))||existingContent.has(contentKey)){skipped++;continue;}
     const typeRaw=typeCol>=0?(row[typeCol]||'').toLowerCase():'income';
     const type=typeRaw.includes('exp')||typeRaw.includes('out')?'expense':'income';
     const newId=id&&!existingIds.has(id)?id:uid();
@@ -4471,6 +4535,7 @@ async function handleTransactionsUpload(input){
       });
       if(error)throw error;
       added++;
+      existingContent.add(contentKey);existingIds.add(newId);
     }catch(e){errs.push('Row '+(i+1)+': '+(e.message||'error'));fail++;}
   }
   input.value='';
