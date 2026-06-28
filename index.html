@@ -785,7 +785,7 @@ body.dark .asst-chip{color:#a7e6d0;}
 <script>
 /* Bump this string every time you publish changes to GitHub.
    This is what tells everyone's app that a newer version exists. */
-const APP_VERSION='2026-06-28-4';
+const APP_VERSION='2026-06-28-5';
 const STORE_KEY='oasis-club-data-v1';
 let DATA={members:[
   {
@@ -2564,7 +2564,7 @@ function pageFinance(){
   </div>
   <div class="card" style="margin-top:4px;">
     <div class="card-head"><h2>&#128202; Transactions spreadsheet</h2><span class="badge badge-active">Treasurer</span></div>
-    <p class="cell-muted" style="margin:0 0 14px;">Download the full ledger as CSV, or add new rows directly in Google Sheets and tap <strong>Sync</strong> to import them. Existing rows are never duplicated.</p>
+    <p class="cell-muted" style="margin:0 0 14px;">Download the full ledger as CSV, or add new rows directly in Google Sheets and tap <strong>Sync</strong> to import them. Rows are skipped as duplicates only when their date, description, and amount match exactly \u2014 if a row's date is formatted or typed differently in the sheet than it already is here, it won't be recognised as the same entry and will be added again. Double-check date formatting in the sheet before syncing.</p>
     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
       <button type="button" class="btn btn-primary" onclick="downloadTransactionsCSV()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M12 3v13M6 11l6 6 6-6"/><rect x="3" y="19" width="18" height="2" rx="1"/></svg>
@@ -2583,6 +2583,13 @@ function pageFinance(){
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2m2 0v14a1 1 0 01-1 1H6a1 1 0 01-1-1V6z"/></svg>
         Find &amp; remove duplicates
       </button>
+    </div>
+    <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line-soft);">
+      <button type="button" class="btn btn-danger" onclick="resetAllTransactions()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2m2 0v14a1 1 0 01-1 1H6a1 1 0 01-1-1V6z"/></svg>
+        Reset ALL transactions
+      </button>
+      <p class="cell-muted" style="margin:6px 0 0;font-size:11.5px;">Last resort: wipes every transaction so you can re-import a clean file from scratch. Use this only when duplicates are too tangled to fix individually (e.g. mismatched dates from two different sources).</p>
     </div>
     <p class="cell-muted" style="margin:12px 0 0;font-size:11.5px;">
       &#128279; <a href="https://docs.google.com/spreadsheets/d/1i7qcWpf9l86iE4rgBPNn5OIx5wutmBwh9z0yia7toxk/edit" target="_blank" rel="noopener" style="color:var(--teal);">Open Oasis financial ledger in Google Sheets</a>
@@ -4439,6 +4446,45 @@ function findDuplicateTransactionGroups(){
     (groups[key]=groups[key]||[]).push(t);
   }
   return Object.values(groups).filter(g=>g.length>1);
+}
+async function resetAllTransactions(){
+  const count=DATA.transactions.length;
+  if(!count){showToast('There are no transactions to remove.');return;}
+  const income=DATA.transactions.filter(t=>t.type==='income').reduce((s,t)=>s+Number(t.amount),0);
+  const expense=DATA.transactions.filter(t=>t.type==='expense').reduce((s,t)=>s+Number(t.amount),0);
+  openModal(`<h3>\u26a0\ufe0f Delete ALL transactions</h3>
+    <p class="cell-muted" style="margin-bottom:10px;">
+      This permanently deletes <strong>all ${count}</strong> transactions currently on record
+      (total income ${fmtMoney(income)}, total expense ${fmtMoney(expense)}, balance ${fmtMoney(income-expense)}).
+      This cannot be undone. Only do this immediately before re-uploading a clean, verified file \u2014
+      not as a general cleanup step.
+    </p>
+    <div class="field">
+      <label>Type DELETE ALL to confirm</label>
+      <input type="text" id="reset-tx-confirm" placeholder="DELETE ALL" autocomplete="off"/>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn" onclick="closeModal()">Cancel</button>
+      <button type="button" class="btn btn-danger" onclick="confirmResetAllTransactions()">Delete all ${count} transactions</button>
+    </div>`);
+}
+async function confirmResetAllTransactions(){
+  const val=(document.getElementById('reset-tx-confirm').value||'').trim().toUpperCase();
+  if(val!=='DELETE ALL'){showToast('Type "DELETE ALL" exactly to confirm.');return;}
+  closeModal();
+  showToast('Deleting all transactions\u2026');
+  const pin=getCurrentAuthPin();
+  const ids=DATA.transactions.map(t=>t.id);
+  let ok=0,fail=0;
+  for(const id of ids){
+    try{
+      const{error}=await sb.rpc('officer_delete_transaction',{p_officer_pin:pin,p_id:id});
+      if(error)throw error;
+      ok++;
+    }catch(e){fail++;}
+  }
+  await fetchAllData();render();
+  showToast('✓ Deleted '+ok+' transaction'+(ok===1?'':'s')+(fail?' · '+fail+' failed':'')+'. You can now re-upload a clean file.');
 }
 async function findAndRemoveDuplicateTransactions(){
   const groups=findDuplicateTransactionGroups();

@@ -1,0 +1,209 @@
+ID,Date,Description,Type,Amount (₦)
+,2020-02-02T00:00:00,Borrowing from a member,income,20000
+,2020-08-02T00:00:00,Ayodeji Bisi (Annual Due 2020/21),income,30000
+,2020-09-17T00:00:00,Akanni Tunde (Annual Due),income,20000
+,2020-09-17T00:00:00,Borrowing from a member,income,20000
+,2020-09-25T00:00:00,Akanni Tunde (Annual Due),income,10000
+,2020-09-25T00:00:00,Disbursment to Lawyer for Registration,expense,50000
+,2020-10-09T00:00:00,Adebayo Lanre(Annual Due),income,30000
+,2020-10-10T00:00:00,Olatunji Matthew (Annual Due),income,10000
+,2020-10-11T00:00:00,Olatunde Kunle (Annual due),income,5000
+,2020-10-14T00:00:00,Balance of Olawuyi Abiodun's Grandma burial contribution,income,2000
+,2020-11-30T00:00:00,Refund of borrowed amount,expense,40000
+,2020-12-21T00:00:00,Olatunde Kunle (Annual due),income,10000
+,2021-01-27T00:00:00,Olawuyi Abiodun,income,10000
+,2021-03-03T00:00:00,Adebayo Taiwo (Annual Due),income,10000
+,2021-03-03T00:00:00,Bal of payment to Lawyer for Registration,expense,70000
+,2021-03-05T00:00:00,Olatunde Kunle (Annual due),income,15000
+,2021-03-12T00:00:00,Adebayo Taiwo (Annual Due),income,5000
+,2021-03-19T00:00:00,Ogunleye Dele (Annual due),income,20000
+,2021-03-21T00:00:00,Adebayo Taiwo (Annual Due),income,5000
+,2021-03-29T00:00:00,Adebayo Taiwo (Annual Due),income,5000
+,2021-04-07T00:00:00,Babalola Adewunmi (Annual Due),income,10000
+,2021-04-24T00:00:00,Falade Taiwo (Annual Due),income,6000
+,2021-05-29T00:00:00,Olawuyi Abiodun(Annual Due),income,5000
+,2021-06-01T00:00:00,Atolani Femi (Annual Due),income,20000
+,2021-06-03T00:00:00,Olatunji Matthew (Annual Due),income,10000
+,2021-06-26T00:00:00,Awoyemi Sunkanmi(Annual Due),income,20000
+,2021-08-14T00:00:00,Awoyemi Sunkanmi(Annual Due),income,5000
+,2021-10-29T00:00:00,Ayodeji Bisi (Annual Due 2021/22),income,30000
+,2021-10-31T00:00:00,Olawuyi Abiodun(Annual Due),income,5000
+,2021-11-19T00:00:00,Ayorinde Toyin Adeniran (Annual  Due 21/22),income,10000
+,2021-11-27T00:00:00,Babalola Adewunmi (Annual Due),income,5000
+,2021-11-28T00:00:00,Olawuyi Abiodun(Annual Due),income,5000
+,2021-11-29T00:00:00,Adebayo Olanrewaju (Annual Due 21/22),income,30000
+,2021-11-30T00:00:00,Awoyemi Sunkanmi(Annual Due),income,2500
+,2021-12-24T00:00:00,Adebayo Taiwo (Annual Due),income,5000
+,2021-12-24T00:00:00,Awoyemi Sunkanmi(Annual Due),income,5000
+,2021-12-24T00:00:00,Olawuyi Abiodun (Annual Due),income,5000
+,2021-12-26T00:00:00,Babalola Adewunmi (Annual Due),income,5000
+,2021-12-26T00:00:00,Ogunleye Dele (Annual due),income,10000
+,2022-01-27T00:00:00,Adebayo Taiwo (Annual Due),income,2500
+,2022-01-30T00:00:00,Ayorinde Toyin Adeniran (Annual  Due 21/22),income,10000
+,2022-02-14T00:00:00,Payment of compensation to lawer,expense,10000
+,2022-03-21T00:00:00,Adebayo Taiwo (Annual Due),income,5000
+,2022-03-27T00:00:00,Olawuyi Abiodun (Annual Due),income,5000
+,2022-05-20T00:00:00,Adebayo Taiwo (Annual Due),income,5000
+,2022-05-29T00:00:00,Akanni Tunde (Annual Due),income,5000
+,2022-05-29T00:00:00,Olatunji Matthew (Annual Due),income,10000
+,2022-06-05T00:00:00,Adewumi Babalola (Annual Due),income,10000
+,2022-06-20T00:00:00,Akanni Tunde (Annual due),income,20000
+,2022-06-21T00:00:00,Adebayo Taiwo (Annual Due),income,2500
+,2022-07-21T00:00:00,Olatunji Matthew (Annual Due),income,10000
+,2022-07-22T00:00:00,Adebayo Taiwo (Annual Due),income,5000
+,2022-07-31T00:00:00,Akanni Tunde (Annual Due),income,5000
+,2022-09-11T00:00:00,Ayorinde Toyin Adeniran (Annual  Due 21/22),income,10000
+,2022-09-16T00:00:00,Ayodeji Bisi (Annual Due 2022/23),income,25000
+,2022-09-16T00:00:00,Part Payment for Landed property,expense,300000
+,2022-09-20T00:00:00,Olatunji Matthew (Annual Due),income,20000
+,2022-09-21T00:00:00,Ayodeji Bisi (Annual Due 2022/23),income,5000
+,2022-09-23T00:00:00,Atolani Femi (Annual Due),income,10000
+,2022-09-25T00:00:00,Atolani Femi (Annual Due),income,10000
+,2022-09-25T00:00:00,Olatunde Kunle (Annual due),income,10000
+,2022-09-28T00:00:00,Adebayo Taiwo (Annual Due),income,4000
+,2022-10-01T00:00:00,Ogunleye Dele (Annual due 2021/22),income,30000
+,2022-10-07T00:00:00,Ayodeji Bisi (Lending to the Club),income,100000
+,2022-10-08T00:00:00,Adebayo Olanrewaju (Annual Due 2022/23),income,30000
+,2022-10-08T00:00:00,Adebayo Olanrewaju Donation towards Land,income,30000
+,2022-10-08T00:00:00,Part-payment of agent commission,expense,15000
+,2022-10-08T00:00:00,Second Part-payment  for Land.,expense,250000
+,2022-10-10T00:00:00,Balance of payment for Land,expense,50000
+,2022-10-10T00:00:00,Balance of payment of Agent Commission,expense,10000
+,2022-10-28T00:00:00,Olawuyi Abiodun (Annual Due),income,10000
+,2022-12-04T00:00:00,Akanni Tunde (Annual due),income,30000
+,2022-12-24T00:00:00,Babalola Adewunmi (Annual Due),income,10000
+,2022-12-24T00:00:00,Olatunde Kunle (Annual due),income,20000
+,2023-02-26T00:00:00,Babalola Adewunmi (Annual Due),income,10000
+,2023-02-26T00:00:00,Olawuyi Abiodun (Annual Due),income,10000
+,2023-03-02T00:00:00,Adebayo Taiwo (Annual Due),income,6000
+,2023-03-11T00:00:00,Adebayo Taiwo (Annual Due),income,5000
+,2023-03-24T00:00:00,Olatoye Kunle (Annual due),income,10000
+,2023-03-25T00:00:00,Ayorinde Toyin Adeniran (Annual  Due ),income,10000
+,2023-03-29T00:00:00,Olatunde Kunle (Annual due),income,10000
+,2023-04-02T00:00:00,Akanni Babatunte (Assistance on Corner Piece),income,10000
+,2023-04-04T00:00:00,Refund of borrowed amount to Bisi Ayodeji,expense,100000
+,2023-04-12T00:00:00,Adebayo Taiwo (Annual Due),income,10000
+,2023-04-15T00:00:00,Olatunde Kunle (Annual Due),income,5000
+,2023-04-30T00:00:00,Olawuyi Abiodun (Annual Due),income,10000
+,2023-05-04T00:00:00,Adebayo Taiwo (Annual Due),income,8000
+,2023-05-10T00:00:00,Olatunji Matthew (Annual Due),income,10000
+,2023-05-31T00:00:00,Adebayo Taiwo (Annual Due),income,5000
+,2023-06-22T00:00:00,Ajibade Adetayo(Annual Due),income,20000
+,2023-07-04T00:00:00,Adebayo Taiwo (Annual Due),income,2000
+,2023-07-15T00:00:00,Olawuyi Abiodun (Annual Due),income,25000
+,2023-07-17T00:00:00,Oasis Land bush Clearing,expense,25000
+,2023-07-29T00:00:00,Ayorinde Toyin Adeniran (Annual Due),income,10000
+,2023-08-05T00:00:00,Olatunji Matthew (Annual Due),income,10000
+,2023-08-27T00:00:00,Awoyemi Sunkanmi(Annual Due),income,15000
+,2023-09-08T00:00:00,Ogunleye Dele (Annual Due),income,15000
+,2023-09-13T00:00:00,Donation by Lanre Adebayo (Bush clearing),income,25000
+,2023-09-14T00:00:00,Olatoye Kunle (Annual due),income,10000
+,2023-09-24T00:00:00,Ayodeji Olabisi (Annual Due 2023/24),income,30000
+,2023-10-01T00:00:00,Payment for 11 loads of Sand,expense,150000
+,2023-10-17T00:00:00,Babalola Adewunmi (Annual Due ),income,10000
+,2023-10-29T00:00:00,Olatunde Kunle (Annual due),income,15000
+,2023-12-04T00:00:00,Ayodeji Olabisi (Donation towards Otun day 2023),income,50000
+,2023-12-05T00:00:00,Payment of Otun Day 2023 Contribution/ Registratn,expense,50000
+,2023-12-06T00:00:00,Adebayo Lanre(Donation towards Otun Day 2023),income,50000
+,2023-12-06T00:00:00,Payment of Otun Day 2023 Bronchure advert/publicatn,expense,50000
+,2024-01-17T00:00:00,Payment of Otun Day 2023 Bronchure fees (15 copies),expense,7500
+,2024-01-26T00:00:00,"Otun Day Bronchure for Toyin, Lanre, Bisi & Sunkanmi",income,2000
+,2024-01-26T00:00:00,Ayorinde Toyin Adeniran (Annual Due),income,10000
+,2024-01-28T00:00:00,Ogunleye Dele (Annual Due),income,30000
+,2024-01-28T00:00:00,Otun Day Bronchure for (Ogunleye Dele),income,500
+,2024-01-29T00:00:00,Olatoye Kunle (Annual due),income,10000
+,2024-01-29T00:00:00,Otun Day Bronchure for (Kunle Olatoye),income,500
+,2024-02-25T00:00:00,Akanni Tunde (Annual due),income,10000
+,2024-02-25T00:00:00,Otun Day Bronchure for (Akani Tunde),income,500
+,2024-03-01T00:00:00,Payment for Blocks and workmanship on Corner piece,expense,27000
+,2024-03-10T00:00:00,Adebayo Taiwo (Annual Due),income,6000
+,2024-03-29T00:00:00,Adebayo Taiwo (Annual Due),income,9000
+,2024-03-30T00:00:00,Olatunji Matthew (Annual Due),income,10000
+,2024-03-31T00:00:00,Ayorinde Toyin Adeniran (Annual Due),income,15000
+,2024-04-16T00:00:00,Adetoyi Dare (Annual Due),income,10000
+,2024-04-19T00:00:00,Otun Day Bronchure (Olatunji Matthew),income,500
+,2024-04-28T00:00:00,Akanni Babatunte (Annual Due),income,20000
+,2024-04-28T00:00:00,Awoyemi Sunkanmi(Annual Due),income,10000
+,2024-05-26T00:00:00,Olatunde Kunle (Annual due),income,15000
+,2024-05-26T00:00:00,Olatoye Kunle (Annual due),income,5000
+,2024-05-28T00:00:00,Adebayo Taiwo (Annual Due),income,10000
+,2024-06-30T00:00:00,Adebayo Lanre (Annual due),income,30000
+,2024-06-30T00:00:00,Ajibade Adetayo(Annual Due),income,30000
+,2024-07-12T00:00:00,Adebayo Taiwo (Annual Due),income,5000
+,2024-07-26T00:00:00,Awoyemi Sunkanmi(Annual Due),income,12500
+,2024-09-28T00:00:00,Olatoye Kunle (Annual due),income,10000
+,2024-09-29T00:00:00,Olawuyi Abiodun (Annual Due),income,20000
+,2024-09-29T00:00:00,Olatunde Kunle (Annual due),income,15000
+,2024-10-03T00:00:00,Atolani Femi (Annual Due),income,10000
+,2024-10-26T00:00:00,Ayorinde Toyin Adeniran (Annual Due),income,15000
+,2024-10-27T00:00:00,Ogunleye Oladele (Annual Due),income,15000
+,2024-10-28T00:00:00,Olatunji Matthew (Annual Due),income,10000
+,2024-12-22T00:00:00,Olatunji Matthew (Annual Due),income,20000
+,2025-01-17T00:00:00,Adebayo Taiwo (Annual Due 2024/2025),income,25000
+,2025-01-30T00:00:00,Paid to Tunde Akanni for purchase of Share vat Acess Bank,expense,300000
+,2025-02-01T00:00:00,Balance returned by Tunde Akanni after share purchase,income,3657
+,2025-02-20T00:00:00,Adebayo Taiwo (Annual Due 2024/2025),income,25000
+,2025-02-22T00:00:00,Adebayo Lanre (Annual Due 2024/2025),income,50000
+,2025-02-23T00:00:00,Ayodeji Olabisi(Annual Due 2024/2025),income,50000
+,2025-02-23T00:00:00,Ayorinde Toyin Adeniran (Annual Due),income,20000
+,2025-03-04T00:00:00,Awoyemi Sunkanmi(Annual Due),income,50000
+,2025-05-13T00:00:00,Oasis Land bush Clearing fee paid to Olatunde Adekunle,expense,40000
+,2025-05-16T00:00:00,Dividend received on our Access Bank Share as paid in by Tunde Akanni,income,20295
+,2025-05-25T00:00:00,Ogunleye Oladele (Annual Due 2024/2025),income,50000
+,2025-05-27T00:00:00,Oasis Building Project Block making paid to Olatunde Adekunle,expense,800000
+,2025-06-13T00:00:00,Oasis Building Project Block making Bal paid to Olatunde Adekunle,expense,68900
+,2025-06-29T00:00:00,Awoyemi Sunkanmi(Annual Due),income,30000
+,2025-06-29T00:00:00,Olatunde Kunle (Annual due),income,30000
+,2025-06-30T00:00:00,Olatunji Matthew (Annual Due),income,10000
+,2025-07-01T00:00:00,Aina Adewale (Annual Due),income,50000
+,2025-07-02T00:00:00,Account opening Legal / Search Fee,expense,8600
+,2025-07-05T00:00:00,Onifade Mojisola (Annual Due),income,20000
+,2025-07-19T00:00:00,Ajibade Adetayo(Annual Due),income,50000
+,2025-07-22T00:00:00,Olatoye Kunle (Annual due),income,10000
+,2025-07-26T00:00:00,Ayorinde Toyin Adeniran (Annual Due),income,20000
+,2025-07-26T00:00:00,Olawuyi Abiodun (Annual Due),income,10000
+,2025-07-27T00:00:00,Babalola Adewumi (Annual Due),income,15000
+,2025-08-12T00:00:00,Oasis Building Project fencing paid to Adewumi Babalola,expense,482500
+,2025-08-13T00:00:00,Awoyemi Sunkanmi(Annual Due),income,20000
+,2025-08-29T00:00:00,Ayorinde Toyin Adeniran (Annual Due),income,10000
+,2025-08-31T00:00:00,Olawuyi Abiodun (Annual Due),income,50000
+,2025-08-31T00:00:00,Olatunde Kunle (Annual due),income,20000
+,2025-08-31T00:00:00,Olatoye Kunle (Annual due),income,10000
+,2025-08-31T00:00:00,Akanni Babatunte (Annual Due),income,30000
+,2025-09-01T00:00:00,Oasis Building Project fencing paid to Adewumi Babalola,expense,198500
+,2025-09-28T00:00:00,Babalola Adewumi (Annual Due),income,10000
+,2025-09-28T00:00:00,Akanni Babatunte (Annual Due) Balance,income,20000
+,2025-09-30T00:00:00,Olatoye Kunle (Annual due),income,20000
+,2025-10-23T00:00:00,Olatoye Kunle (Annual due),income,10000
+,2025-10-26T00:00:00,Aborisade Funso (Annual Due),income,50000
+,2025-10-26T00:00:00,Olatunji Matthew (Annual Due),income,20000
+,2025-10-26T00:00:00,Refund from Pledges account to balance up,income,652048
+,2025-11-10T00:00:00,Olawuyi Abiodun (Annual Due 2025/2026),income,50000
+,2025-11-29T00:00:00,Ayodeji Olabisi  (Annual Due 2025/2026),income,50000
+,2025-11-30T00:00:00,Onifade Mojisola (Annual Due),income,20000
+,2025-11-30T00:00:00,Onifade Mojisola (Annual Due),income,10000
+,2025-12-05T00:00:00,Olatunji Matthew (Annual Due),income,20000
+,2025-12-25T00:00:00,Olatoye Kunle (Annual due),income,15000
+,2025-12-26T00:00:00,Awoyemi Sunkanmi(Annual Due 2025/2026),income,50000
+,2025-12-26T00:00:00,Babalola Adewumi (Annual Due),income,40000
+,2025-12-27T00:00:00,Onifade Mojisola (Annual Due),income,20000
+,2025-12-27T00:00:00,Onifade Mojisola (Annual Due),income,10000
+,2025-12-31T00:00:00,Surplus fund from our AGM contributions,income,77000
+,2026-02-07T00:00:00,Adebayo Taiwo (Annual Due 2025/2026 part payment),income,25000
+,2026-02-10T00:00:00,Repair of Oasis roll up banner,expense,10000
+,2026-03-04T00:00:00,Olatunji Matthew (Annual Due 2025/2026 part payment),income,10000
+,2026-03-08T00:00:00,Olatunji Matthew (Annual Due 2025/2026 part payment),income,15000
+,2026-03-13T00:00:00,Aina Adewale (Annual Due 2025/2026),income,50000
+,2026-03-18T00:00:00,Ayorinde Toyin Adeniran (Annual Due 2025/ 2026 part payment),income,25000
+,2026-03-29T00:00:00,Adebayo Lanre (Annual Due 2025/2026),income,50000
+,2026-03-29T00:00:00,Olayemi Bunmi (Annual Due 2025/2026),income,25000
+,2026-03-29T00:00:00,Onifade Mojisola (Annual Due),income,20000
+,2026-03-29T00:00:00,Ogunleye Oladele (Annual Due 2025/2026),income,50000
+,2026-03-29T00:00:00,Olatunde Kunle (Annual due),income,30000
+,2026-03-30T00:00:00,Olatoye Kunle (Annual due),income,25000
+,2026-04-26T00:00:00,Ajibade Adetayo(Annual Due),income,50000
+,2026-04-26T00:00:00,Awogbami Muyiwa,income,50000
+,2026-04-26T00:00:00,Akanni Babatunte (Annual Due),income,50000
+,2026-05-02T00:00:00,Adebayo Taiwo (Annual Due 2025/2026 balance),income,25000
+,2026-06-15T00:00:00,Paid to Olatunde Adekunle f0r Oasis Land bush clearing,expense,50000
+,2026-06-24T00:00:00,Babalola Adewumi (Annual Due),income,50000
