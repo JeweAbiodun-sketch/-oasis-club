@@ -20,8 +20,10 @@ CREATE TABLE IF NOT EXISTS members (
   joined     TEXT    NOT NULL DEFAULT '',
   dues_paid  NUMERIC NOT NULL DEFAULT 0,
   pin        TEXT    NOT NULL,
-  photo      TEXT    NOT NULL DEFAULT ''
+  photo      TEXT    NOT NULL DEFAULT '',
+  dob        TEXT    NOT NULL DEFAULT ''
 );
+ALTER TABLE members ADD COLUMN IF NOT EXISTS dob TEXT NOT NULL DEFAULT '';
 
 CREATE TABLE IF NOT EXISTS minutes (
   id    TEXT PRIMARY KEY,
@@ -185,7 +187,8 @@ CREATE OR REPLACE FUNCTION update_member_profile(
   p_name        TEXT,
   p_phone       TEXT DEFAULT '',
   p_email       TEXT DEFAULT '',
-  p_photo       TEXT DEFAULT NULL
+  p_photo       TEXT DEFAULT NULL,
+  p_dob         TEXT DEFAULT NULL
 ) RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM members WHERE id = p_member_id AND pin = p_current_pin) THEN
@@ -195,7 +198,8 @@ BEGIN
   SET name  = p_name,
       phone = COALESCE(p_phone, ''),
       email = COALESCE(p_email, ''),
-      photo = CASE WHEN p_photo IS NULL THEN photo ELSE p_photo END
+      photo = CASE WHEN p_photo IS NULL THEN photo ELSE p_photo END,
+      dob   = COALESCE(p_dob, dob)
   WHERE id = p_member_id;
 END;
 $$;
@@ -231,19 +235,21 @@ CREATE OR REPLACE FUNCTION officer_upsert_member(
   p_email       TEXT    DEFAULT '',
   p_joined      TEXT    DEFAULT '',
   p_photo       TEXT    DEFAULT NULL,
-  p_pin         TEXT    DEFAULT NULL
+  p_pin         TEXT    DEFAULT NULL,
+  p_dob         TEXT    DEFAULT NULL
 ) RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS $$
 BEGIN
   IF NOT is_officer_pin(p_officer_pin) THEN
     RAISE EXCEPTION 'Unauthorized: invalid officer PIN';
   END IF;
-  INSERT INTO members (id, name, role, status, phone, email, joined, photo, pin, dues_paid)
+  INSERT INTO members (id, name, role, status, phone, email, joined, photo, pin, dues_paid, dob)
   VALUES (
     p_id, p_name, p_role, p_status,
     COALESCE(p_phone,''), COALESCE(p_email,''), COALESCE(p_joined,''),
     COALESCE(p_photo,''),
     COALESCE(p_pin, LPAD(FLOOR(RANDOM()*10000)::TEXT, 4, '0')),
-    0
+    0,
+    COALESCE(p_dob,'')
   )
   ON CONFLICT (id) DO UPDATE SET
     name   = EXCLUDED.name,
@@ -252,7 +258,8 @@ BEGIN
     phone  = EXCLUDED.phone,
     email  = EXCLUDED.email,
     joined = EXCLUDED.joined,
-    photo  = CASE WHEN p_photo IS NULL THEN members.photo ELSE EXCLUDED.photo END;
+    photo  = CASE WHEN p_photo IS NULL THEN members.photo ELSE EXCLUDED.photo END,
+    dob    = CASE WHEN p_dob IS NULL THEN members.dob ELSE EXCLUDED.dob END;
 END;
 $$;
 
@@ -493,6 +500,48 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION upsert_birthday_notice(
+  p_notice_key TEXT,
+  p_author_id  TEXT DEFAULT '',
+  p_title      TEXT DEFAULT 'Birthday Notice',
+  p_body_html  TEXT DEFAULT ''
+) RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS $$
+BEGIN
+  INSERT INTO news_posts (
+    id,
+    author_id,
+    title,
+    body_html,
+    attachment_url,
+    attachment_name,
+    status,
+    reviewed_by,
+    reviewed_at,
+    rejection_reason
+  )
+  VALUES (
+    p_notice_key,
+    COALESCE(p_author_id,''),
+    p_title,
+    p_body_html,
+    NULL,
+    NULL,
+    'approved',
+    COALESCE(p_author_id,''),
+    NOW(),
+    NULL
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    author_id = EXCLUDED.author_id,
+    title = EXCLUDED.title,
+    body_html = EXCLUDED.body_html,
+    status = 'approved',
+    reviewed_by = EXCLUDED.reviewed_by,
+    reviewed_at = EXCLUDED.reviewed_at,
+    rejection_reason = NULL;
+END;
+$$;
+
 CREATE OR REPLACE FUNCTION add_club_poll(
   p_officer_pin TEXT,
   p_id          TEXT,
@@ -615,9 +664,9 @@ $$;
 -- ── SECTION 11: GRANTS (anon role used by the app) ──────────────
 
 GRANT EXECUTE ON FUNCTION is_officer_pin(TEXT)                                       TO anon;
-GRANT EXECUTE ON FUNCTION update_member_profile(TEXT,TEXT,TEXT,TEXT,TEXT,TEXT)       TO anon;
+GRANT EXECUTE ON FUNCTION update_member_profile(TEXT,TEXT,TEXT,TEXT,TEXT,TEXT,TEXT)   TO anon;
 GRANT EXECUTE ON FUNCTION change_member_pin(TEXT,TEXT,TEXT)                          TO anon;
-GRANT EXECUTE ON FUNCTION officer_upsert_member(TEXT,TEXT,TEXT,TEXT,TEXT,TEXT,TEXT,TEXT,TEXT,TEXT) TO anon;
+GRANT EXECUTE ON FUNCTION officer_upsert_member(TEXT,TEXT,TEXT,TEXT,TEXT,TEXT,TEXT,TEXT,TEXT,TEXT,TEXT) TO anon;
 GRANT EXECUTE ON FUNCTION officer_delete_member(TEXT,TEXT)                           TO anon;
 GRANT EXECUTE ON FUNCTION officer_restore_member(TEXT,TEXT)                          TO anon;
 GRANT EXECUTE ON FUNCTION officer_set_dues_paid(TEXT,TEXT,NUMERIC)                   TO anon;
@@ -632,6 +681,7 @@ GRANT EXECUTE ON FUNCTION add_club_event(TEXT,TEXT,TEXT,TEXT,TEXT,TEXT,TEXT,TEXT
 GRANT EXECUTE ON FUNCTION delete_club_event(TEXT,TEXT)                               TO anon;
 GRANT EXECUTE ON FUNCTION add_club_news(TEXT,TEXT,TEXT,TEXT,TEXT,TEXT,TEXT,TEXT,TEXT) TO anon;
 GRANT EXECUTE ON FUNCTION delete_club_news(TEXT,TEXT)                                TO anon;
+GRANT EXECUTE ON FUNCTION upsert_birthday_notice(TEXT,TEXT,TEXT,TEXT)               TO anon;
 GRANT EXECUTE ON FUNCTION add_club_poll(TEXT,TEXT,TEXT,JSONB,TEXT,TEXT)              TO anon;
 GRANT EXECUTE ON FUNCTION vote_club_poll(TEXT,TEXT,TEXT,TEXT)                        TO anon;
 GRANT EXECUTE ON FUNCTION delete_club_poll(TEXT,TEXT)                                TO anon;
