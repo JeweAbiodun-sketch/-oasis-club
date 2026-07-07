@@ -17,6 +17,20 @@ CREATE TABLE IF NOT EXISTS club_events (
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS event_memories (
+  id                   TEXT PRIMARY KEY,
+  event_id             TEXT NOT NULL DEFAULT '',
+  title                TEXT NOT NULL,
+  caption              TEXT NOT NULL DEFAULT '',
+  media_url            TEXT NOT NULL,
+  media_path           TEXT NOT NULL DEFAULT '',
+  media_type           TEXT NOT NULL DEFAULT 'image',
+  poster_url           TEXT NOT NULL DEFAULT '',
+  event_date           DATE,
+  created_by_member_id TEXT NOT NULL DEFAULT '',
+  created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 CREATE TABLE IF NOT EXISTS club_news (
   id         TEXT PRIMARY KEY,
   title      TEXT NOT NULL,
@@ -41,6 +55,7 @@ CREATE TABLE IF NOT EXISTS club_polls (
 -- RLS -----------------------------------------------------------
 
 ALTER TABLE club_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE event_memories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE club_news   ENABLE ROW LEVEL SECURITY;
 ALTER TABLE club_polls  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE club_news ADD COLUMN IF NOT EXISTS attachment_url  TEXT;
@@ -66,6 +81,26 @@ EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 DO $$ BEGIN
   CREATE POLICY "news_attachments_update" ON storage.objects
     FOR UPDATE USING (bucket_id = 'news-attachments');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- Event memories bucket used by the permanent gallery under Events
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('event-memories', 'event-memories', true)
+ON CONFLICT (id) DO NOTHING;
+
+DO $$ BEGIN
+  CREATE POLICY "event_memories_select" ON storage.objects
+    FOR SELECT USING (bucket_id = 'event-memories');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "event_memories_insert" ON storage.objects
+    FOR INSERT WITH CHECK (bucket_id = 'event-memories');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "event_memories_update" ON storage.objects
+    FOR UPDATE USING (bucket_id = 'event-memories');
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- Everyone can read (anon key is used in the app)
@@ -121,6 +156,54 @@ BEGIN
     RAISE EXCEPTION 'Unauthorized: invalid officer PIN';
   END IF;
   DELETE FROM club_events WHERE id = p_id;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION add_event_memory(
+  p_officer_pin TEXT,
+  p_id          TEXT,
+  p_event_id    TEXT DEFAULT '',
+  p_title       TEXT DEFAULT '',
+  p_caption     TEXT DEFAULT '',
+  p_media_url   TEXT DEFAULT '',
+  p_media_path  TEXT DEFAULT '',
+  p_media_type  TEXT DEFAULT 'image',
+  p_poster_url  TEXT DEFAULT '',
+  p_event_date  TEXT DEFAULT NULL,
+  p_created_by_member_id TEXT DEFAULT ''
+) RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS $$
+BEGIN
+  IF NOT is_officer_pin(p_officer_pin) THEN
+    RAISE EXCEPTION 'Unauthorized: invalid officer PIN';
+  END IF;
+  INSERT INTO event_memories (
+    id, event_id, title, caption, media_url, media_path, media_type, poster_url, event_date, created_by_member_id
+  )
+  VALUES (
+    p_id,
+    COALESCE(p_event_id,''),
+    p_title,
+    COALESCE(p_caption,''),
+    p_media_url,
+    COALESCE(p_media_path,''),
+    COALESCE(p_media_type,'image'),
+    COALESCE(p_poster_url,''),
+    CASE WHEN p_event_date IS NULL OR p_event_date = '' THEN NULL ELSE p_event_date::DATE END,
+    COALESCE(p_created_by_member_id,'')
+  )
+  ON CONFLICT (id) DO NOTHING;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION delete_event_memory(
+  p_officer_pin TEXT,
+  p_id          TEXT
+) RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS $$
+BEGIN
+  IF NOT is_officer_pin(p_officer_pin) THEN
+    RAISE EXCEPTION 'Unauthorized: invalid officer PIN';
+  END IF;
+  DELETE FROM event_memories WHERE id = p_id;
 END;
 $$;
 
@@ -242,6 +325,8 @@ $$;
 GRANT EXECUTE ON FUNCTION is_officer_pin(TEXT)                              TO anon;
 GRANT EXECUTE ON FUNCTION add_club_event(TEXT,TEXT,TEXT,TEXT,TEXT,TEXT,TEXT,TEXT) TO anon;
 GRANT EXECUTE ON FUNCTION delete_club_event(TEXT,TEXT)                      TO anon;
+GRANT EXECUTE ON FUNCTION add_event_memory(TEXT,TEXT,TEXT,TEXT,TEXT,TEXT,TEXT,TEXT,TEXT,TEXT,TEXT) TO anon;
+GRANT EXECUTE ON FUNCTION delete_event_memory(TEXT,TEXT)                    TO anon;
 GRANT EXECUTE ON FUNCTION add_club_news(TEXT,TEXT,TEXT,TEXT,TEXT,TEXT,TEXT,TEXT,TEXT) TO anon;
 GRANT EXECUTE ON FUNCTION delete_club_news(TEXT,TEXT)                       TO anon;
 GRANT EXECUTE ON FUNCTION add_club_poll(TEXT,TEXT,TEXT,JSONB,TEXT,TEXT)     TO anon;

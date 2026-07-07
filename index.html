@@ -83,6 +83,38 @@ h1,h2,h3{font-family:'Source Serif 4',Georgia,serif;font-weight:600;color:var(--
 .page-head h1{font-size:26px;letter-spacing:-.01em;}
 .page-head .sub{color:var(--ink-soft);font-size:13px;margin-top:4px;}
 
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(14px);}
+  to{opacity:1;transform:translateY(0);}
+}
+.event-section{margin-bottom:24px;animation:fadeUp .36s ease both;}
+.event-section + .event-section{margin-top:10px;}
+.section-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:14px;}
+.section-head h2{font-size:20px;}
+.section-head .sub{font-size:12.5px;color:var(--ink-soft);margin-top:4px;}
+.section-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.event-memory-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;}
+.event-memory-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-sm);animation:fadeUp .36s ease both;}
+.event-memory-media-wrap{position:relative;background:linear-gradient(135deg,rgba(15,122,92,.08),rgba(184,134,46,.08));aspect-ratio:16/10;overflow:hidden;}
+.event-memory-media{width:100%;height:100%;object-fit:cover;display:block;background:#111;}
+.event-memory-video{background:#000;}
+.event-memory-overlay{position:absolute;inset:auto 12px 12px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.event-memory-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border-radius:999px;background:rgba(7,59,48,.88);color:#fff;font-size:11px;font-weight:600;backdrop-filter:blur(8px);}
+.event-memory-body{padding:14px 15px 15px;}
+.event-memory-title{font-family:'Source Serif 4',serif;font-size:17px;color:var(--ink);margin-bottom:4px;}
+.event-memory-meta{font-size:12px;color:var(--ink-faint);margin-bottom:8px;}
+.event-memory-caption{font-size:13px;color:var(--ink-soft);line-height:1.6;}
+.event-memory-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:14px;flex-wrap:wrap;}
+.event-memory-actions{display:flex;gap:6px;flex-wrap:wrap;}
+.event-memory-shell{display:grid;place-items:center;min-height:220px;background:linear-gradient(135deg,rgba(15,122,92,.05),rgba(184,134,46,.06));color:var(--ink-faint);text-align:center;padding:24px;border:1px dashed var(--line);}
+.event-memory-shell strong{display:block;color:var(--ink);font-size:15px;margin-bottom:4px;}
+.event-memory-shell small{display:block;max-width:420px;line-height:1.6;}
+.cards-stack{display:flex;flex-direction:column;gap:16px;}
+@media (max-width:760px){
+  .event-memory-grid{grid-template-columns:1fr;}
+  .section-head,.page-head{align-items:flex-start;flex-direction:column;}
+}
+
 /* cards */
 .card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius-lg);padding:20px 22px;box-shadow:var(--shadow-sm);}
 .card + .card{margin-top:16px;}
@@ -777,7 +809,7 @@ body.dark .asst-chip{color:#a7e6d0;}
   <button type="button" class="navlink" data-page="committee"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l3 6 6.5.6-5 4.4 1.5 6.4L12 16l-6 3.4L7.5 13l-5-4.4L9 8z"/></svg>Executive Officers &amp; quorum</button>
   <button type="button" class="navlink" data-page="constitution"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2h9l5 5v15H6z"/><path d="M15 2v5h5"/><path d="M9 13h6M9 17h6M9 9h2"/></svg>Constitution</button>
   <div class="nav-divider"></div>
-  <button type="button" class="navlink" data-page="events"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>Upcoming events<span class="nav-dot hidden" id="dot-events"></span></button>
+  <button type="button" class="navlink" data-page="events"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>Event<span class="nav-dot hidden" id="dot-events"></span></button>
   <button type="button" class="navlink" data-page="news"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h16v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"/><path d="M8 8h8M8 12h5"/></svg>News &amp; notices<span class="nav-dot hidden" id="dot-news"></span></button>
   <button type="button" class="navlink" data-page="interactive"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Polls &amp; voting</button>
   <button type="button" class="navlink" data-page="welfare"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>Welfare contributions</button>
@@ -828,7 +860,7 @@ body.dark .asst-chip{color:#a7e6d0;}
 <script>
 /* Bump this string every time you publish changes to GitHub.
    This is what tells everyone's app that a newer version exists. */
-const APP_VERSION='2026-07-07-1';
+const APP_VERSION='2026-07-07-2';
 const STORE_KEY='oasis-club-data-v1';
 let DATA={members:[
   {
@@ -1292,6 +1324,21 @@ function rowsToTransactions(rows){
 function rowsToEvents(rows){
   return rows.map(r=>({id:r.id,title:r.title,date:r.date,time:r.time||'',location:r.location||'',type:r.type||'general',description:r.description||'',createdAt:r.created_at,createdByMemberId:r.created_by_member_id||'',meetingLink:r.meeting_link||''}));
 }
+function rowsToEventMemories(rows){
+  return rows.map(r=>({
+    id:r.id,
+    eventId:r.event_id||'',
+    title:r.title||'',
+    caption:r.caption||'',
+    mediaUrl:r.media_url||'',
+    mediaPath:r.media_path||'',
+    mediaType:r.media_type||'image',
+    posterUrl:r.poster_url||'',
+    eventDate:r.event_date||'',
+    createdByMemberId:r.created_by_member_id||'',
+    createdAt:r.created_at
+  })).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+}
 function rowsToNewsPosts(rows){
   return rows.map(r=>({
     id:r.id,
@@ -1408,7 +1455,7 @@ async function loadData(){
   if(typeof window.supabase==='undefined'){
     console.error('Supabase library failed to load \u2014 check internet connection.');
     connectionStatus='offline';
-    DATA={members:[],minutes:[],transactions:[],meta:rowToMeta(null)};
+    DATA={members:[],minutes:[],transactions:[],meta:rowToMeta(null),events:[],eventMemories:[],newsPosts:[],birthdayComments:[],polls:[]};
     return;
   }
   sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
@@ -1419,12 +1466,13 @@ async function loadData(){
 async function fetchAllData(){
   try{
     const localBirthdayComments=loadBirthdayCommentsCache();
-    const[membersRes,minutesRes,txRes,metaRes,eventsRes,newsPostsRes,pollsRes,paymentSubmissionsRes,tasksRes,loansRes,repaymentsRes,purseRes,releaseRequestsRes,pledgesRes,committeesRes,committeeMembersRes,attendanceRes,qaCacheRes]=await Promise.all([
+    const[membersRes,minutesRes,txRes,metaRes,eventsRes,eventMemoriesRes,newsPostsRes,pollsRes,paymentSubmissionsRes,tasksRes,loansRes,repaymentsRes,purseRes,releaseRequestsRes,pledgesRes,committeesRes,committeeMembersRes,attendanceRes,qaCacheRes]=await Promise.all([
       sb.from('members').select('*'),
       sb.from('minutes').select('*'),
       sb.from('transactions').select('*'),
       sb.from('club_meta').select('*').eq('id',1).maybeSingle(),
       sb.from('club_events').select('*').order('created_at',{ascending:false}),
+      sb.from('event_memories').select('*').order('created_at',{ascending:false}),
       sb.from('news_posts').select('*'),
       sb.from('club_polls').select('*').order('created_at',{ascending:false}),
       sb.from('payment_submissions').select('*'),
@@ -1448,6 +1496,7 @@ async function fetchAllData(){
       transactions:rowsToTransactions(txRes.data||[]),
       meta:rowToMeta(metaRes.data),
       events:rowsToEvents(eventsRes.data||[]),
+      eventMemories:rowsToEventMemories(eventMemoriesRes.data||[]),
       newsPosts:rowsToNewsPosts(newsPostsRes.data||[]),
       birthdayComments:localBirthdayComments,
       polls:rowsToPolls(pollsRes.data||[]),
@@ -1473,6 +1522,7 @@ async function fetchAllData(){
     }catch(_){}
     try{
       localStorage.setItem(EVENTS_STORE,JSON.stringify(DATA.events));
+      localStorage.setItem(EVENT_MEMORIES_STORE,JSON.stringify(DATA.eventMemories));
       localStorage.setItem(NEWS_STORE,JSON.stringify(DATA.newsPosts));
       localStorage.setItem(BIRTHDAY_COMMENTS_STORE,JSON.stringify(DATA.birthdayComments));
       localStorage.setItem(POLLS_STORE,JSON.stringify(DATA.polls));
@@ -1496,10 +1546,11 @@ async function fetchAllData(){
     connectionStatus='offline';
     if(!DATA||!DATA.members){
       DATA={members:[],minutes:[],transactions:[],meta:rowToMeta(null),
-        events:[],newsPosts:[],birthdayComments:[],polls:[]};
+        events:[],eventMemories:[],newsPosts:[],birthdayComments:[],polls:[]};
     }
     // Restore events/news/polls from offline cache
     if(!DATA.events||!DATA.events.length)try{DATA.events=JSON.parse(localStorage.getItem(EVENTS_STORE)||'[]');}catch(_){}
+    if(!DATA.eventMemories||!DATA.eventMemories.length)try{DATA.eventMemories=JSON.parse(localStorage.getItem(EVENT_MEMORIES_STORE)||'[]');}catch(_){}
     if(!DATA.newsPosts||!DATA.newsPosts.length)try{DATA.newsPosts=JSON.parse(localStorage.getItem(NEWS_STORE)||'[]');}catch(_){}
     if(!DATA.birthdayComments||!DATA.birthdayComments.length)try{DATA.birthdayComments=JSON.parse(localStorage.getItem(BIRTHDAY_COMMENTS_STORE)||'[]');}catch(_){}
     if(!DATA.polls||!DATA.polls.length)try{DATA.polls=JSON.parse(localStorage.getItem(POLLS_STORE)||'[]');}catch(_){}
@@ -1525,6 +1576,7 @@ function subscribeToRealtime(){
     .on('postgres_changes',{event:'*',schema:'public',table:'transactions'},handleRealtimeChange)
     .on('postgres_changes',{event:'*',schema:'public',table:'club_meta'},handleRealtimeChange)
     .on('postgres_changes',{event:'*',schema:'public',table:'club_events'},handleRealtimeChange)
+    .on('postgres_changes',{event:'*',schema:'public',table:'event_memories'},handleRealtimeChange)
     .on('postgres_changes',{event:'*',schema:'public',table:'news_posts'},handleRealtimeChange)
     .on('postgres_changes',{event:'*',schema:'public',table:'birthday_comments'},handleRealtimeChange)
     .on('postgres_changes',{event:'*',schema:'public',table:'welfare_loans'},handleRealtimeChange)
@@ -1566,6 +1618,8 @@ function handleRealtimeChange(payload){
     }else if(payload.table==='club_events'&&payload.new){
       showToast('New event: '+(payload.new.title||''));
       sendNotif('New Club Event',payload.new.title||'');
+    }else if(payload.table==='event_memories'&&payload.new){
+      showToast('New event memory added');
     }else if(payload.table==='club_polls'&&payload.new){
       showToast('New poll: '+(payload.new.question||''));
     }else if(payload.table==='welfare_loans'&&payload.new&&payload.new.status==='proposed'&&isWelfareCommitteeNow()){
@@ -1579,6 +1633,19 @@ function handleRealtimeChange(payload){
     }else if(payload.table==='welfare_release_requests'&&payload.new&&payload.new.status==='pending'&&isPresidentNow()){
       showToast('New welfare fund release request — '+fmtMoney(Number(payload.new.amount))+' awaiting your approval');
       sendNotif('Oasis Club — Release awaiting approval','A welfare fund release of '+fmtMoney(Number(payload.new.amount))+' needs your approval');
+    }
+  }else if(payload&&payload.table==='event_memories'){
+    if(payload.eventType==='DELETE'&&payload.old){
+      const next=loadEventMemories().filter(m=>m.id!==payload.old.id);
+      DATA.eventMemories=next;
+      saveEventMemories(next);
+      if(currentPage==='events')render();
+    }else if(payload.eventType==='INSERT'&&payload.new){
+      const item=rowsToEventMemories([payload.new])[0];
+      const next=[item,...loadEventMemories().filter(m=>m.id!==item.id)];
+      DATA.eventMemories=next;
+      saveEventMemories(next);
+      if(currentPage==='events')render();
     }
   }else if(payload&&payload.eventType==='UPDATE'&&payload.table==='news_posts'&&payload.new){
     // A post just got approved by the reviewer — let everyone know, same
@@ -3483,6 +3550,8 @@ function lockApp(){
 
 /* ============ EVENTS / NEWS / POLLS ============ */
 const EVENTS_STORE='oasis-events-v1';
+const EVENT_MEMORIES_STORE='oasis-event-memories-v1';
+const EVENT_MEDIA_CACHE_DB='oasis-event-media-cache-v1';
 const NEWS_STORE='oasis-news-v1';
 const POLLS_STORE='oasis-polls-v1';
 const PAYMENT_SUBMISSIONS_STORE='oasis-payment-submissions-v1';
@@ -3497,6 +3566,9 @@ const COMMITTEE_MEMBERS_STORE='oasis-committee-members-v1';
 const MEETING_ATTENDANCE_STORE='oasis-meeting-attendance-v1';
 const QA_CACHE_STORE='oasis-qa-cache-v1';
 const SEEN_STORE='oasis-last-seen-v1';
+let eventMemoriesWarmupPromise=null;
+let eventMediaDbPromise=null;
+const eventMediaObjectUrlCache=new Map();
 
 function escHtml(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
@@ -3507,6 +3579,11 @@ function loadEvents(){
   try{return JSON.parse(localStorage.getItem(EVENTS_STORE)||'[]');}catch(_){return[];}
 }
 function saveEvents(a){localStorage.setItem(EVENTS_STORE,JSON.stringify(a));}
+function loadEventMemories(){
+  if(DATA&&DATA.eventMemories)return DATA.eventMemories;
+  try{return JSON.parse(localStorage.getItem(EVENT_MEMORIES_STORE)||'[]');}catch(_){return[];}
+}
+function saveEventMemories(a){localStorage.setItem(EVENT_MEMORIES_STORE,JSON.stringify(a));}
 function loadNews(){
   // Only approved posts count as published "news" for the general badge.
   // Pending/rejected posts are review-queue items, handled separately below.
@@ -3521,6 +3598,61 @@ function loadPolls(){
 function savePolls(a){localStorage.setItem(POLLS_STORE,JSON.stringify(a));}
 function loadSeen(){try{return JSON.parse(localStorage.getItem(SEEN_STORE)||'{}');}catch(_){return{};}}
 function saveSeen(o){localStorage.setItem(SEEN_STORE,JSON.stringify(o));}
+function idbOpenDatabase(name){
+  if(!('indexedDB' in window))return Promise.resolve(null);
+  if(name===EVENT_MEDIA_CACHE_DB&&eventMediaDbPromise)return eventMediaDbPromise;
+  const promise=new Promise(resolve=>{
+    try{
+      const request=indexedDB.open(name,1);
+      request.onupgradeneeded=()=>{request.result.createObjectStore('files');};
+      request.onsuccess=()=>resolve(request.result);
+      request.onerror=()=>resolve(null);
+      request.onblocked=()=>resolve(null);
+    }catch(_){resolve(null);}
+  });
+  if(name===EVENT_MEDIA_CACHE_DB)eventMediaDbPromise=promise;
+  return promise;
+}
+function idbGet(db,store,key){
+  return new Promise(resolve=>{
+    try{
+      const tx=db.transaction(store,'readonly');
+      const req=tx.objectStore(store).get(key);
+      req.onsuccess=()=>resolve(req.result||null);
+      req.onerror=()=>resolve(null);
+    }catch(_){resolve(null);}
+  });
+}
+function idbPut(db,store,key,val){
+  return new Promise(resolve=>{
+    try{
+      const tx=db.transaction(store,'readwrite');
+      tx.objectStore(store).put(val,key);
+      tx.oncomplete=()=>resolve(true);
+      tx.onerror=()=>resolve(false);
+      tx.onabort=()=>resolve(false);
+    }catch(_){resolve(false);}
+  });
+}
+async function cacheEventMediaBlob(url,blob){
+  if(!url||!blob)return false;
+  const db=await idbOpenDatabase(EVENT_MEDIA_CACHE_DB);
+  if(!db)return false;
+  const ok=await idbPut(db,'files',url,{blob,updatedAt:Date.now(),type:blob.type||''});
+  if(ok)eventMediaObjectUrlCache.delete(url);
+  return ok;
+}
+async function getCachedEventMediaObjectUrl(url){
+  if(!url)return '';
+  if(eventMediaObjectUrlCache.has(url))return eventMediaObjectUrlCache.get(url);
+  const db=await idbOpenDatabase(EVENT_MEDIA_CACHE_DB);
+  if(!db)return '';
+  const record=await idbGet(db,'files',url);
+  if(!record||!record.blob)return '';
+  const objectUrl=URL.createObjectURL(record.blob);
+  eventMediaObjectUrlCache.set(url,objectUrl);
+  return objectUrl;
+}
 
 function updateBadges(){
   const seen=loadSeen();
@@ -3602,9 +3734,43 @@ function handleBroadcast({event,payload}){
 }
 
 /* ---- Events page ---- */
+function eventMemoryTypeForFile(file){
+  return file&&String(file.type||'').startsWith('video/')?'video':'image';
+}
+function eventMemoryCardHtml(mem,index){
+  const isVideo=mem.mediaType==='video';
+  const dateText=mem.eventDate?new Date(mem.eventDate+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):(mem.createdAt?new Date(mem.createdAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'');
+  const safeTitle=escHtml(mem.title||'Event memory');
+  const safeCaption=escHtml(mem.caption||'');
+  const srcAttr=escHtml(mem.mediaUrl||'');
+  const linkedEvent=(loadEvents().find(e=>e.id===mem.eventId)||{}).title||'Event';
+  const mediaMarkup=isVideo
+    ?'<video class="event-memory-media event-memory-video" controls playsinline preload="metadata" muted data-event-memory-media data-media-url="'+srcAttr+'" data-media-type="video"></video>'
+    :'<img class="event-memory-media" alt="'+safeTitle+'" loading="lazy" data-event-memory-media data-media-url="'+srcAttr+'" data-media-type="image"/>';
+  return '<article class="event-memory-card" style="animation-delay:'+(index*35)+'ms;">'
+    +'<div class="event-memory-media-wrap">'
+    +mediaMarkup
+    +'<div class="event-memory-overlay">'
+    +'<span class="event-memory-badge">'+(isVideo?'Video':'Photo')+'</span>'
+    +(mem.eventId?'<span class="event-memory-badge" style="background:rgba(184,134,46,.92);">'+escHtml(linkedEvent)+'</span>':'')
+    +'</div></div>'
+    +'<div class="event-memory-body">'
+    +'<div class="event-memory-title">'+safeTitle+'</div>'
+    +(dateText?'<div class="event-memory-meta">'+escHtml(dateText)+'</div>':'')
+    +(safeCaption?'<div class="event-memory-caption">'+safeCaption+'</div>':'<div class="event-memory-caption">Permanent memories from club events. Files are cached locally after first viewing so they can open offline later.</div>')
+    +'<div class="event-memory-foot">'
+    +'<div class="event-memory-actions">'
+    +'<button type="button" class="btn btn-sm" onclick="openEventMemory(\''+mem.id+'\')">Open</button>'
+    +(isOfc?'<button type="button" class="icon-btn" onclick="deleteEventMemory(\''+mem.id+'\')" title="Delete memory"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>':'')
+    +'</div>'
+    +(mem.caption?'<div class="cell-muted">Saved permanently</div>':'<div class="cell-muted">Cached for offline viewing</div>')
+    +'</div>'
+    +'</div></article>';
+}
 function pageEvents(){
   markSeen('events');
   const evts=loadEvents();
+  const memories=loadEventMemories();
   const isOfc=isOfficerSessionNow();
   const now=new Date(); now.setHours(0,0,0,0);
   const upcoming=evts.filter(e=>new Date(e.date+'T00:00:00')>=now).sort((a,b)=>a.date.localeCompare(b.date));
@@ -3630,14 +3796,61 @@ function pageEvents(){
       +'</div>'
       +'</div>';
   }
-  let html='<div class="page-head"><div><h1>Upcoming Events</h1>'
-    +'<div class="sub">'+upcoming.length+' upcoming'+(past.length?' · '+past.length+' past':'')+'</div></div>'
+  let html='<div class="page-head"><div><h1>Event</h1>'
+    +'<div class="sub">'+upcoming.length+' upcoming'+(memories.length?' · '+memories.length+' memories':'')+'</div></div>'
+    +'<div class="section-actions">'
     +(isOfc?'<button type="button" class="btn btn-primary" onclick="openAddEvent()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M12 5v14M5 12h14"/></svg>Add event</button>':'')
+    +(isOfc?'<button type="button" class="btn" onclick="openAddEventMemory()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M4 7h4l2-3h4l2 3h4v12H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Add memory</button>':'')
+    +'</div>'
     +'</div>';
-  if(upcoming.length){html+=upcoming.map(evCard).join('');}
+  html+='<section class="event-section"><div class="section-head"><div><h2>Upcoming events</h2><div class="sub">What is next on the club calendar</div></div></div>';
+  if(upcoming.length){html+='<div class="cards-stack">'+upcoming.map(evCard).join('')+'</div>';}
   else{html+='<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><div class="title">No upcoming events</div><div class="hint">'+(isOfc?'Use the button above to add your first event.':'Nothing scheduled yet — check back soon.')+'</div></div>';}
   if(past.length){html+='<details style="margin-top:20px"><summary style="cursor:pointer;font-size:13px;color:var(--ink-faint);padding:8px 0">Show '+past.length+' past event'+(past.length>1?'s':'')+'</summary>'+past.map(evCard).join('')+'</details>';}
+  html+='</section>';
+  html+='<section class="event-section"><div class="section-head"><div><h2>Memories</h2><div class="sub">Photos and videos from club events, stored permanently and cached offline after first view.</div></div>'
+    +(isOfc?'<div class="section-actions"><button type="button" class="btn btn-primary" onclick="openAddEventMemory()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M4 7h4l2-3h4l2 3h4v12H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Upload memory</button></div>':'')
+    +'</div>';
+  if(memories.length){html+='<div class="event-memory-grid">'+memories.map((mem,i)=>eventMemoryCardHtml(mem,i)).join('')+'</div>';}
+  else{html+='<div class="event-memory-shell"><div><strong>No memories yet</strong><small>Once photos or videos are added here, they will stay in the club record permanently and can be opened later even when the device is offline.</small></div></div>';}
+  html+='</section>';
+  setTimeout(()=>{void hydrateEventMemoryMedia();void warmEventMemoryCache();},0);
   return html;
+}
+
+async function hydrateEventMemoryMedia(){
+  const nodes=document.querySelectorAll('[data-event-memory-media]');
+  for(const node of nodes){
+    const url=node.getAttribute('data-media-url')||'';
+    if(!url)continue;
+    const cached=await getCachedEventMediaObjectUrl(url);
+    const src=cached||url;
+    if(node.tagName==='IMG'){
+      if(node.src!==src)node.src=src;
+    }else if(node.tagName==='VIDEO'){
+      if(node.src!==src)node.src=src;
+    }
+  }
+}
+
+async function warmEventMemoryCache(){
+  const memories=loadEventMemories();
+  if(!memories.length||!navigator.onLine)return;
+  if(eventMemoriesWarmupPromise)return eventMemoriesWarmupPromise;
+  eventMemoriesWarmupPromise=(async()=>{
+    for(const mem of memories){
+      if(!mem.mediaUrl||eventMediaObjectUrlCache.has(mem.mediaUrl))continue;
+      const existing=await getCachedEventMediaObjectUrl(mem.mediaUrl);
+      if(existing)continue;
+      try{
+        const res=await fetch(mem.mediaUrl,{mode:'cors'});
+        if(!res.ok)continue;
+        const blob=await res.blob();
+        await cacheEventMediaBlob(mem.mediaUrl,blob);
+      }catch(_){}
+    }
+  })().finally(()=>{eventMemoriesWarmupPromise=null;});
+  return eventMemoriesWarmupPromise;
 }
 
 function openAddEvent(){
@@ -3652,6 +3865,111 @@ function openAddEvent(){
     +'<div class="field"><label>Type</label><select id="ev-type"><option value="general">General meeting</option><option value="committee">Committee meeting</option><option value="agm">AGM</option><option value="social">Social event</option></select></div>'
     +'<div class="field"><label>Description (optional)</label><textarea id="ev-desc" rows="3"></textarea></div>'
     +'<div class="modal-actions"><button type="button" class="btn" onclick="closeModal()">Cancel</button><button type="button" class="btn btn-primary" onclick="submitAddEvent()">Add event</button></div>');
+}
+
+function openAddEventMemory(){
+  const events=loadEvents().slice().sort((a,b)=>b.date.localeCompare(a.date));
+  const options=events.length?events.map(ev=>'<option value="'+escHtml(ev.id)+'">'+escHtml(ev.title)+' · '+escHtml(ev.date)+'</option>').join(''):'<option value="">No events available yet</option>';
+  openModal('<h3>Add Event Memory</h3>'
+    +'<p class="cell-muted" style="margin-top:-4px;margin-bottom:14px;">Upload photos or videos from an event. The app will keep them permanently and cache them locally after first view.</p>'
+    +'<div class="field"><label>Event</label><select id="mem-event-id"><option value="">Select an event</option>'+options+'</select></div>'
+    +'<div class="field"><label>Title</label><input type="text" id="mem-title" placeholder="e.g. Gala Night Highlights"/></div>'
+    +'<div class="field"><label>Caption (optional)</label><textarea id="mem-caption" rows="3" placeholder="A short note about the memory"></textarea></div>'
+    +'<div class="field"><label>Photos or videos</label><input type="file" id="mem-files" accept="image/*,video/*" multiple/></div>'
+    +'<div class="cell-muted" style="font-size:12px;line-height:1.6;margin-bottom:6px;">Video files can be large. For the smoothest offline experience, keep each file reasonably sized.</div>'
+    +'<div class="modal-actions"><button type="button" class="btn" onclick="closeModal()">Cancel</button><button type="button" class="btn btn-primary" onclick="submitAddEventMemory()">Save memories</button></div>');
+}
+
+async function submitAddEventMemory(){
+  const eventId=(document.getElementById('mem-event-id').value||'').trim();
+  const files=Array.from(document.getElementById('mem-files').files||[]);
+  const title=(document.getElementById('mem-title').value||'').trim();
+  const caption=(document.getElementById('mem-caption').value||'').trim();
+  if(!files.length){showToast('Choose at least one photo or video.');return;}
+  const pin=getCurrentAuthPin();
+  const createdByMemberId=getCurrentMemberId()||'';
+  const saveBtn=document.querySelector('#modal-content .btn-primary');
+  if(saveBtn){saveBtn.disabled=true;saveBtn.textContent='Saving…';}
+  const event=loadEvents().find(e=>e.id===eventId);
+  const fallbackTitle=title||(event?event.title:'Event memory');
+  try{
+    let saved=0;
+    for(const file of files){
+      if(file.size>60*1024*1024)throw new Error('Please keep each memory file under 60MB.');
+      const ext=(file.name.split('.').pop()||'bin').toLowerCase();
+      const path=`${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;
+      const mediaType=eventMemoryTypeForFile(file);
+      const bucket='event-memories';
+      const {error:uploadError}=await sb.storage.from(bucket).upload(path,file,{contentType:file.type||'application/octet-stream'});
+      if(uploadError)throw uploadError;
+      const {data:urlData}=sb.storage.from(bucket).getPublicUrl(path);
+      const mediaUrl=urlData.publicUrl;
+      const {error:rpcError}=await sb.rpc('add_event_memory',{
+        p_officer_pin:pin,
+        p_id:uid(),
+        p_event_id:eventId||null,
+        p_title:fallbackTitle,
+        p_caption:caption,
+        p_media_url:mediaUrl,
+        p_media_path:path,
+        p_media_type:mediaType,
+        p_poster_url:null,
+        p_created_by_member_id:createdByMemberId
+      });
+      if(rpcError)throw rpcError;
+      await cacheEventMediaBlob(mediaUrl,file);
+      const createdAt=new Date().toISOString();
+      const memory={id:uid(),eventId:eventId||'',title:fallbackTitle,caption,mediaUrl,mediaPath:path,mediaType,posterUrl:'',eventDate:event?event.date:'',createdByMemberId,createdAt};
+      const next=[memory,...loadEventMemories()];
+      DATA.eventMemories=next;
+      saveEventMemories(next);
+      saved++;
+    }
+    closeModal();
+    if(currentPage==='events')render();
+    showToast(saved+' memory item'+(saved===1?'':'s')+' saved');
+  }catch(err){
+    if(saveBtn){saveBtn.disabled=false;saveBtn.textContent='Save memories';}
+    showToast('Could not save memories: '+(err.message||'unknown error'));
+  }
+}
+
+async function openEventMemory(id){
+  const mem=loadEventMemories().find(m=>m.id===id);
+  if(!mem)return;
+  const title=escHtml(mem.title||'Event memory');
+  const caption=escHtml(mem.caption||'');
+  const dateText=mem.eventDate?new Date(mem.eventDate+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'';
+  const mediaSrc=await getCachedEventMediaObjectUrl(mem.mediaUrl)||mem.mediaUrl;
+  const media=mem.mediaType==='video'
+    ?'<video controls playsinline style="width:100%;max-height:70vh;border-radius:14px;background:#000;" src="'+escHtml(mediaSrc)+'"></video>'
+    :'<img src="'+escHtml(mediaSrc)+'" alt="'+title+'" style="width:100%;max-height:70vh;object-fit:contain;border-radius:14px;background:#111;display:block;"/>';
+  openModal('<h3>'+title+'</h3>'
+    +(dateText?'<div class="cell-muted" style="margin-top:-6px;margin-bottom:12px;">'+escHtml(dateText)+'</div>':'')
+    +media
+    +(caption?'<p style="margin-top:12px;line-height:1.7;color:var(--ink-soft);">'+caption+'</p>':'')
+    +'<div class="modal-actions"><button type="button" class="btn" onclick="closeModal()">Close</button></div>');
+}
+
+async function deleteEventMemory(id){
+  if(!confirm('Delete this event memory?'))return;
+  const pin=getCurrentAuthPin();
+  try{
+    const mem=loadEventMemories().find(m=>m.id===id);
+    const {error}=await sb.rpc('delete_event_memory',{p_officer_pin:pin,p_id:id});
+    if(error)throw error;
+    if(mem&&mem.mediaPath){
+      try{await sb.storage.from('event-memories').remove([mem.mediaPath]);}catch(_){}
+    }
+    const next=loadEventMemories().filter(m=>m.id!==id);
+    DATA.eventMemories=next;
+    saveEventMemories(next);
+    eventMediaObjectUrlCache.delete(mem?mem.mediaUrl:'');
+    if(currentPage==='events')render();
+    showToast('Memory deleted');
+  }catch(e){
+    showToast('Could not delete: '+(e.message||'unknown error'));
+  }
 }
 
 async function submitAddEvent(){
