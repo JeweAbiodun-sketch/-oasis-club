@@ -4580,19 +4580,22 @@ function normalizeBirthdayWish(text){
   return String(text||'').replace(/[*_`]/g,'').replace(/\s+/g,' ').replace(/^[\s\-•]+/,'').trim().replace(/[.!?]+$/,'');
 }
 const BIRTHDAY_WISH_TONES=[
-  {label:'Warm',descriptor:'warm, gracious, and deeply personal'},
-  {label:'Joyful',descriptor:'bright, celebratory, and uplifting'},
-  {label:'Reflective',descriptor:'thoughtful, sincere, and encouraging'},
-  {label:'Elegant',descriptor:'polished, respectful, and inspiring'}
+  {label:'Ceremonial',descriptor:'ceremonial, grand, and warmly celebratory'},
+  {label:'Lyrical',descriptor:'lyrical, affectionate, and graceful'},
+  {label:'Executive',descriptor:'dignified, official, and club-leadership oriented'}
 ];
 function birthdayToneForIndex(index){return BIRTHDAY_WISH_TONES[index%BIRTHDAY_WISH_TONES.length];}
 function birthdayFallbackWish(member,tone,allNames){
   const name=member&&member.name?member.name:'friend';
-  const toneLabel=tone&&tone.label?tone.label:'Warm';
+  const toneLabel=tone&&tone.label?tone.label:'Ceremonial';
   const groupNote=(allNames&&allNames.length>1)?' on your special day':'';
-  const p1='Happy birthday, '+name+'. '+toneLabel+' wishes to you'+groupNote+'.';
-  const p2='May this year bring you steady growth, good health, and a sense of being genuinely celebrated by the people around you.';
-  return p1+'\n\n'+p2;
+  if(toneLabel==='Ceremonial'){
+    return 'Happy birthday, '+name+'. Today the club pauses to celebrate you with the kind of recognition that marks a meaningful life and a valued presence'+groupNote+'.\n\nMay this new year open with favor, steady progress, and the kind of joy that makes every effort worthwhile.';
+  }
+  if(toneLabel==='Lyrical'){
+    return 'Happy birthday, '+name+'. Your day deserves a softer kind of beauty, the sort that lingers in the heart and turns ordinary moments into something memorable'+groupNote+'.\n\nMay this year meet you with gentle blessings, bright surprises, and the quiet assurance that you are appreciated deeply.';
+  }
+  return 'Happy birthday, '+name+'. On behalf of the club, we extend our sincere appreciation for your presence, your spirit, and the example you set'+groupNote+'.\n\nMay the year ahead bring you health, wisdom, and clear success in every worthy endeavor you pursue.';
 }
 function loadBirthdayWishDraft(key){return loadBirthdayWishCache()[key]||'';}
 function saveBirthdayWishDraft(key,wish){
@@ -4626,7 +4629,7 @@ function birthdayNoticeBodyHtml(blocks,birthdayKey){
           ${birthdayAvatarHtml(member,true)}
           <div>
             <div class="birthday-wish-name">${name}</div>
-            <div class="birthday-wish-role">${role} · ${escHtml(tone.label||'Warm')}</div>
+            <div class="birthday-wish-role">${role} · ${escHtml(tone.label||'Ceremonial')}</div>
           </div>
         </div>
       </div>
@@ -4790,7 +4793,7 @@ async function buildBirthdayWish(todayBdays,birthdayKey){
     for(let i=0;i<members.length;i++){
       const member=members[i];
       const tone=birthdayToneForIndex(i);
-      const prompt='Write a thoughtful birthday message in exactly two paragraphs for a single Oasis Club member. Keep it intelligent, warm, and specific to that member alone. The tone should be '+tone.descriptor+'. Do not mention other celebrants, do not use bullet points, do not add emojis, and do not add any explanation.';
+      const prompt='Write a thoughtful birthday message in exactly two paragraphs for a single Oasis Club member. Keep it intelligent, specific to that member alone, and match the tone style "'+tone.label+'" which should feel '+tone.descriptor+'. Do not mention other celebrants, do not use bullet points, do not add emojis, and do not add any explanation.';
       const user='Member: '+member.name+'. Role: '+(member.role||'Member')+'.';
       let text='';
       try{
