@@ -557,6 +557,37 @@ body.dark .asst-chip{color:#a7e6d0;}
 .birthday-row{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--line-soft);}
 .birthday-row:last-child{border-bottom:none;}
 .birthday-today-banner{background:var(--gold-light);border-radius:10px;padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;font-size:14px;font-weight:500;color:#7a5800;}
+.birthday-entrance{animation:birthdayRise .55s cubic-bezier(.22,1,.36,1) both;}
+@keyframes birthdayRise{from{opacity:0;transform:translateY(18px) scale(.985);}to{opacity:1;transform:translateY(0) scale(1);}}
+.birthday-spotlight-card{position:relative;overflow:hidden;background:linear-gradient(180deg,#fffaf0 0%,#fff 100%);border:1px solid rgba(217,169,58,.38);box-shadow:0 20px 50px -28px rgba(120,92,14,.35);}
+.birthday-spotlight-glow{position:absolute;inset:auto -40px -70px auto;width:190px;height:190px;border-radius:50%;background:radial-gradient(circle,rgba(217,169,58,.24) 0%,rgba(217,169,58,0) 68%);pointer-events:none;}
+.birthday-spotlight-top{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;position:relative;z-index:1;}
+.birthday-spotlight-title{font-family:'Source Serif 4',serif;font-size:24px;font-weight:700;line-height:1.15;color:var(--ink);letter-spacing:-.01em;max-width:680px;}
+.birthday-spotlight-photo{flex-shrink:0;}
+.birthday-hero{margin-top:16px;padding:14px 16px;border-radius:18px;background:linear-gradient(135deg,rgba(217,169,58,.14) 0%,rgba(255,255,255,.65) 100%);border:1px solid rgba(217,169,58,.25);}
+.birthday-hero-main{display:flex;align-items:center;gap:14px;}
+.birthday-hero-stack{display:flex;align-items:center;margin-bottom:10px;min-height:64px;}
+.birthday-stack-item{margin-right:4px;}
+.birthday-avatar,.birthday-avatar-ph{width:72px;height:72px;border-radius:50%;object-fit:cover;display:block;box-shadow:0 10px 26px -14px rgba(0,0,0,.3);}
+.birthday-avatar--featured{width:96px;height:96px;border:4px solid var(--gold);box-shadow:0 14px 30px -12px rgba(0,0,0,.28);}
+.birthday-avatar-ph{display:flex;align-items:center;justify-content:center;background:var(--gold-light);border:2px solid rgba(217,169,58,.5);color:#7a5800;font-weight:700;}
+.birthday-hero-name{margin-top:2px;font-weight:700;font-size:16px;color:var(--ink);}
+.birthday-hero-role{font-size:12px;color:var(--ink-faint);margin-top:4px;text-transform:uppercase;letter-spacing:.08em;}
+.birthday-spotlight-wish{margin-top:16px;padding:16px 18px;border-radius:18px;background:#fff;border:1px solid var(--line-soft);font-family:'Source Serif 4',serif;font-size:20px;line-height:1.55;color:var(--teal-dark);font-weight:600;box-shadow:var(--shadow-xs);}
+.birthday-mini-count{margin-top:10px;font-size:12px;font-weight:600;color:var(--gold-dark);text-transform:uppercase;letter-spacing:.08em;}
+.birthday-comments{margin-top:16px;padding-top:16px;border-top:1px dashed rgba(217,169,58,.35);}
+.birthday-comments-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:12px;}
+.birthday-comments-title{font-family:'Source Serif 4',serif;font-size:18px;font-weight:700;color:var(--ink);}
+.birthday-comments-sub{font-size:12.5px;color:var(--ink-faint);margin-top:3px;}
+.birthday-comments-list{display:flex;flex-direction:column;gap:12px;margin-bottom:14px;}
+.birthday-comment{display:flex;gap:12px;align-items:flex-start;}
+.birthday-comment-avatar{width:38px;height:38px;border-radius:50%;overflow:hidden;flex-shrink:0;background:var(--gold-light);color:#7a5800;font-weight:700;font-size:12.5px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(217,169,58,.35);}
+.birthday-comment-avatar img{width:100%;height:100%;object-fit:cover;display:block;}
+.birthday-comment-body{flex:1;background:#fff;border:1px solid var(--line-soft);border-radius:14px;padding:10px 12px;box-shadow:var(--shadow-xs);}
+.birthday-comment-top{display:flex;justify-content:space-between;gap:10px;font-size:12px;margin-bottom:5px;}
+.birthday-comment-top span{color:var(--ink-faint);}
+.birthday-comment-text{font-size:13.5px;line-height:1.55;color:var(--ink);}
+.birthday-comment-form textarea{width:100%;resize:vertical;min-height:74px;}
 
 /* ── Welfare register ── */
 .welfare-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius-lg);padding:18px 20px;margin-bottom:12px;box-shadow:var(--shadow-sm);}
@@ -786,7 +817,7 @@ body.dark .asst-chip{color:#a7e6d0;}
 <script>
 /* Bump this string every time you publish changes to GitHub.
    This is what tells everyone's app that a newer version exists. */
-const APP_VERSION='2026-06-28-8';
+const APP_VERSION='2026-07-07-1';
 const STORE_KEY='oasis-club-data-v1';
 let DATA={members:[
   {
@@ -1009,7 +1040,7 @@ let DATA={members:[
     "duesPaid": 0,
     "pin": "7873"
   }
-],minutes:[],transactions:[
+],birthdayComments:[],minutes:[],transactions:[
   {
     "id": "t001",
     "desc": "Balance brought forward (since inception, pre-Oct 2025)",
@@ -1265,6 +1296,16 @@ function rowsToNewsPosts(rows){
     createdAt:r.created_at
   })).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
 }
+function rowsToBirthdayComments(rows){
+  return rows.map(r=>({
+    id:r.id,
+    noticeKey:r.notice_key,
+    memberId:r.member_id,
+    memberName:r.member_name||'',
+    comment:r.comment||'',
+    createdAt:r.created_at
+  })).sort((a,b)=>new Date(a.createdAt)-new Date(b.createdAt));
+}
 // dues_payment_claims/rowsToPaymentClaims removed entirely — that table was
 // dropped as part of the security tightening pass (see 08_security_tightening.sql),
 // since it had the same role-bypass gap already fixed elsewhere. Payment Evidence
@@ -1366,6 +1407,7 @@ async function loadData(){
 
 async function fetchAllData(){
   try{
+    const localBirthdayComments=loadBirthdayCommentsCache();
     const[membersRes,minutesRes,txRes,metaRes,eventsRes,newsPostsRes,pollsRes,paymentSubmissionsRes,tasksRes,loansRes,repaymentsRes,purseRes,releaseRequestsRes,pledgesRes,committeesRes,committeeMembersRes,attendanceRes,qaCacheRes]=await Promise.all([
       sb.from('members').select('*'),
       sb.from('minutes').select('*'),
@@ -1396,6 +1438,7 @@ async function fetchAllData(){
       meta:rowToMeta(metaRes.data),
       events:rowsToEvents(eventsRes.data||[]),
       newsPosts:rowsToNewsPosts(newsPostsRes.data||[]),
+      birthdayComments:localBirthdayComments,
       polls:rowsToPolls(pollsRes.data||[]),
       paymentSubmissions:rowsToPaymentSubmissions(paymentSubmissionsRes.data||[]),
       tasks:rowsToTasks(tasksRes.data||[]),
@@ -1411,8 +1454,16 @@ async function fetchAllData(){
     };
     // Cache for offline reading
     try{
+      const birthdayCommentsRes=await sb.from('birthday_comments').select('*').order('created_at',{ascending:true});
+      if(!birthdayCommentsRes.error){
+        const serverBirthdayComments=rowsToBirthdayComments(birthdayCommentsRes.data||[]);
+        DATA.birthdayComments=serverBirthdayComments.length?serverBirthdayComments:localBirthdayComments;
+      }
+    }catch(_){}
+    try{
       localStorage.setItem(EVENTS_STORE,JSON.stringify(DATA.events));
       localStorage.setItem(NEWS_STORE,JSON.stringify(DATA.newsPosts));
+      localStorage.setItem(BIRTHDAY_COMMENTS_STORE,JSON.stringify(DATA.birthdayComments));
       localStorage.setItem(POLLS_STORE,JSON.stringify(DATA.polls));
       localStorage.setItem(PAYMENT_SUBMISSIONS_STORE,JSON.stringify(DATA.paymentSubmissions));
       localStorage.setItem(TASKS_STORE,JSON.stringify(DATA.tasks));
@@ -1434,11 +1485,12 @@ async function fetchAllData(){
     connectionStatus='offline';
     if(!DATA||!DATA.members){
       DATA={members:[],minutes:[],transactions:[],meta:rowToMeta(null),
-        events:[],newsPosts:[],polls:[]};
+        events:[],newsPosts:[],birthdayComments:[],polls:[]};
     }
     // Restore events/news/polls from offline cache
     if(!DATA.events||!DATA.events.length)try{DATA.events=JSON.parse(localStorage.getItem(EVENTS_STORE)||'[]');}catch(_){}
     if(!DATA.newsPosts||!DATA.newsPosts.length)try{DATA.newsPosts=JSON.parse(localStorage.getItem(NEWS_STORE)||'[]');}catch(_){}
+    if(!DATA.birthdayComments||!DATA.birthdayComments.length)try{DATA.birthdayComments=JSON.parse(localStorage.getItem(BIRTHDAY_COMMENTS_STORE)||'[]');}catch(_){}
     if(!DATA.polls||!DATA.polls.length)try{DATA.polls=JSON.parse(localStorage.getItem(POLLS_STORE)||'[]');}catch(_){}
     if(!DATA.paymentSubmissions||!DATA.paymentSubmissions.length)try{DATA.paymentSubmissions=JSON.parse(localStorage.getItem(PAYMENT_SUBMISSIONS_STORE)||'[]');}catch(_){}
     if(!DATA.tasks||!DATA.tasks.length)try{DATA.tasks=JSON.parse(localStorage.getItem(TASKS_STORE)||'[]');}catch(_){}
@@ -1463,6 +1515,7 @@ function subscribeToRealtime(){
     .on('postgres_changes',{event:'*',schema:'public',table:'club_meta'},handleRealtimeChange)
     .on('postgres_changes',{event:'*',schema:'public',table:'club_events'},handleRealtimeChange)
     .on('postgres_changes',{event:'*',schema:'public',table:'news_posts'},handleRealtimeChange)
+    .on('postgres_changes',{event:'*',schema:'public',table:'birthday_comments'},handleRealtimeChange)
     .on('postgres_changes',{event:'*',schema:'public',table:'welfare_loans'},handleRealtimeChange)
     .on('postgres_changes',{event:'*',schema:'public',table:'welfare_loan_repayments'},handleRealtimeChange)
     .on('postgres_changes',{event:'*',schema:'public',table:'welfare_purse_entries'},handleRealtimeChange)
@@ -1493,6 +1546,11 @@ function handleRealtimeChange(payload){
       }else if(payload.new.status==='approved'){
         showToast('New notice: '+(payload.new.title||''));
         sendNotif('Oasis Club Notice',payload.new.title||'');
+      }
+    }else if(payload.table==='birthday_comments'&&payload.new){
+      const mem=DATA.members.find(m=>m.id===payload.new.member_id);
+      if(mem){
+        showToast(mem.name+' left a birthday wish');
       }
     }else if(payload.table==='club_events'&&payload.new){
       showToast('New event: '+(payload.new.title||''));
@@ -3639,22 +3697,18 @@ function pageNews(){
   const myId=getCurrentMemberId();
   const reviewer=isNewsReviewerNow();
   const posts=visibleNewsPosts();
-  const pendingForReview=reviewer?posts.filter(p=>p.status==='pending'):[];
-  const rest=posts.filter(p=>!(reviewer&&p.status==='pending'));
   const todayBdays=todaysBirthdays();
   const birthdayKey=todayBdays.map(m=>m.id).slice().sort().join('|');
+  const birthdayPost=todayBdays.length?findBirthdayNoticePost(birthdayKey):null;
+  const pendingForReview=reviewer?posts.filter(p=>p.status==='pending'&&!(birthdayPost&&p.id===birthdayPost.id)):[];
+  const rest=posts.filter(p=>!(reviewer&&p.status==='pending')&&!(birthdayPost&&p.id===birthdayPost.id));
   if(todayBdays.length)void syncBirthdayNoticePost(todayBdays,birthdayKey);
   return`
   <div class="page-head">
     <div><h1>News &amp; Notices</h1><div class="sub">${reviewer?'Reviewing as '+escHtml(DATA.members.find(m=>m.id===myId)?.role||''):'Shared by club members'}</div></div>
     ${myId?`<button class="btn btn-primary" onclick="openPostComposer()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>Write a post</button>`:''}
   </div>
-  ${todayBdays.length?`
-  <div class="card" style="border-left:3px solid var(--gold);margin-bottom:18px;">
-    <div class="card-head"><h2>&#127874; Birthday Notice</h2><span class="meta">Auto-saved to the feed</span></div>
-    <div class="birthday-today-banner" style="margin-bottom:12px;">&#127881; Today we celebrate <strong style="margin:0 4px;">${escHtml(todayBdays.map(m=>m.name).join(todayBdays.length>1?', ':' '))}</strong>.</div>
-    <p class="cell-muted" style="margin-bottom:0;">A short club wish is being saved into the main notice feed so it stays with the rest of the announcements.</p>
-  </div>`:''}
+  ${todayBdays.length?birthdaySpotlightCardHtml(todayBdays,birthdayPost,birthdayKey):''}
   ${pendingForReview.length?`
   <div class="card" style="border-left:3px solid var(--gold);margin-bottom:18px;">
     <div class="card-head"><h2 style="font-size:14.5px;">Awaiting your review (${pendingForReview.length})</h2></div>
@@ -4488,6 +4542,7 @@ function todaysBirthdays(){
 const BIRTHDAY_ALERT_STORE='oasis-birthday-alerts-v1';
 const BIRTHDAY_WISH_STORE='oasis-birthday-wishes-v1';
 const BIRTHDAY_NOTICE_STORE='oasis-birthday-notices-v1';
+const BIRTHDAY_COMMENTS_STORE='oasis-birthday-comments-v1';
 let birthdayWishFlight=null;
 function loadBirthdayAlerts(){try{return JSON.parse(localStorage.getItem(BIRTHDAY_ALERT_STORE)||'{}');}catch(_){return{};}}
 function saveBirthdayAlerts(o){localStorage.setItem(BIRTHDAY_ALERT_STORE,JSON.stringify(o));}
@@ -4495,6 +4550,8 @@ function loadBirthdayWishCache(){try{return JSON.parse(localStorage.getItem(BIRT
 function saveBirthdayWishCache(o){localStorage.setItem(BIRTHDAY_WISH_STORE,JSON.stringify(o));}
 function loadBirthdayNoticeCache(){try{return JSON.parse(localStorage.getItem(BIRTHDAY_NOTICE_STORE)||'{}');}catch(_){return{};}}
 function saveBirthdayNoticeCache(o){localStorage.setItem(BIRTHDAY_NOTICE_STORE,JSON.stringify(o));}
+function loadBirthdayCommentsCache(){try{return JSON.parse(localStorage.getItem(BIRTHDAY_COMMENTS_STORE)||'[]');}catch(_){return[];}}
+function saveBirthdayCommentsCache(a){localStorage.setItem(BIRTHDAY_COMMENTS_STORE,JSON.stringify(a));}
 function getMemberDob(memberId){
   const mem=DATA.members.find(m=>m.id===memberId);
   return (mem&&mem.dob)||getExtra(memberId,'dob')||'';
@@ -4534,6 +4591,140 @@ function findBirthdayNoticePost(birthdayKey){
   const marker=birthdayNoticeMarker(birthdayKey);
   const posts=(DATA&&Array.isArray(DATA.newsPosts)&&DATA.newsPosts.length)?DATA.newsPosts:loadNews();
   return posts.find(p=>(p.bodyHtml||'').includes(marker));
+}
+function birthdayNoticeWishText(bodyHtml){
+  try{
+    const tmp=document.createElement('div');
+    tmp.innerHTML=bodyHtml||'';
+    const first=tmp.firstElementChild;
+    const text=(first?first.textContent:tmp.textContent)||'';
+    return text.replace(/\s+/g,' ').trim();
+  }catch(_){
+    return String(bodyHtml||'').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim();
+  }
+}
+function birthdayCommentText(text){
+  return String(text||'').replace(/\s+/g,' ').trim().slice(0,180);
+}
+function birthdayCommentKey(birthdayKey){
+  return 'birthday-comment-'+birthdayKey+'-'+Date.now()+'-'+Math.random().toString(36).slice(2,8);
+}
+function birthdayCommentsForKey(birthdayKey){
+  const comments=(DATA&&Array.isArray(DATA.birthdayComments)&&DATA.birthdayComments.length)?DATA.birthdayComments:loadBirthdayCommentsCache();
+  return comments.filter(c=>c.noticeKey===birthdayKey).slice().sort((a,b)=>(a.createdAt||'').localeCompare(b.createdAt||''));
+}
+function birthdayAvatarHtml(mem,featured){
+  const cls='birthday-avatar'+(featured?' birthday-avatar--featured':'');
+  return mem&&mem.photo
+    ?`<img class="${cls}" src="${mem.photo}" alt="${escHtml(mem.name)}" crossorigin="anonymous"/>`
+    :`<div class="${cls} birthday-avatar-ph">${escHtml(initials(mem?mem.name:''))}</div>`;
+}
+function birthdaySpotlightPeopleHtml(todayBdays){
+  const list=todayBdays||[];
+  if(!list.length)return'';
+  if(list.length===1){
+    const mem=list[0];
+    return `<div class="birthday-hero-main">${birthdayAvatarHtml(mem,true)}<div><div class="birthday-hero-name">${escHtml(mem.name)}</div><div class="birthday-hero-role">${escHtml(mem.role||'Member')}</div></div></div>`;
+  }
+  return `<div class="birthday-hero-stack">${list.slice(0,4).map((mem,i)=>`<div class="birthday-stack-item" style="z-index:${10-i};transform:translateX(${i*-10}px);">${birthdayAvatarHtml(mem,false)}</div>`).join('')}</div>
+    <div class="birthday-hero-name">${escHtml(list.map(m=>m.name).join(', '))}</div>
+    <div class="birthday-hero-role">${list.length} celebrants today</div>`;
+}
+function birthdayCommentItemHtml(comment){
+  const mem=DATA.members.find(m=>m.id===comment.memberId);
+  const label=(comment.memberName||mem?.name||'Member');
+  return `<div class="birthday-comment">
+    <div class="birthday-comment-avatar">${mem&&mem.photo?`<img src="${mem.photo}" alt="${escHtml(label)}" crossorigin="anonymous"/>`:escHtml(initials(label))}</div>
+    <div class="birthday-comment-body">
+      <div class="birthday-comment-top"><strong>${escHtml(label)}</strong><span>${fmtDate((comment.createdAt||'').slice(0,10))}</span></div>
+      <div class="birthday-comment-text">${escHtml(comment.comment||'')}</div>
+    </div>
+  </div>`;
+}
+function birthdayCommentsSectionHtml(birthdayKey){
+  const comments=birthdayCommentsForKey(birthdayKey);
+  const currentId=getCurrentMemberId();
+  return `<div class="birthday-comments">
+    <div class="birthday-comments-head">
+      <div>
+        <div class="birthday-comments-title">Birthday wishes</div>
+        <div class="birthday-comments-sub">${comments.length?comments.length+' member wish'+(comments.length===1?'':'es'):'Be the first to send a birthday wish.'}</div>
+      </div>
+    </div>
+    ${comments.length?`<div class="birthday-comments-list">${comments.slice(-8).map(birthdayCommentItemHtml).join('')}</div>`:`<div class="cell-muted" style="font-size:12.5px;">No comments yet.</div>`}
+    ${currentId?`<div class="birthday-comment-form">
+      <div class="field" style="margin-bottom:10px;">
+        <label>Your wish</label>
+        <textarea id="birthday-comment-${birthdayKey}" rows="3" maxlength="180" placeholder="Write a short birthday wish"></textarea>
+      </div>
+      <div class="modal-actions" style="justify-content:flex-start;">
+        <button type="button" class="btn btn-primary" onclick="submitBirthdayComment('${birthdayKey}')">Post wish</button>
+      </div>
+    </div>`:`<p class="cell-muted" style="font-size:12.5px;margin-top:10px;">Log in to leave a birthday wish.</p>`}
+  </div>`;
+}
+function birthdaySpotlightCardHtml(todayBdays,birthdayPost,birthdayKey){
+  const wish=birthdayPost?birthdayNoticeWishText(birthdayPost.bodyHtml):(loadBirthdayWishDraft(birthdayKey)||'Drafting a short birthday wish…');
+  const comments=birthdayCommentsForKey(birthdayKey);
+  const leadToday=todayBdays[0];
+  return `
+  <div class="card birthday-spotlight-card birthday-entrance">
+    <div class="birthday-spotlight-glow"></div>
+    <div class="birthday-spotlight-top">
+      <div>
+        <div class="card-head" style="margin-bottom:10px;">
+          <h2>&#127874; Birthday Spotlight</h2>
+          <span class="meta">${birthdayPost?'Saved in the feed':'Saving now…'}</span>
+        </div>
+        <div class="birthday-spotlight-title">Today we celebrate ${escHtml(todayBdays.map(m=>m.name).join(todayBdays.length>1?', ':' '))}</div>
+        <p class="cell-muted" style="margin-top:8px;">A club wish is being kept in the main notice feed, with room for everyone else to add their greetings below.</p>
+      </div>
+      <div class="birthday-spotlight-photo">${birthdayAvatarHtml(leadToday||todayBdays[0],true)}</div>
+    </div>
+    <div class="birthday-hero">${birthdaySpotlightPeopleHtml(todayBdays)}</div>
+    <div class="birthday-spotlight-wish">${escHtml(wish||'Drafting a short birthday wish…')}</div>
+    ${comments.length?`<div class="birthday-mini-count">${comments.length} birthday wish${comments.length===1?'':'es'} so far</div>`:''}
+    ${birthdayCommentsSectionHtml(birthdayKey)}
+  </div>`;
+}
+async function submitBirthdayComment(birthdayKey){
+  const textarea=document.getElementById('birthday-comment-'+birthdayKey);
+  if(!textarea)return;
+  const comment=birthdayCommentText(textarea.value);
+  if(!comment){showToast('Please write a short birthday wish.');return;}
+  const memberId=getCurrentMemberId();
+  const member=DATA.members.find(m=>m.id===memberId);
+  if(!memberId||!member){showToast('Log in to leave a birthday wish.');return;}
+  const pin=getCurrentAuthPin();
+  try{
+    const{error}=await sb.rpc('add_birthday_comment',{
+      p_notice_key:birthdayKey,
+      p_member_id:memberId,
+      p_member_pin:pin,
+      p_comment:comment
+    });
+    if(error)throw error;
+    textarea.value='';
+    await fetchAllData();
+    if(currentPage==='news')render();
+    showToast('Birthday wish posted.');
+  }catch(err){
+    const cache=loadBirthdayCommentsCache();
+    const row={
+      id:birthdayCommentKey(birthdayKey),
+      noticeKey:birthdayKey,
+      memberId,
+      memberName:member.name||'',
+      comment,
+      createdAt:new Date().toISOString()
+    };
+    cache.push(row);
+    saveBirthdayCommentsCache(cache);
+    DATA.birthdayComments=cache;
+    textarea.value='';
+    if(currentPage==='news')render();
+    showToast('Birthday wish saved locally.'+(err&&err.message?': '+err.message:''));
+  }
 }
 async function buildBirthdayWish(todayBdays,birthdayKey){
   const names=todayBdays.map(m=>m.name).filter(Boolean);

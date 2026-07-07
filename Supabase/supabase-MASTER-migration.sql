@@ -92,6 +92,15 @@ CREATE TABLE IF NOT EXISTS club_polls (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS birthday_comments (
+  id           TEXT PRIMARY KEY,
+  notice_key   TEXT NOT NULL,
+  member_id    TEXT NOT NULL,
+  member_name  TEXT NOT NULL DEFAULT '',
+  comment      TEXT NOT NULL,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 
 -- ── SECTION 2: ROW LEVEL SECURITY ───────────────────────────────
 
@@ -102,6 +111,7 @@ ALTER TABLE club_meta    ENABLE ROW LEVEL SECURITY;
 ALTER TABLE club_events  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE club_news    ENABLE ROW LEVEL SECURITY;
 ALTER TABLE club_polls   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE birthday_comments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE club_news ADD COLUMN IF NOT EXISTS attachment_url  TEXT;
 ALTER TABLE club_news ADD COLUMN IF NOT EXISTS attachment_name TEXT;
 ALTER TABLE club_news ADD COLUMN IF NOT EXISTS attachment_mime TEXT;
@@ -115,6 +125,7 @@ DO $$ BEGIN CREATE POLICY "pub_read_club_meta"    ON club_meta    FOR SELECT USI
 DO $$ BEGIN CREATE POLICY "pub_read_club_events"  ON club_events  FOR SELECT USING (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 DO $$ BEGIN CREATE POLICY "pub_read_club_news"    ON club_news    FOR SELECT USING (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 DO $$ BEGIN CREATE POLICY "pub_read_club_polls"   ON club_polls   FOR SELECT USING (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE POLICY "pub_read_birthday_comments" ON birthday_comments FOR SELECT USING (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 
 -- ── SECTION 3: SUPABASE STORAGE BUCKET (constitution files) ────
@@ -542,6 +553,38 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION add_birthday_comment(
+  p_notice_key TEXT,
+  p_member_id  TEXT,
+  p_member_pin  TEXT,
+  p_comment     TEXT
+) RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS $$
+DECLARE
+  v_member_name TEXT;
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM members WHERE id = p_member_id AND pin = p_member_pin) THEN
+    RAISE EXCEPTION 'Unauthorized: incorrect PIN';
+  END IF;
+  SELECT name INTO v_member_name FROM members WHERE id = p_member_id;
+  INSERT INTO birthday_comments (
+    id,
+    notice_key,
+    member_id,
+    member_name,
+    comment,
+    created_at
+  )
+  VALUES (
+    p_notice_key || '-' || TO_CHAR(CLOCK_TIMESTAMP(),'YYYYMMDDHH24MISSUS') || '-' || FLOOR(RANDOM()*1000000)::TEXT,
+    p_notice_key,
+    p_member_id,
+    COALESCE(v_member_name,''),
+    p_comment,
+    NOW()
+  );
+END;
+$$;
+
 CREATE OR REPLACE FUNCTION add_club_poll(
   p_officer_pin TEXT,
   p_id          TEXT,
@@ -682,6 +725,7 @@ GRANT EXECUTE ON FUNCTION delete_club_event(TEXT,TEXT)                          
 GRANT EXECUTE ON FUNCTION add_club_news(TEXT,TEXT,TEXT,TEXT,TEXT,TEXT,TEXT,TEXT,TEXT) TO anon;
 GRANT EXECUTE ON FUNCTION delete_club_news(TEXT,TEXT)                                TO anon;
 GRANT EXECUTE ON FUNCTION upsert_birthday_notice(TEXT,TEXT,TEXT,TEXT)               TO anon;
+GRANT EXECUTE ON FUNCTION add_birthday_comment(TEXT,TEXT,TEXT,TEXT)                 TO anon;
 GRANT EXECUTE ON FUNCTION add_club_poll(TEXT,TEXT,TEXT,JSONB,TEXT,TEXT)              TO anon;
 GRANT EXECUTE ON FUNCTION vote_club_poll(TEXT,TEXT,TEXT,TEXT)                        TO anon;
 GRANT EXECUTE ON FUNCTION delete_club_poll(TEXT,TEXT)                                TO anon;
