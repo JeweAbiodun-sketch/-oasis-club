@@ -588,6 +588,17 @@ body.dark .asst-chip{color:#a7e6d0;}
 .birthday-comment-top span{color:var(--ink-faint);}
 .birthday-comment-text{font-size:13.5px;line-height:1.55;color:var(--ink);}
 .birthday-comment-form textarea{width:100%;resize:vertical;min-height:74px;}
+.birthday-notice-copy{display:flex;flex-direction:column;gap:14px;}
+.birthday-notice-loading{padding:18px;border-radius:16px;background:rgba(217,169,58,.1);border:1px dashed rgba(217,169,58,.4);font-size:13.5px;font-weight:600;color:#7a5800;text-align:center;}
+.birthday-wish-block{padding:14px 15px;border-radius:16px;background:#fff;border:1px solid var(--line-soft);box-shadow:var(--shadow-xs);}
+.birthday-wish-block-head{margin-bottom:10px;}
+.birthday-wish-block-person{display:flex;align-items:center;gap:12px;}
+.birthday-wish-block .birthday-avatar,.birthday-wish-block .birthday-avatar-ph{width:58px;height:58px;flex-shrink:0;}
+.birthday-wish-name{font-weight:700;font-size:15px;color:var(--ink);}
+.birthday-wish-role{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold-dark);margin-top:3px;}
+.birthday-wish-paragraphs{display:flex;flex-direction:column;gap:10px;font-family:'Source Serif 4',serif;font-size:16px;line-height:1.7;color:var(--ink);}
+.birthday-wish-paragraphs p{margin:0;}
+.birthday-notice-footer{font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);padding-top:4px;}
 
 /* ── Welfare register ── */
 .welfare-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius-lg);padding:18px 20px;margin-bottom:12px;box-shadow:var(--shadow-sm);}
@@ -4541,6 +4552,7 @@ function todaysBirthdays(){
 }
 const BIRTHDAY_ALERT_STORE='oasis-birthday-alerts-v1';
 const BIRTHDAY_WISH_STORE='oasis-birthday-wishes-v1';
+const BIRTHDAY_WISH_BLOCKS_STORE='oasis-birthday-wish-blocks-v1';
 const BIRTHDAY_NOTICE_STORE='oasis-birthday-notices-v1';
 const BIRTHDAY_COMMENTS_STORE='oasis-birthday-comments-v1';
 let birthdayWishFlight=null;
@@ -4548,6 +4560,8 @@ function loadBirthdayAlerts(){try{return JSON.parse(localStorage.getItem(BIRTHDA
 function saveBirthdayAlerts(o){localStorage.setItem(BIRTHDAY_ALERT_STORE,JSON.stringify(o));}
 function loadBirthdayWishCache(){try{return JSON.parse(localStorage.getItem(BIRTHDAY_WISH_STORE)||'{}');}catch(_){return{};}}
 function saveBirthdayWishCache(o){localStorage.setItem(BIRTHDAY_WISH_STORE,JSON.stringify(o));}
+function loadBirthdayWishBlocksCache(){try{return JSON.parse(localStorage.getItem(BIRTHDAY_WISH_BLOCKS_STORE)||'{}');}catch(_){return{};}}
+function saveBirthdayWishBlocksCache(o){localStorage.setItem(BIRTHDAY_WISH_BLOCKS_STORE,JSON.stringify(o));}
 function loadBirthdayNoticeCache(){try{return JSON.parse(localStorage.getItem(BIRTHDAY_NOTICE_STORE)||'{}');}catch(_){return{};}}
 function saveBirthdayNoticeCache(o){localStorage.setItem(BIRTHDAY_NOTICE_STORE,JSON.stringify(o));}
 function loadBirthdayCommentsCache(){try{return JSON.parse(localStorage.getItem(BIRTHDAY_COMMENTS_STORE)||'[]');}catch(_){return[];}}
@@ -4565,9 +4579,20 @@ function birthdayCacheKey(members){
 function normalizeBirthdayWish(text){
   return String(text||'').replace(/[*_`]/g,'').replace(/\s+/g,' ').replace(/^[\s\-•]+/,'').trim().replace(/[.!?]+$/,'');
 }
-function fallbackBirthdayWish(names){
-  const list=names.length===1?names[0]:names.slice(0,-1).join(', ')+' and '+names[names.length-1];
-  return 'Happy birthday to '+list+'! Wishing you joy, good health, and many fruitful years ahead.';
+const BIRTHDAY_WISH_TONES=[
+  {label:'Warm',descriptor:'warm, gracious, and deeply personal'},
+  {label:'Joyful',descriptor:'bright, celebratory, and uplifting'},
+  {label:'Reflective',descriptor:'thoughtful, sincere, and encouraging'},
+  {label:'Elegant',descriptor:'polished, respectful, and inspiring'}
+];
+function birthdayToneForIndex(index){return BIRTHDAY_WISH_TONES[index%BIRTHDAY_WISH_TONES.length];}
+function birthdayFallbackWish(member,tone,allNames){
+  const name=member&&member.name?member.name:'friend';
+  const toneLabel=tone&&tone.label?tone.label:'Warm';
+  const groupNote=(allNames&&allNames.length>1)?' on your special day':'';
+  const p1='Happy birthday, '+name+'. '+toneLabel+' wishes to you'+groupNote+'.';
+  const p2='May this year bring you steady growth, good health, and a sense of being genuinely celebrated by the people around you.';
+  return p1+'\n\n'+p2;
 }
 function loadBirthdayWishDraft(key){return loadBirthdayWishCache()[key]||'';}
 function saveBirthdayWishDraft(key,wish){
@@ -4576,11 +4601,40 @@ function saveBirthdayWishDraft(key,wish){
   cache.updatedAt=new Date().toISOString();
   saveBirthdayWishCache(cache);
 }
+function loadBirthdayWishBlocksDraft(key){
+  const cache=loadBirthdayWishBlocksCache();
+  return cache[key]&&Array.isArray(cache[key].blocks)?cache[key].blocks:[];
+}
+function saveBirthdayWishBlocksDraft(key,data){
+  const cache=loadBirthdayWishBlocksCache();
+  cache[key]=Object.assign({},data,{updatedAt:new Date().toISOString()});
+  saveBirthdayWishBlocksCache(cache);
+}
 function birthdayNoticeMarker(birthdayKey){return 'birthday-key:'+birthdayKey;}
-function birthdayNoticeBodyHtml(wish,birthdayKey){
-  const safeWish=escHtml(wish||'');
+function birthdayNoticeBodyHtml(blocks,birthdayKey){
+  const list=Array.isArray(blocks)?blocks:[];
+  const items=list.length?list.map((item,idx)=>{
+    const member=item.member||{};
+    const tone=item.tone||birthdayToneForIndex(idx);
+    const p1=escHtml(item.paragraph1||'');
+    const p2=escHtml(item.paragraph2||'');
+    const name=escHtml(member.name||'Celebrant');
+    const role=escHtml(member.role||'Member');
+    return `<section class="birthday-wish-block">
+      <div class="birthday-wish-block-head">
+        <div class="birthday-wish-block-person">
+          ${birthdayAvatarHtml(member,true)}
+          <div>
+            <div class="birthday-wish-name">${name}</div>
+            <div class="birthday-wish-role">${role} · ${escHtml(tone.label||'Warm')}</div>
+          </div>
+        </div>
+      </div>
+      <div class="birthday-wish-paragraphs"><p>${p1}</p><p>${p2}</p></div>
+    </section>`;
+  }).join(''):`<div class="birthday-notice-loading">Drafting a thoughtful birthday wish...</div>`;
   const safeKey=escHtml(birthdayKey||'');
-  return '<div>'+safeWish+'</div><div style="margin-top:10px;font-size:11.5px;color:var(--ink-faint);">Auto-saved club notice</div><!-- '+birthdayNoticeMarker(safeKey)+' -->';
+  return '<div class="birthday-notice-copy">'+items+'<div class="birthday-notice-footer">Auto-saved club notice</div></div><!-- '+birthdayNoticeMarker(safeKey)+' -->';
 }
 function birthdayNoticeAuthorId(){
   const active=(DATA.members||[]).filter(m=>!['suspended','dismissed'].includes(m.status));
@@ -4596,9 +4650,8 @@ function birthdayNoticeWishText(bodyHtml){
   try{
     const tmp=document.createElement('div');
     tmp.innerHTML=bodyHtml||'';
-    const first=tmp.firstElementChild;
-    const text=(first?first.textContent:tmp.textContent)||'';
-    return text.replace(/\s+/g,' ').trim();
+    const text=(tmp.textContent||'').replace(/\s+/g,' ').trim();
+    return text.length>220?text.slice(0,220).trim()+'…':text;
   }catch(_){
     return String(bodyHtml||'').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim();
   }
@@ -4664,7 +4717,7 @@ function birthdayCommentsSectionHtml(birthdayKey){
   </div>`;
 }
 function birthdaySpotlightCardHtml(todayBdays,birthdayPost,birthdayKey){
-  const wish=birthdayPost?birthdayNoticeWishText(birthdayPost.bodyHtml):(loadBirthdayWishDraft(birthdayKey)||'Drafting a short birthday wish…');
+  const wishHtml=birthdayPost?birthdayPost.bodyHtml:birthdayNoticeBodyHtml(loadBirthdayWishBlocksDraft(birthdayKey),birthdayKey);
   const comments=birthdayCommentsForKey(birthdayKey);
   const leadToday=todayBdays[0];
   return `
@@ -4677,12 +4730,12 @@ function birthdaySpotlightCardHtml(todayBdays,birthdayPost,birthdayKey){
           <span class="meta">${birthdayPost?'Saved in the feed':'Saving now…'}</span>
         </div>
         <div class="birthday-spotlight-title">Today we celebrate ${escHtml(todayBdays.map(m=>m.name).join(todayBdays.length>1?', ':' '))}</div>
-        <p class="cell-muted" style="margin-top:8px;">A club wish is being kept in the main notice feed, with room for everyone else to add their greetings below.</p>
+        <p class="cell-muted" style="margin-top:8px;">A thoughtful wish is being kept in the main notice feed, with a unique message for each celebrant and room for everyone else to add their greetings below.</p>
       </div>
       <div class="birthday-spotlight-photo">${birthdayAvatarHtml(leadToday||todayBdays[0],true)}</div>
     </div>
     <div class="birthday-hero">${birthdaySpotlightPeopleHtml(todayBdays)}</div>
-    <div class="birthday-spotlight-wish">${escHtml(wish||'Drafting a short birthday wish…')}</div>
+    <div class="birthday-spotlight-wish">${wishHtml||'Drafting a thoughtful birthday wish…'}</div>
     ${comments.length?`<div class="birthday-mini-count">${comments.length} birthday wish${comments.length===1?'':'es'} so far</div>`:''}
     ${birthdayCommentsSectionHtml(birthdayKey)}
   </div>`;
@@ -4727,43 +4780,57 @@ async function submitBirthdayComment(birthdayKey){
   }
 }
 async function buildBirthdayWish(todayBdays,birthdayKey){
-  const names=todayBdays.map(m=>m.name).filter(Boolean);
-  if(!names.length)return'';
-  const cached=loadBirthdayWishDraft(birthdayKey);
-  if(cached)return cached;
+  const members=(todayBdays||[]).filter(Boolean);
+  if(!members.length)return{summary:'',blocks:[]};
+  const cachedBlocks=loadBirthdayWishBlocksDraft(birthdayKey);
+  if(cachedBlocks.length)return{summary:loadBirthdayWishDraft(birthdayKey)||'',blocks:cachedBlocks};
   if(birthdayWishFlight&&birthdayWishFlight.key===birthdayKey)return birthdayWishFlight.promise;
-  const prompt='Write a single short birthday wish for the Oasis Club notice board. Keep it warm, sincere, and under 24 words. Use no markdown, no emojis, and no extra explanation.';
-  const user='Members celebrating today: '+names.join(', ')+'.';
   const task=(async()=>{
-    try{
-      const raw=await asstCall(prompt,[{role:'user',content:user}]);
-      const clean=normalizeBirthdayWish(raw);
-      return clean||fallbackBirthdayWish(names);
-    }catch(_){
-      return fallbackBirthdayWish(names);
+    const blocks=[];
+    for(let i=0;i<members.length;i++){
+      const member=members[i];
+      const tone=birthdayToneForIndex(i);
+      const prompt='Write a thoughtful birthday message in exactly two paragraphs for a single Oasis Club member. Keep it intelligent, warm, and specific to that member alone. The tone should be '+tone.descriptor+'. Do not mention other celebrants, do not use bullet points, do not add emojis, and do not add any explanation.';
+      const user='Member: '+member.name+'. Role: '+(member.role||'Member')+'.';
+      let text='';
+      try{
+        const raw=await asstCall(prompt,[{role:'user',content:user}]);
+        text=normalizeBirthdayWish(raw).replace(/\n{3,}/g,'\n\n');
+      }catch(_){}
+      if(!text){
+        text=birthdayFallbackWish(member,tone,members.map(m=>m.name));
+      }
+      const parts=text.split(/\n\s*\n/).map(s=>s.trim()).filter(Boolean);
+      const p1=parts[0]||birthdayFallbackWish(member,tone,members.map(m=>m.name)).split(/\n\s*\n/)[0];
+      const p2=parts[1]||'May this new year bring you meaningful progress, good health, and moments that remind you how appreciated you are.';
+      blocks.push({member,tone,paragraph1:p1,paragraph2:p2});
     }
+    const summary=blocks.map(b=>b.paragraph1).join(' ');
+    return{summary,blocks};
   })();
   birthdayWishFlight={key:birthdayKey,promise:task};
-  const wish=await task;
+  const result=await task;
   birthdayWishFlight=null;
-  saveBirthdayWishDraft(birthdayKey,wish);
-  return wish;
+  saveBirthdayWishDraft(birthdayKey,result.summary);
+  saveBirthdayWishBlocksDraft(birthdayKey,{summary:result.summary,blocks:result.blocks});
+  return result;
 }
 async function syncBirthdayNoticePost(todayBdays,birthdayKey){
   if(!todayBdays.length)return;
   const cache=loadBirthdayNoticeCache();
-  if(cache[birthdayKey]==='done'&&findBirthdayNoticePost(birthdayKey))return;
+  const existing=findBirthdayNoticePost(birthdayKey);
+  if(cache[birthdayKey]==='done'&&existing&&String(existing.bodyHtml||'').includes('birthday-wish-block'))return;
   if(cache[birthdayKey]==='pending')return;
   cache[birthdayKey]='pending';
   saveBirthdayNoticeCache(cache);
   const wish=await buildBirthdayWish(todayBdays,birthdayKey);
-  if(findBirthdayNoticePost(birthdayKey)){
+  if(existing&&String(existing.bodyHtml||'').includes('birthday-wish-block')){
     cache[birthdayKey]='done';
     saveBirthdayNoticeCache(cache);
     return;
   }
   const title='Birthday Notice';
-  const bodyHtml=birthdayNoticeBodyHtml(wish,birthdayKey);
+  const bodyHtml=birthdayNoticeBodyHtml(wish.blocks,birthdayKey);
   const authorId=birthdayNoticeAuthorId();
   try{
     const{error}=await sb.rpc('upsert_birthday_notice',{
@@ -4776,6 +4843,7 @@ async function syncBirthdayNoticePost(todayBdays,birthdayKey){
     cache[birthdayKey]='done';
     saveBirthdayNoticeCache(cache);
     await fetchAllData();
+    maybeNotifyBirthdayNotice();
     if(currentPage==='news')render();
   }catch(err){
     delete cache[birthdayKey];
@@ -4796,8 +4864,10 @@ async function syncBirthdayNoticePost(todayBdays,birthdayKey){
     const arr=loadNews();
     if(!arr.find(n=>(n.bodyHtml||'').includes(birthdayNoticeMarker(birthdayKey)))){arr.unshift(row);saveNews(arr);}
     DATA.newsPosts=arr;
+    if(wish&&wish.blocks){saveBirthdayWishBlocksDraft(birthdayKey,{summary:wish.summary||'',blocks:wish.blocks});}
     cache[birthdayKey]='done';
     saveBirthdayNoticeCache(cache);
+    maybeNotifyBirthdayNotice();
     if(currentPage==='news')render();
     console.warn('Birthday notice stored locally only:',err);
   }
@@ -4808,8 +4878,25 @@ function maybeNotifyBirthdayToday(){
   const key=birthdayCacheKey(todayBdays);
   const alerts=loadBirthdayAlerts();
   if(alerts[key])return;
+  if(findBirthdayNoticePost(key))return;
   const names=todayBdays.map(m=>m.name).filter(Boolean);
   const msg='Today we celebrate '+names.join(', ')+'. Wishing them a joyful birthday.';
+  showToast(msg);
+  sendNotif('Oasis Club Birthday',msg);
+  alerts[key]=new Date().toISOString();
+  saveBirthdayAlerts(alerts);
+}
+function maybeNotifyBirthdayNotice(){
+  const todayBdays=todaysBirthdays();
+  if(!todayBdays.length)return;
+  const key=birthdayCacheKey(todayBdays);
+  const alerts=loadBirthdayAlerts();
+  if(alerts[key])return;
+  const post=findBirthdayNoticePost(key);
+  if(!post)return;
+  const names=todayBdays.map(m=>m.name).filter(Boolean);
+  const wish=birthdayNoticeWishText(post.bodyHtml)||loadBirthdayWishDraft(key)||'Happy birthday!';
+  const msg='Birthday notice for '+names.join(', ')+': '+wish;
   showToast(msg);
   sendNotif('Oasis Club Birthday',msg);
   alerts[key]=new Date().toISOString();
@@ -6237,6 +6324,7 @@ function render(){
   else if(currentPage==='tasks')main.innerHTML=pageTasks();
   const todayBdays=todaysBirthdays();
   if(todayBdays.length)void syncBirthdayNoticePost(todayBdays,birthdayCacheKey(todayBdays));
+  maybeNotifyBirthdayNotice();
   maybeNotifyBirthdayToday();
 }
 
