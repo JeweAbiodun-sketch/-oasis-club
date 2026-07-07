@@ -841,7 +841,7 @@ body.dark .asst-chip{color:#a7e6d0;}
   <button type="button" class="navlink" data-page="events"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>Event<span class="nav-dot hidden" id="dot-events"></span></button>
   <button type="button" class="navlink" data-page="news"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h16v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"/><path d="M8 8h8M8 12h5"/></svg>News &amp; notices<span class="nav-dot hidden" id="dot-news"></span></button>
   <button type="button" class="navlink" data-page="interactive"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Polls &amp; voting</button>
-  <button type="button" class="navlink" data-page="welfare"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>Welfare contributions</button>
+  <button type="button" class="navlink" data-page="welfare"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>Welfare Affair</button>
   <button type="button" class="navlink" data-page="pledges"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Pledges</button>
   <button type="button" class="navlink" id="nav-loans" data-page="loans"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="7" width="20" height="13" rx="2"/><path d="M2 10h20"/><circle cx="12" cy="14.5" r="2.2"/></svg>Welfare loans</button>
   <button type="button" class="navlink" id="nav-committees" data-page="committees"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="7" r="3"/><circle cx="17" cy="7" r="3"/><path d="M2 21v-1a6 6 0 016-6h2a6 6 0 016 6v1"/><path d="M15 14h2a6 6 0 016 6v1"/></svg>Committees</button>
@@ -1660,8 +1660,8 @@ function handleRealtimeChange(payload){
       showToast('New payment evidence from '+(mem?mem.name:'a member')+' — '+fmtMoney(Number(payload.new.amount)));
       sendNotif('Oasis Club — Payment evidence',(mem?mem.name:'A member')+' submitted proof of payment for '+fmtMoney(Number(payload.new.amount)));
     }else if(payload.table==='welfare_release_requests'&&payload.new&&payload.new.status==='pending'&&isPresidentNow()){
-      showToast('New welfare fund release request — '+fmtMoney(Number(payload.new.amount))+' awaiting your approval');
-      sendNotif('Oasis Club — Release awaiting approval','A welfare fund release of '+fmtMoney(Number(payload.new.amount))+' needs your approval');
+      showToast('New welfare fund disbursement — '+fmtMoney(Number(payload.new.amount)));
+      sendNotif('Oasis Club — Welfare fund disbursement','A welfare fund disbursement of '+fmtMoney(Number(payload.new.amount))+' was recorded.');
     }
   }else if(payload&&payload.table==='event_memories'){
     if(payload.eventType==='DELETE'&&payload.old){
@@ -3561,7 +3561,7 @@ function updateNavForSession(){
   const navProfile=document.getElementById('nav-profile');
   if(navProfile)navProfile.style.display=getCurrentMemberId()?'':'none';
   const navLoans=document.getElementById('nav-loans');
-  if(navLoans)navLoans.style.display=(isWelfareCommitteeNow()||isTreasurerSession()||isFinancialSecretarySessionNow()||isPresidentNow())?'':'none';
+  if(navLoans)navLoans.style.display='none';
   const navCommittees=document.getElementById('nav-committees');
   if(navCommittees)navCommittees.style.display=isOfficerSessionNow()?'':'none';
   const navPaymentReview=document.getElementById('nav-payment-review');
@@ -4442,15 +4442,7 @@ function isTreasurerSession(){
   return (sessionStorage.getItem(SESSION_KEY)||'')==='role:treasurer';
 }
 // Officer-login PIN only -- no member-role fallback. Used by the Payment
-// Evidence review page (pagePaymentReview) and the Welfare Loans
-// release-request flow (request_welfare_release). This app previously
-// had a weaker pattern (canReviewPaymentClaims, now removed) that
-// trusted a member's self-reported role field instead of requiring the
-// real officer-PIN login -- the same bypass already removed from the
-// old release_welfare_fund() (now itself retired in favor of
-// request_welfare_release() + approve_welfare_release(), which adds
-// President approval before funds actually move). Deliberately not
-// repeated here.
+// Evidence review page and the welfare expense/disbursement actions.
 function isFinancialSecretarySessionNow(){
   return (sessionStorage.getItem(SESSION_KEY)||'')==='role:financial_secretary';
 }
@@ -5409,31 +5401,37 @@ function pageWelfare(){
       </details>
     </div>`;
   }
-  return `<div class="page-head">
-    <div><h1>Welfare &amp; Levies</h1><div class="sub">${welfare.length} event${welfare.length!==1?'s':''} on record</div></div>
-    ${isOfc?`<button type="button" class="btn btn-primary" onclick="openAddWelfare()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M12 5v14M5 12h14"/></svg>New entry</button>`:''}
-  </div>
-  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
-    <button type="button" class="btn ${welfareYearFilter==='all'?'btn-primary':''}" style="padding:6px 14px;font-size:13px;" onclick="setWelfareYearFilter('all')">All years</button>
-    ${wfyLabels.map(y=>`<button type="button" class="btn ${welfareYearFilter===y?'btn-primary':''}" style="padding:6px 14px;font-size:13px;" onclick="setWelfareYearFilter('${y}')">${y}</button>`).join('')}
-  </div>
-  ${welfare.length?welfare.map(welfareCard).join(''):emptyState('No welfare events recorded','Executive Officers can log bereavement, new baby, illness levies and other special contributions.')}
-  ${welfareSummaryTable(allWelfare)}
-  ${isTreasurerSession()?`<div class="card" style="margin-top:8px;">
-    <div class="card-head"><h2>&#128202; Welfare spreadsheet</h2><span class="badge badge-active">Treasurer</span></div>
-    <p class="cell-muted" style="margin:0 0 14px;">Download as CSV to see all events and member contributions. On upload, the data is replaced in full &mdash; keep a backup of the downloaded file before uploading.</p>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-      <button type="button" class="btn btn-primary" onclick="downloadWelfareCSV()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M12 3v13M6 11l6 6 6-6"/><rect x="3" y="19" width="18" height="2" rx="1"/></svg>
-        Download welfare CSV
-      </button>
-      <label class="btn" style="cursor:pointer;margin:0;">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M12 21V8M6 14l6-6 6 6"/><rect x="3" y="3" width="18" height="2" rx="1"/></svg>
-        Upload welfare CSV or Excel
-        <input type="file" accept=".csv,.txt,.xlsx,.xls" style="display:none;" onchange="handleWelfareUpload(this)"/>
-      </label>
+  const contributionSection=`<section class="card" style="margin-top:10px;">
+    <div class="card-head"><h2>1. Welfare contribution</h2><span class="badge badge-active">Members</span></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+      <button type="button" class="btn ${welfareYearFilter==='all'?'btn-primary':''}" style="padding:6px 14px;font-size:13px;" onclick="setWelfareYearFilter('all')">All years</button>
+      ${wfyLabels.map(y=>`<button type="button" class="btn ${welfareYearFilter===y?'btn-primary':''}" style="padding:6px 14px;font-size:13px;" onclick="setWelfareYearFilter('${y}')">${y}</button>`).join('')}
     </div>
-  </div>`:''}`;
+    ${welfare.length?welfare.map(welfareCard).join(''):emptyState('No welfare events recorded','Executive Officers can log bereavement, new baby, illness levies and other special contributions.')}
+    ${welfareSummaryTable(allWelfare)}
+    ${isTreasurerSession()?`<div class="card" style="margin-top:8px;">
+      <div class="card-head"><h2>&#128202; Welfare spreadsheet</h2><span class="badge badge-active">Treasurer</span></div>
+      <p class="cell-muted" style="margin:0 0 14px;">Download as CSV to see all events and member contributions. On upload, the data is replaced in full &mdash; keep a backup of the downloaded file before uploading.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <button type="button" class="btn btn-primary" onclick="downloadWelfareCSV()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M12 3v13M6 11l6 6 6-6"/><rect x="3" y="19" width="18" height="2" rx="1"/></svg>
+          Download welfare CSV
+        </button>
+        <label class="btn" style="cursor:pointer;margin:0;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M12 21V8M6 14l6-6 6 6"/><rect x="3" y="3" width="18" height="2" rx="1"/></svg>
+          Upload welfare CSV or Excel
+          <input type="file" accept=".csv,.txt,.xlsx,.xls" style="display:none;" onchange="handleWelfareUpload(this)"/>
+        </label>
+      </div>
+    </div>`:''}
+  </section>`;
+  return `<div class="page-head">
+    <div><h1>Welfare Affair</h1><div class="sub">Contributions, committee loans, and welfare expenses in one place</div></div>
+    ${isOfc?`<button type="button" class="btn btn-primary" onclick="openAddWelfare()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M12 5v14M5 12h14"/></svg>New contribution event</button>`:''}
+  </div>
+  ${contributionSection}
+  ${renderWelfareLoanSection({embedded:true})}
+  ${renderWelfareExpenseSection()}`;
 }
 // Aggregates every member's contributions by financial year, across ALL
 // events (not just one event card at a time) -- shows a single-year table
@@ -5483,6 +5481,126 @@ function welfareSummaryTable(allWelfare){
     </table>
     ${note}
   </div>`;
+}
+
+function canViewWelfareLoanSectionNow(){
+  return isWelfareCommitteeNow()||isOfficerSessionNow()||isPresidentNow();
+}
+
+function welfareReleaseStatusBadge(r){
+  if(r.status==='approved')return'<span class="badge badge-paid">Approved</span>';
+  if(r.status==='rejected')return'<span class="badge badge-overdue">Rejected</span>';
+  return'<span class="badge badge-due">Awaiting President\'s approval</span>';
+}
+
+function welfareReleaseRequestCard(r,isPres,canRequestRelease){
+  return `<div class="news-card" style="${r.status==='pending'?'border:1.5px dashed var(--gold);':''}">
+    <div class="news-card-head">
+      <div>
+        <div class="news-title">${fmtMoney(r.amount)} ${welfareReleaseStatusBadge(r)}</div>
+        <div class="news-meta">${fmtDate(r.entryDate)}${r.description?' &middot; '+escHtml(r.description):''}</div>
+      </div>
+      ${r.status==='pending'&&isPres?`<div style="display:flex;gap:6px;">
+        <button type="button" class="btn btn-primary" style="font-size:12px;padding:5px 12px;" onclick="approveWelfareRelease('${r.id}')">Approve</button>
+        <button type="button" class="btn" style="font-size:12px;padding:5px 12px;" onclick="openRejectWelfareRelease('${r.id}')">Reject</button>
+      </div>`:''}
+      ${r.status==='pending'&&canRequestRelease&&!isPres?`<button type="button" class="btn" style="font-size:12px;padding:5px 12px;" onclick="withdrawWelfareRelease('${r.id}')">Withdraw</button>`:''}
+    </div>
+    ${r.status==='rejected'&&r.rejectionReason?`<div class="cell-muted" style="margin-top:6px;"><strong style="color:var(--ink);">Note:</strong> ${escHtml(r.rejectionReason)}</div>`:''}
+  </div>`;
+}
+
+function welfareLoanStatusInfo(loan,today){
+  if(loan.status==='closed')return{label:'Repaid in full',cls:'badge-paid'};
+  if(loan.status==='proposed')return{label:'Awaiting 2nd approval',cls:'badge-due'};
+  if(loan.status==='active'&&loan.dueDate&&loan.dueDate<today&&loan.amountRepaid<loan.amountDue)return{label:'Overdue',cls:'badge-overdue'};
+  return{label:'Active',cls:'badge-active'};
+}
+
+function welfareLoanCard(loan,myId,today){
+  const mem=DATA.members.find(m=>m.id===loan.memberId);
+  const proposer=DATA.members.find(m=>m.id===loan.proposedBy);
+  const info=welfareLoanStatusInfo(loan,today);
+  const balance=Math.max(0,loan.amountDue-loan.amountRepaid);
+  const canApprove=isWelfareCommitteeNow()&&loan.status==='proposed'&&loan.proposedBy!==myId&&loan.approver1!==myId;
+  const repayments=(DATA.loanRepayments||[]).filter(r=>r.loanId===loan.id).sort((a,b)=>(b.paidDate||'').localeCompare(a.paidDate||''));
+  return `<div class="news-card" style="${info.cls==='badge-overdue'?'border:1.5px solid var(--red);':''}">
+    <div class="news-card-head">
+      <div>
+        <div class="news-title">${escHtml(mem?mem.name:'Member')} &mdash; ${fmtMoney(loan.principal)} <span class="badge ${info.cls}" style="font-size:10px;margin-left:4px;">${info.label}</span></div>
+        <div class="news-meta">Proposed by ${escHtml(proposer?proposer.name:'committee')} &middot; Profit ${loan.interestRate}% &middot; Total due ${fmtMoney(loan.amountDue)}${loan.dueDate?' &middot; Due '+fmtDate(loan.dueDate):''}</div>
+      </div>
+      ${canApprove?`<button type="button" class="btn btn-primary" style="font-size:12px;padding:5px 12px;" onclick="approveWelfareLoan('${loan.id}')">Approve</button>`:''}
+      ${isWelfareCommitteeNow()&&loan.status==='active'?`<button type="button" class="btn" style="font-size:12px;padding:5px 12px;" onclick="openRecordRepayment('${loan.id}')">Record repayment</button>`:''}
+    </div>
+    <div class="news-body">${escHtml(loan.purpose)}</div>
+    ${loan.status!=='proposed'?`<div class="cell-muted" style="margin-top:8px;font-size:12.5px;">Repaid so far: <strong>${fmtMoney(loan.amountRepaid)}</strong> &middot; Outstanding: <strong>${fmtMoney(balance)}</strong></div>`:''}
+    ${repayments.length?`<details style="margin-top:6px;"><summary style="cursor:pointer;font-size:12px;color:var(--ink-faint);">Repayment history (${repayments.length})</summary>
+      <div style="margin-top:6px;">${repayments.map(r=>`<div class="welfare-member-row"><span style="flex:1;font-size:13px;">${fmtDate(r.paidDate)}</span><span class="welfare-paid">${fmtMoney(r.amount)}</span></div>`).join('')}</div>
+    </details>`:''}
+  </div>`;
+}
+
+function welfarePurseEntryRow(p){
+  const recorder=DATA.members.find(m=>m.id===p.recordedBy);
+  const fallbackLabel=p.entryType==='expense'?'Financial Secretary':'Treasurer';
+  return `<div class="welfare-member-row">
+    <span style="flex:1;font-size:13px;">${fmtDate(p.entryDate)} &middot; ${escHtml(p.description)} <span class="cell-muted">(${escHtml(recorder?recorder.name:fallbackLabel)})</span></span>
+    <span style="${p.entryType==='release'?'color:#2E7D32;':'color:var(--red);'}font-weight:600;">${p.entryType==='release'?'+':'&minus;'}${fmtMoney(p.amount)}</span>
+  </div>`;
+}
+
+function renderWelfareLoanSection({embedded=false}={}){
+  if(!canViewWelfareLoanSectionNow()){
+    return '';
+  }
+  const myId=getCurrentMemberId();
+  const loans=(DATA.welfareLoans||[]).slice().sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
+  const purse=(DATA.welfarePurse||[]).slice().sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
+  const totalReleased=purse.filter(p=>p.entryType==='release').reduce((s,p)=>s+p.amount,0);
+  const totalExpenses=purse.filter(p=>p.entryType==='expense').reduce((s,p)=>s+p.amount,0);
+  const activeLoansOut=loans.filter(l=>l.status==='active'||l.status==='proposed').reduce((s,l)=>s+(l.amountDue-l.amountRepaid),0);
+  const availableBalance=totalReleased-totalExpenses-loans.filter(l=>l.status==='active').reduce((s,l)=>s+l.principal,0);
+  const today=new Date().toISOString().slice(0,10);
+  const canDisburse=isTreasurerSession();
+  const sectionTitle=embedded?'2. Loan':'Welfare Committee loans';
+  const sectionSub=embedded
+    ?'Treasurer releases funds to the Welfare Committee, and the committee lends to members at an adjustable profit.'
+    :'Fund released by the Treasurer, loaned out by the Welfare Committee, and repaid by members.';
+  const loanCards=loans.length?loans.map(loan=>welfareLoanCard(loan,myId,today)).join(''):emptyState('No loans on record','The Welfare Committee can propose profit-based loans for members in urgent need.');
+  const purseCards=purse.length?`<div class="card-head" style="margin-top:14px;"><h2>&#128176; Purse activity</h2></div>
+    <div class="card">${purse.map(welfarePurseEntryRow).join('')}</div>`:'';
+  return `<section class="card" style="margin-top:14px;">
+    <div class="card-head"><h2>${sectionTitle}</h2><span class="badge badge-active">Committee access</span></div>
+    <p class="cell-muted" style="margin:0 0 14px;">${sectionSub}</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin-bottom:6px;">
+      ${canDisburse?`<button type="button" class="btn" onclick="openReleaseFund()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M12 5v14M5 12h14"/></svg>Disburse fund</button>`:''}
+      ${isWelfareCommitteeNow()?`<button type="button" class="btn" onclick="openLogExpense()">Log expense</button>`:''}
+      ${isWelfareCommitteeNow()?`<button type="button" class="btn btn-primary" onclick="openProposeLoan()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M12 5v14M5 12h14"/></svg>Propose loan</button>`:''}
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="label">Total released</div><div class="value teal">${fmtMoney(totalReleased)}</div><div class="note">Treasurer disbursements</div></div>
+      <div class="stat"><div class="label">Loans &amp; expenses out</div><div class="value">${fmtMoney(activeLoansOut+totalExpenses)}</div><div class="note">active loans + logged expenses</div></div>
+      <div class="stat"><div class="label">Available balance</div><div class="value ${availableBalance<0?'red':'gold'}">${fmtMoney(availableBalance)}</div><div class="note">for new loans/expenses</div></div>
+    </div>
+    <div class="card-head" style="margin-top:14px;"><h2>&#129500; Loans</h2></div>
+    ${loanCards}
+    ${purseCards}
+  </section>`;
+}
+
+function renderWelfareExpenseSection(){
+  const expenses=(DATA.welfarePurse||[]).filter(p=>p.entryType==='expense').slice().sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
+  const total=expenses.reduce((s,p)=>s+Number(p.amount||0),0);
+  return `<section class="card" style="margin-top:14px;">
+    <div class="card-head"><h2>3. Welfare Expenses</h2><span class="badge badge-active">Visible to all members</span></div>
+    <p class="cell-muted" style="margin:0 0 14px;">Recorded spending from the welfare fund. The Financial Secretary manages this section, while every member can view the history.</p>
+    <div class="stats" style="margin-bottom:10px;">
+      <div class="stat"><div class="label">Total welfare expenses</div><div class="value red">${fmtMoney(total)}</div><div class="note">${expenses.length} recorded expense${expenses.length!==1?'s':''}</div></div>
+    </div>
+    ${isFinancialSecretarySessionNow()?`<div style="display:flex;justify-content:flex-end;margin-bottom:10px;"><button type="button" class="btn btn-primary" onclick="openLogExpense()">Record expense</button></div>`:''}
+    ${expenses.length?`<div class="card">${expenses.map(welfarePurseEntryRow).join('')}</div>`:emptyState('No welfare expenses recorded yet','The Financial Secretary can log welfare spending here, and every member can read it later.')}
+  </section>`;
 }
 
 /* ---------- Welfare Committee Loans ---------- */
@@ -6087,130 +6205,41 @@ function openTaskForm(taskId){
 }
 
 function pageWelfareLoansStandalone(){
-  const isWc=isWelfareCommitteeNow();
-  const canRequestRelease=isTreasurerSession()||isFinancialSecretarySessionNow();
-  const isPres=isPresidentNow();
-  if(!isWc&&!canRequestRelease&&!isPres){
-    return `<div class="page-head"><div><h1>Welfare loans</h1></div></div>
-    ${emptyState('This page is restricted','Only Welfare Committee members, the Treasurer/Financial Secretary, and the President can view welfare loan details. Contact the Welfare Committee if you have questions about a loan.')}`;
-  }
-  const myId=getCurrentMemberId();
-  const loans=(DATA.welfareLoans||[]).slice().sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
-  const purse=(DATA.welfarePurse||[]).slice().sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
-  const releaseRequests=(DATA.welfareReleaseRequests||[]).slice().sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
-  const pendingReleaseRequests=releaseRequests.filter(r=>r.status==='pending');
-  const totalReleased=purse.filter(p=>p.entryType==='release').reduce((s,p)=>s+p.amount,0);
-  const totalExpenses=purse.filter(p=>p.entryType==='expense').reduce((s,p)=>s+p.amount,0);
-  const activeLoansOut=loans.filter(l=>l.status==='active'||l.status==='proposed').reduce((s,l)=>s+(l.amountDue-l.amountRepaid),0);
-  const availableBalance=totalReleased-totalExpenses-loans.filter(l=>l.status==='active').reduce((s,l)=>s+l.principal,0);
-  const today=new Date().toISOString().slice(0,10);
-  function releaseStatusBadge(r){
-    if(r.status==='approved')return'<span class="badge badge-paid">Approved</span>';
-    if(r.status==='rejected')return'<span class="badge badge-overdue">Rejected</span>';
-    return'<span class="badge badge-due">Awaiting President\'s approval</span>';
-  }
-  function releaseRequestCard(r){
-    return `<div class="news-card" style="${r.status==='pending'?'border:1.5px dashed var(--gold);':''}">
-      <div class="news-card-head">
-        <div>
-          <div class="news-title">${fmtMoney(r.amount)} ${releaseStatusBadge(r)}</div>
-          <div class="news-meta">${fmtDate(r.entryDate)}${r.description?' &middot; '+escHtml(r.description):''}</div>
-        </div>
-        ${r.status==='pending'&&isPres?`<div style="display:flex;gap:6px;">
-          <button type="button" class="btn btn-primary" style="font-size:12px;padding:5px 12px;" onclick="approveWelfareRelease('${r.id}')">Approve</button>
-          <button type="button" class="btn" style="font-size:12px;padding:5px 12px;" onclick="openRejectWelfareRelease('${r.id}')">Reject</button>
-        </div>`:''}
-        ${r.status==='pending'&&canRequestRelease&&!isPres?`<button type="button" class="btn" style="font-size:12px;padding:5px 12px;" onclick="withdrawWelfareRelease('${r.id}')">Withdraw</button>`:''}
-      </div>
-      ${r.status==='rejected'&&r.rejectionReason?`<div class="cell-muted" style="margin-top:6px;"><strong style="color:var(--ink);">Note:</strong> ${escHtml(r.rejectionReason)}</div>`:''}
-    </div>`;
-  }
-  function loanStatusInfo(loan){
-    if(loan.status==='closed')return{label:'Repaid in full',cls:'badge-paid'};
-    if(loan.status==='proposed')return{label:'Awaiting 2nd approval',cls:'badge-due'};
-    if(loan.status==='active'&&loan.dueDate&&loan.dueDate<today&&loan.amountRepaid<loan.amountDue)return{label:'Overdue',cls:'badge-overdue'};
-    return{label:'Active',cls:'badge-active'};
-  }
-  function loanCard(loan){
-    const mem=DATA.members.find(m=>m.id===loan.memberId);
-    const proposer=DATA.members.find(m=>m.id===loan.proposedBy);
-    const info=loanStatusInfo(loan);
-    const balance=Math.max(0,loan.amountDue-loan.amountRepaid);
-    const canApprove=isWc&&loan.status==='proposed'&&loan.proposedBy!==myId&&loan.approver1!==myId;
-    const repayments=(DATA.loanRepayments||[]).filter(r=>r.loanId===loan.id).sort((a,b)=>(b.paidDate||'').localeCompare(a.paidDate||''));
-    return `<div class="news-card" style="${info.cls==='badge-overdue'?'border:1.5px solid var(--red);':''}">
-      <div class="news-card-head">
-        <div>
-          <div class="news-title">${escHtml(mem?mem.name:'Member')} &mdash; ${fmtMoney(loan.principal)} <span class="badge ${info.cls}" style="font-size:10px;margin-left:4px;">${info.label}</span></div>
-          <div class="news-meta">Proposed by ${escHtml(proposer?proposer.name:'committee')} &middot; Interest ${loan.interestRate}% &middot; Total due ${fmtMoney(loan.amountDue)}${loan.dueDate?' &middot; Due '+fmtDate(loan.dueDate):''}</div>
-        </div>
-        ${canApprove?`<button type="button" class="btn btn-primary" style="font-size:12px;padding:5px 12px;" onclick="approveWelfareLoan('${loan.id}')">Approve</button>`:''}
-        ${isWc&&loan.status==='active'?`<button type="button" class="btn" style="font-size:12px;padding:5px 12px;" onclick="openRecordRepayment('${loan.id}')">Record repayment</button>`:''}
-      </div>
-      <div class="news-body">${escHtml(loan.purpose)}</div>
-      ${loan.status!=='proposed'?`<div class="cell-muted" style="margin-top:8px;font-size:12.5px;">Repaid so far: <strong>${fmtMoney(loan.amountRepaid)}</strong> &middot; Outstanding: <strong>${fmtMoney(balance)}</strong></div>`:''}
-      ${repayments.length?`<details style="margin-top:6px;"><summary style="cursor:pointer;font-size:12px;color:var(--ink-faint);">Repayment history (${repayments.length})</summary>
-        <div style="margin-top:6px;">${repayments.map(r=>`<div class="welfare-member-row"><span style="flex:1;font-size:13px;">${fmtDate(r.paidDate)}</span><span class="welfare-paid">${fmtMoney(r.amount)}</span></div>`).join('')}</div>
-      </details>`:''}
-    </div>`;
-  }
-  function purseEntryRow(p){
-    const recorder=DATA.members.find(m=>m.id===p.recordedBy);
-    return `<div class="welfare-member-row">
-      <span style="flex:1;font-size:13px;">${fmtDate(p.entryDate)} &middot; ${escHtml(p.description)} <span class="cell-muted">(${escHtml(recorder?recorder.name:'')})</span></span>
-      <span style="${p.entryType==='release'?'color:#2E7D32;':'color:var(--red);'}font-weight:600;">${p.entryType==='release'?'+':'&minus;'}${fmtMoney(p.amount)}</span>
-    </div>`;
-  }
   return `<div class="page-head">
-    <div><h1>Welfare Committee loans</h1><div class="sub">Fund released by the Treasurer (subject to the President's approval), loaned out and repaid by members</div></div>
-    <div style="display:flex;gap:8px;">
-      ${canRequestRelease?`<button type="button" class="btn" onclick="openReleaseFund()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M12 5v14M5 12h14"/></svg>Request fund release</button>`:''}
-      ${isWc?`<button type="button" class="btn" onclick="openLogExpense()">Log expense</button>`:''}
-      ${isWc?`<button type="button" class="btn btn-primary" onclick="openProposeLoan()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M12 5v14M5 12h14"/></svg>Propose loan</button>`:''}
-    </div>
-  </div>
-  <div class="stats">
-    <div class="stat"><div class="label">Total released</div><div class="value teal">${fmtMoney(totalReleased)}</div><div class="note">President-approved releases</div></div>
-    <div class="stat"><div class="label">Loans &amp; expenses out</div><div class="value">${fmtMoney(activeLoansOut+totalExpenses)}</div><div class="note">active loans + logged expenses</div></div>
-    <div class="stat"><div class="label">Available balance</div><div class="value ${availableBalance<0?'red':'gold'}">${fmtMoney(availableBalance)}</div><div class="note">for new loans/expenses</div></div>
-  </div>
-  ${(isPres||canRequestRelease)&&releaseRequests.length?`<div class="card-head"><h2>&#128179; Fund release requests${pendingReleaseRequests.length&&isPres?' <span class="badge badge-due" style="font-size:10px;vertical-align:middle;">'+pendingReleaseRequests.length+' awaiting your approval</span>':''}</h2></div>
-  ${releaseRequests.map(releaseRequestCard).join('')}`:''}
-  <div class="card-head" style="margin-top:14px;"><h2>&#129500; Loans</h2></div>
-  ${loans.length?loans.map(loanCard).join(''):emptyState('No loans on record','The Welfare Committee can propose interest-bearing loans for members in urgent need.')}
-  ${purse.length?`<div class="card-head" style="margin-top:14px;"><h2>&#128176; Purse activity</h2></div>
-  <div class="card">${purse.map(purseEntryRow).join('')}</div>`:''}`;
+    <div><h1>Welfare Committee loans</h1><div class="sub">Fund released by the Treasurer, loaned out by the Welfare Committee, and repaid by members</div></div>
+  </div>${renderWelfareLoanSection({embedded:false})}`;
 }
 
 function openReleaseFund(){
-  openModal(`<h3>Request Welfare Fund Release</h3>
-    <p class="cell-muted" style="margin:0 0 12px;font-size:12.5px;">This sends a request to the President for approval. The Welfare Committee's available balance only updates once it's approved.</p>
+  openModal(`<h3>Disburse Welfare Fund</h3>
+    <p class="cell-muted" style="margin:0 0 12px;font-size:12.5px;">The Treasurer releases money directly to the Welfare Committee balance.</p>
     <div class="field-row">
       <div class="field"><label>Amount (&#8358;)</label><input type="number" id="rf-amount" min="0" step="500" required/></div>
       <div class="field"><label>Date</label><input type="date" id="rf-date" value="${new Date().toISOString().slice(0,10)}" required/></div>
     </div>
-    <div class="field"><label>Note</label><input type="text" id="rf-desc" placeholder="e.g. June welfare fund release"/></div>
-    <div class="modal-actions"><button type="button" class="btn" onclick="closeModal()">Cancel</button><button type="button" class="btn btn-primary" onclick="submitReleaseFund()">Send for approval</button></div>`);
+    <div class="field"><label>Note</label><input type="text" id="rf-desc" placeholder="e.g. June welfare fund disbursement"/></div>
+    <div class="modal-actions"><button type="button" class="btn" onclick="closeModal()">Cancel</button><button type="button" class="btn btn-primary" onclick="submitReleaseFund()">Disburse fund</button></div>`);
 }
 
 async function submitReleaseFund(){
   const amount=Number(document.getElementById('rf-amount').value||0);
   const date=document.getElementById('rf-date').value;
-  const desc=(document.getElementById('rf-desc').value||'').trim()||'Welfare fund release';
+  const desc=(document.getElementById('rf-desc').value||'').trim()||'Welfare fund disbursement';
   if(!amount||!date){showToast('Amount and date are required.');return;}
   const pin=getCurrentAuthPin();
+  if(!isTreasurerSession()){showToast('Only the Treasurer can disburse welfare funds.');return;}
   const btn=document.querySelector('#modal-content .btn-primary');
-  if(btn){btn.disabled=true;btn.textContent='Sending\u2026';}
+  if(btn){btn.disabled=true;btn.textContent='Disbursing\u2026';}
   try{
-    const{error}=await sb.rpc('request_welfare_release',{
+    const{error}=await sb.rpc('release_welfare_fund',{
       p_officer_pin:pin,p_id:uid(),p_amount:amount,p_description:desc,p_entry_date:date
     });
     if(error)throw error;
     closeModal();
-    showToast('Sent to the President for approval.');
+    showToast('Fund disbursed to the Welfare Committee.');
   }catch(e){
-    if(btn){btn.disabled=false;btn.textContent='Send for approval';}
-    showToast('Could not send request: '+(e.message||'unknown error'));
+    if(btn){btn.disabled=false;btn.textContent='Disburse fund';}
+    showToast('Could not disburse fund: '+(e.message||'unknown error'));
   }
 }
 async function approveWelfareRelease(id){
@@ -6262,13 +6291,14 @@ async function submitLogExpense(){
   const date=document.getElementById('le-date').value;
   const desc=(document.getElementById('le-desc').value||'').trim();
   if(!amount||!date||!desc){showToast('Amount, date and description are required.');return;}
-  const me=getCurrentMemberRecord();
-  if(!me){showToast('You must be logged in to log an expense.');return;}
+  if(!isFinancialSecretarySessionNow()){showToast('Only the Financial Secretary can log welfare expenses.');return;}
+  const pin=getCurrentAuthPin();
+  if(!pin){showToast('You must be logged in to log an expense.');return;}
   const btn=document.querySelector('#modal-content .btn-primary');
   if(btn){btn.disabled=true;btn.textContent='Saving\u2026';}
   try{
     const{error}=await sb.rpc('log_welfare_expense',{
-      p_committee_pin:me.pin,p_id:uid(),p_amount:amount,p_description:desc,p_entry_date:date
+      p_committee_pin:pin,p_id:uid(),p_amount:amount,p_description:desc,p_entry_date:date
     });
     if(error)throw error;
     closeModal();
@@ -6285,7 +6315,7 @@ function openProposeLoan(){
     <div class="field"><label>Member</label><select id="wl-member">${active.map(m=>`<option value="${m.id}">${escHtml(m.name)}</option>`).join('')}</select></div>
     <div class="field-row">
       <div class="field"><label>Principal (&#8358;)</label><input type="number" id="wl-principal" min="0" step="500" required/></div>
-      <div class="field"><label>Interest rate (%)</label><input type="number" id="wl-rate" min="0" step="0.5" value="0" required/></div>
+      <div class="field"><label>Profit rate (%)</label><input type="number" id="wl-rate" min="0" step="0.5" value="0" required/></div>
     </div>
     <div class="field"><label>Purpose</label><textarea id="wl-purpose" rows="3" placeholder="e.g. Urgent medical expenses"></textarea></div>
     <div class="field"><label>Due date</label><input type="date" id="wl-due"/></div>
@@ -7085,9 +7115,9 @@ function asstBuildContext(){
     +'\n\n=== BUILDING PROJECT PLEDGES ===\n'+pledgeSummary+'\n'+(pledgeList||'No pledges on record.')
     +'\n\n=== WELFARE CONTRIBUTIONS ===\n'+welfareContribSummary
     +'\n\n=== WELFARE COMMITTEE LOANS ===\n'+welfareSummary+'\n'+(loanList||'No loans on record.')
-    +'\n\n=== WELFARE RELEASE REQUESTS ===\n'+(releaseList||'No welfare fund release requests on record.');
+    +'\n\n=== WELFARE FUND DISBURSEMENTS ===\n'+(releaseList||'No welfare fund disbursements on record.');
 }
-const ASST_PREAMBLE='You are the Oasis Assistant for the Oasis Club of Otun Ekiti. Answer the member\u2019s questions using ONLY the club information provided below \u2014 this covers the constitution, meeting minutes and attendance, finances, the member directory, committees, news & notices, events, polls, tasks, payment evidence, building-project pledges, welfare contributions, welfare committee loans, and welfare fund release requests. Rules: if the answer is not in the data, say you do not have it on record and suggest contacting the relevant Executive Officer (e.g. the Secretary or Treasurer). Be concise, warm and clear \u2014 two or three sentences is usually enough. When you state a fact, briefly note its source, e.g. "(Article 4)", "(per the April minutes)", or "(per the notice posted on 12 March)". Never invent names, figures or dates. Use Naira (\u20a6) for money.';
+const ASST_PREAMBLE='You are the Oasis Assistant for the Oasis Club of Otun Ekiti. Answer the member\u2019s questions using ONLY the club information provided below \u2014 this covers the constitution, meeting minutes and attendance, finances, the member directory, committees, news & notices, events, polls, tasks, payment evidence, building-project pledges, welfare contributions, welfare committee loans, and welfare fund disbursements. Rules: if the answer is not in the data, say you do not have it on record and suggest contacting the relevant Executive Officer (e.g. the Secretary or Treasurer). Be concise, warm and clear \u2014 two or three sentences is usually enough. When you state a fact, briefly note its source, e.g. "(Article 4)", "(per the April minutes)", or "(per the notice posted on 12 March)". Never invent names, figures or dates. Use Naira (\u20a6) for money.';
 const ASST_SUGGESTIONS=['When is the next meeting?','Maximum number of members?','How much is in the account?','Who are the Executive Officers?','What are the dues this year?'];
 
 /* ---- Oasis Assistant — Gemini AI + local fallback ---- */
@@ -7369,13 +7399,13 @@ function localAsstAnswer(messages){
     if(!loans.length) return 'No welfare loans have been recorded.';
     const active2=loans.filter(l=>l.status==='active');
     const overdue2=active2.filter(l=>l.dueDate&&l.dueDate<new Date().toISOString().slice(0,10)&&l.amountRepaid<l.amountDue);
-    return '**'+loans.length+'** welfare loan(s) on record \u2014 **'+active2.length+'** currently active, **'+overdue2.length+'** overdue. See the Welfare Loans page for details. Note: loan details are only visible to the Welfare Committee.';
+    return '**'+loans.length+'** welfare loan(s) on record \u2014 **'+active2.length+'** currently active, **'+overdue2.length+'** overdue. See the Welfare Affair page for details. Note: loan details are only visible to the Welfare Committee and executives.';
   }
   if(/welfare.*contribut|welfare.*fund|welfare.*levy/.test(q)){
     const welfare=loadWelfare();
     if(!welfare.length) return 'No welfare contributions have been recorded yet.';
     const totalCollected=welfare.reduce((s,w)=>s+(w.contributions||[]).reduce((s2,c)=>s2+Number(c.amount||0),0),0);
-    return 'Total welfare contributions on record: **'+fmt(totalCollected)+'** across **'+welfare.length+'** event(s). See the Welfare Contributions page for details.';
+    return 'Total welfare contributions on record: **'+fmt(totalCollected)+'** across **'+welfare.length+'** event(s). See the Welfare Affair page for details.';
   }
   if(/\b(hi|hello|hey)\b|good (morning|afternoon|evening)/.test(q))
     return "Hello! I'm the Oasis Assistant. Ask me about dues, finances, members, meetings, committees, tasks, polls, news, events, pledges, or welfare.";

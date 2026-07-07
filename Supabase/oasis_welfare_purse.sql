@@ -26,7 +26,7 @@ create policy "Allow read welfare purse entries" on welfare_purse_entries for se
 revoke insert, update, delete on welfare_purse_entries from anon, authenticated;
 
 -- ------------------------------------------------------------
--- Treasurer releases funds to the Welfare Committee.
+-- Treasurer directly releases funds to the Welfare Committee.
 -- ------------------------------------------------------------
 create or replace function release_welfare_fund(
   p_officer_pin text,
@@ -42,16 +42,16 @@ declare
   v_valid boolean := false;
   v_recorder_id text;
 begin
-  if p_officer_pin in ('7395','1064') then  -- treasurer, financial_secretary
+  if p_officer_pin in ('7395') then  -- treasurer
     v_valid := true;
   end if;
   if not v_valid then
     select exists(
-      select 1 from members where pin = p_officer_pin and role in ('Treasurer','Financial Secretary')
+      select 1 from members where pin = p_officer_pin and role = 'Treasurer'
     ) into v_valid;
   end if;
   if not v_valid then
-    raise exception 'Only the Treasurer or Financial Secretary can release welfare funds';
+    raise exception 'Only the Treasurer can release welfare funds';
   end if;
 
   select id into v_recorder_id from members where pin = p_officer_pin limit 1;
@@ -62,8 +62,8 @@ end;
 $$;
 
 -- ------------------------------------------------------------
--- Welfare Committee logs a non-loan expense against the purse
--- (e.g. what they reported spending at the monthly meeting).
+-- Welfare Committee or Financial Secretary logs a non-loan expense
+-- against the purse (e.g. what they reported spending at the monthly meeting).
 -- ------------------------------------------------------------
 create or replace function log_welfare_expense(
   p_committee_pin text,
@@ -78,8 +78,10 @@ as $$
 declare
   v_recorder_id text;
 begin
-  if not is_welfare_committee_pin(p_committee_pin) then
-    raise exception 'Only Welfare Committee members can log welfare expenses';
+  if p_committee_pin in ('1064') then
+    null;
+  elsif not is_welfare_committee_pin(p_committee_pin) then
+    raise exception 'Only Welfare Committee members or the Financial Secretary can log welfare expenses';
   end if;
 
   select id into v_recorder_id from members where pin = p_committee_pin limit 1;
