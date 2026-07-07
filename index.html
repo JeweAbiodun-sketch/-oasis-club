@@ -82,6 +82,18 @@ h1,h2,h3{font-family:'Source Serif 4',Georgia,serif;font-weight:600;color:var(--
 .page-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:28px;}
 .page-head h1{font-size:26px;letter-spacing:-.01em;}
 .page-head .sub{color:var(--ink-soft);font-size:13px;margin-top:4px;}
+.event-hero{position:relative;overflow:hidden;border:1px solid rgba(184,134,46,.28);border-radius:20px;padding:24px;background:linear-gradient(135deg,rgba(7,59,48,.96) 0%,rgba(15,122,92,.95) 52%,rgba(184,134,46,.88) 100%);color:#fff;box-shadow:var(--shadow-lg);margin-bottom:20px;}
+.event-hero::before{content:'';position:absolute;inset:-20% auto auto -5%;width:240px;height:240px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.22),transparent 68%);opacity:.75;pointer-events:none;}
+.event-hero::after{content:'';position:absolute;right:-6%;bottom:-28%;width:240px;height:240px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.16),transparent 68%);pointer-events:none;}
+.event-hero-grid{position:relative;z-index:1;display:grid;grid-template-columns:minmax(0,1.5fr) minmax(240px,.9fr);gap:18px;align-items:end;}
+.event-hero h2{font-family:'Source Serif 4',serif;font-size:30px;line-height:1.05;color:#fff;margin-bottom:10px;}
+.event-hero p{max-width:62ch;font-size:14px;line-height:1.7;color:rgba(255,255,255,.88);}
+.event-hero-note{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;}
+.event-hero-pill{display:inline-flex;align-items:center;gap:7px;padding:7px 11px;border-radius:999px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.14);font-size:12px;font-weight:600;backdrop-filter:blur(10px);}
+.event-hero-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;}
+.event-hero-metric{padding:13px 14px;border-radius:14px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(12px);}
+.event-hero-metric .value{display:block;font-family:'Source Serif 4',serif;font-size:22px;line-height:1;color:#fff;margin-bottom:4px;}
+.event-hero-metric .label{font-size:11px;line-height:1.4;color:rgba(255,255,255,.8);text-transform:uppercase;letter-spacing:.05em;}
 
 @keyframes fadeUp{
   from{opacity:0;transform:translateY(14px);}
@@ -89,17 +101,27 @@ h1,h2,h3{font-family:'Source Serif 4',Georgia,serif;font-weight:600;color:var(--
 }
 .event-section{margin-bottom:24px;animation:fadeUp .36s ease both;}
 .event-section + .event-section{margin-top:10px;}
+.event-albums{display:flex;flex-direction:column;gap:18px;}
+.event-album-card{background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:16px;box-shadow:var(--shadow-sm);overflow:hidden;}
+.event-album-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:14px;}
+.event-album-head h3{font-size:19px;}
+.event-album-head .sub{font-size:12.5px;color:var(--ink-soft);margin-top:4px;}
+.event-album-stats{font-size:12px;color:var(--ink-faint);white-space:nowrap;}
+.event-album-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;}
 .section-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:14px;}
 .section-head h2{font-size:20px;}
 .section-head .sub{font-size:12.5px;color:var(--ink-soft);margin-top:4px;}
 .section-actions{display:flex;gap:8px;flex-wrap:wrap;}
 .event-memory-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;}
-.event-memory-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-sm);animation:fadeUp .36s ease both;}
+.event-memory-card{background:var(--paper);border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:var(--shadow-sm);animation:fadeUp .36s ease both;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;}
+.event-memory-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-md);border-color:rgba(15,122,92,.22);}
 .event-memory-media-wrap{position:relative;background:linear-gradient(135deg,rgba(15,122,92,.08),rgba(184,134,46,.08));aspect-ratio:16/10;overflow:hidden;}
 .event-memory-media{width:100%;height:100%;object-fit:cover;display:block;background:#111;}
+.event-memory-card:hover .event-memory-media{transform:scale(1.03);}
+.event-memory-media{transition:transform .28s ease;}
 .event-memory-video{background:#000;}
-.event-memory-overlay{position:absolute;inset:auto 12px 12px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px;}
-.event-memory-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border-radius:999px;background:rgba(7,59,48,.88);color:#fff;font-size:11px;font-weight:600;backdrop-filter:blur(8px);}
+.event-memory-overlay{position:absolute;inset:auto 12px 12px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px;z-index:1;}
+.event-memory-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border-radius:999px;background:rgba(7,59,48,.88);color:#fff;font-size:11px;font-weight:600;backdrop-filter:blur(8px);box-shadow:0 8px 20px rgba(0,0,0,.18);}
 .event-memory-body{padding:14px 15px 15px;}
 .event-memory-title{font-family:'Source Serif 4',serif;font-size:17px;color:var(--ink);margin-bottom:4px;}
 .event-memory-meta{font-size:12px;color:var(--ink-faint);margin-bottom:8px;}
@@ -111,8 +133,11 @@ h1,h2,h3{font-family:'Source Serif 4',Georgia,serif;font-weight:600;color:var(--
 .event-memory-shell small{display:block;max-width:420px;line-height:1.6;}
 .cards-stack{display:flex;flex-direction:column;gap:16px;}
 @media (max-width:760px){
-  .event-memory-grid{grid-template-columns:1fr;}
-  .section-head,.page-head{align-items:flex-start;flex-direction:column;}
+  .event-hero-grid,.event-album-grid,.event-memory-grid{grid-template-columns:1fr;}
+  .event-hero{padding:20px;}
+  .event-hero h2{font-size:24px;}
+  .event-hero-metrics{grid-template-columns:1fr;gap:8px;}
+  .event-album-head,.event-hero-grid,.section-head,.page-head{align-items:flex-start;flex-direction:column;}
 }
 
 /* cards */
@@ -204,9 +229,13 @@ tr:hover td{background:var(--cream);}
 /* modal */
 .modal-bg{position:fixed;inset:0;background:rgba(20,20,18,.45);display:none;align-items:center;justify-content:center;z-index:100;padding:20px;}
 .modal-bg.show{display:flex;}
-.modal{background:var(--paper);border-radius:var(--radius-lg);padding:26px 28px;max-width:480px;width:100%;max-height:86vh;overflow-y:auto;box-shadow:var(--shadow-lg);}
+.modal{background:var(--paper);border-radius:var(--radius-lg);padding:26px 28px;max-width:480px;width:100%;max-height:86vh;overflow-y:auto;box-shadow:var(--shadow-lg);animation:modalIn .22s ease both;}
 .modal h3{font-size:18px;margin-bottom:18px;}
 .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;}
+@keyframes modalIn{
+  from{opacity:0;transform:translateY(12px) scale(.985);}
+  to{opacity:1;transform:translateY(0) scale(1);}
+}
 
 /* dues grid */
 .dues-grid{overflow-x:auto;}
@@ -3737,6 +3766,48 @@ function handleBroadcast({event,payload}){
 function eventMemoryTypeForFile(file){
   return file&&String(file.type||'').startsWith('video/')?'video':'image';
 }
+function eventMemoryLabel(type){
+  return type==='video'?'Video':'Photo';
+}
+function eventAlbumMeta(memories,event){
+  const items=memories||[];
+  const photos=items.filter(m=>m.mediaType!=='video').length;
+  const videos=items.length-photos;
+  const eventTitle=(event&&event.title)?event.title:'Club memories';
+  const firstDate=(event&&event.date)?new Date(event.date+'T00:00:00'):items[0]&&items[0].eventDate?new Date(items[0].eventDate+'T00:00:00'):null;
+  const dateLabel=firstDate?firstDate.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'';
+  const subtitle=dateLabel?('Captured around '+dateLabel):'Captured from club gatherings';
+  return {
+    title:eventTitle+' album',
+    subtitle:subtitle,
+    stats:items.length+' item'+(items.length===1?'':'s')+(videos?(' · '+videos+' video'+(videos===1?'':'s')):'')+(photos?(' · '+photos+' photo'+(photos===1?'':'s')):'')
+  };
+}
+function buildEventAlbums(memories,events){
+  const eventMap=new Map((events||[]).map(e=>[e.id,e]));
+  const groups=new Map();
+  (memories||[]).forEach(mem=>{
+    const key=mem.eventId||'ungrouped';
+    if(!groups.has(key))groups.set(key,[]);
+    groups.get(key).push(mem);
+  });
+  const albums=[...groups.entries()].map(([key,items])=>{
+    const event=eventMap.get(key)||null;
+    const sorted=items.slice().sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0));
+    return {
+      key,
+      event,
+      items:sorted,
+      meta:eventAlbumMeta(sorted,event)
+    };
+  });
+  albums.sort((a,b)=>{
+    const da=a.event&&a.event.date?a.event.date:(a.items[0]&&a.items[0].eventDate)||'';
+    const db=b.event&&b.event.date?b.event.date:(b.items[0]&&b.items[0].eventDate)||'';
+    return db.localeCompare(da);
+  });
+  return albums;
+}
 function eventMemoryCardHtml(mem,index){
   const isVideo=mem.mediaType==='video';
   const dateText=mem.eventDate?new Date(mem.eventDate+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):(mem.createdAt?new Date(mem.createdAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'');
@@ -3745,13 +3816,13 @@ function eventMemoryCardHtml(mem,index){
   const srcAttr=escHtml(mem.mediaUrl||'');
   const linkedEvent=(loadEvents().find(e=>e.id===mem.eventId)||{}).title||'Event';
   const mediaMarkup=isVideo
-    ?'<video class="event-memory-media event-memory-video" controls playsinline preload="metadata" muted data-event-memory-media data-media-url="'+srcAttr+'" data-media-type="video"></video>'
+    ?'<video class="event-memory-media event-memory-video" controls playsinline preload="metadata" muted poster="" data-event-memory-media data-media-url="'+srcAttr+'" data-media-type="video"></video>'
     :'<img class="event-memory-media" alt="'+safeTitle+'" loading="lazy" data-event-memory-media data-media-url="'+srcAttr+'" data-media-type="image"/>';
   return '<article class="event-memory-card" style="animation-delay:'+(index*35)+'ms;">'
     +'<div class="event-memory-media-wrap">'
     +mediaMarkup
     +'<div class="event-memory-overlay">'
-    +'<span class="event-memory-badge">'+(isVideo?'Video':'Photo')+'</span>'
+    +'<span class="event-memory-badge">'+eventMemoryLabel(mem.mediaType)+'</span>'
     +(mem.eventId?'<span class="event-memory-badge" style="background:rgba(184,134,46,.92);">'+escHtml(linkedEvent)+'</span>':'')
     +'</div></div>'
     +'<div class="event-memory-body">'
@@ -3767,10 +3838,25 @@ function eventMemoryCardHtml(mem,index){
     +'</div>'
     +'</div></article>';
 }
+function eventAlbumCardHtml(album,index){
+  const meta=album.meta||{title:'Club memories',subtitle:'',stats:''};
+  const items=album.items||[];
+  const eventLabel=album.event&&album.event.date?new Date(album.event.date+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):(items[0]&&items[0].eventDate?new Date(items[0].eventDate+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'');
+  return '<article class="event-album-card" style="animation-delay:'+(index*45)+'ms;">'
+    +'<div class="event-album-head">'
+    +'<div><h3>'+escHtml(meta.title)+'</h3><div class="sub">'+escHtml(meta.subtitle)+'</div></div>'
+    +'<div class="event-album-stats">'+escHtml(meta.stats)+(eventLabel?'<br/><span class="cell-muted">'+escHtml(eventLabel)+'</span>':'')+'</div>'
+    +'</div>'
+    +'<div class="event-album-grid">'
+    +items.map((mem,i)=>eventMemoryCardHtml(mem,(index*10)+i)).join('')
+    +'</div>'
+    +'</article>';
+}
 function pageEvents(){
   markSeen('events');
   const evts=loadEvents();
   const memories=loadEventMemories();
+  const albums=buildEventAlbums(memories,evts);
   const isOfc=isOfficerSessionNow();
   const now=new Date(); now.setHours(0,0,0,0);
   const upcoming=evts.filter(e=>new Date(e.date+'T00:00:00')>=now).sort((a,b)=>a.date.localeCompare(b.date));
@@ -3796,22 +3882,41 @@ function pageEvents(){
       +'</div>'
       +'</div>';
   }
-  let html='<div class="page-head"><div><h1>Event</h1>'
-    +'<div class="sub">'+upcoming.length+' upcoming'+(memories.length?' · '+memories.length+' memories':'')+'</div></div>'
-    +'<div class="section-actions">'
-    +(isOfc?'<button type="button" class="btn btn-primary" onclick="openAddEvent()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M12 5v14M5 12h14"/></svg>Add event</button>':'')
-    +(isOfc?'<button type="button" class="btn" onclick="openAddEventMemory()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M4 7h4l2-3h4l2 3h4v12H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Add memory</button>':'')
+  const heroLines={
+    top:'Event',
+    title:'Upcoming plans, permanent memories.',
+    body:'This page holds the club’s next events at the top, then keeps photos and videos below as a lasting archive. Once a memory is viewed, it is cached on the device so it can still open offline later.'
+  };
+  let html='<section class="event-hero">'
+    +'<div class="event-hero-grid">'
+    +'<div><div class="event-hero-pill">Oasis Club archive</div><h2>'+escHtml(heroLines.title)+'</h2><p>'+escHtml(heroLines.body)+'</p>'
+    +'<div class="event-hero-note">'
+    +'<span class="event-hero-pill">'+upcoming.length+' upcoming event'+(upcoming.length===1?'':'s')+'</span>'
+    +'<span class="event-hero-pill">'+albums.length+' album'+(albums.length===1?'':'s')+'</span>'
+    +'<span class="event-hero-pill">Offline after first view</span>'
+    +'</div></div>'
+    +'<div class="event-hero-metrics">'
+    +'<div class="event-hero-metric"><span class="value">'+upcoming.length+'</span><span class="label">Upcoming events</span></div>'
+    +'<div class="event-hero-metric"><span class="value">'+memories.length+'</span><span class="label">Saved memories</span></div>'
+    +'<div class="event-hero-metric"><span class="value">'+albums.length+'</span><span class="label">Albums</span></div>'
     +'</div>'
+    +'</div>'
+    +(isOfc?'<div class="section-actions" style="position:relative;z-index:1;margin-top:18px;">'
+      +'<button type="button" class="btn btn-primary" onclick="openAddEvent()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M12 5v14M5 12h14"/></svg>Add event</button>'
+      +'<button type="button" class="btn" onclick="openAddEventMemory()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M4 7h4l2-3h4l2 3h4v12H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Add memory</button>'
+      +'</div>':'')
+    +'</section>';
+  html+='<section class="event-section"><div class="section-head"><div><h2>Upcoming events</h2><div class="sub">What is next on the club calendar</div></div>'
+    +(isOfc?'<div class="section-actions"><button type="button" class="btn btn-primary" onclick="openAddEvent()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M12 5v14M5 12h14"/></svg>Add event</button></div>':'')
     +'</div>';
-  html+='<section class="event-section"><div class="section-head"><div><h2>Upcoming events</h2><div class="sub">What is next on the club calendar</div></div></div>';
   if(upcoming.length){html+='<div class="cards-stack">'+upcoming.map(evCard).join('')+'</div>';}
   else{html+='<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><div class="title">No upcoming events</div><div class="hint">'+(isOfc?'Use the button above to add your first event.':'Nothing scheduled yet — check back soon.')+'</div></div>';}
   if(past.length){html+='<details style="margin-top:20px"><summary style="cursor:pointer;font-size:13px;color:var(--ink-faint);padding:8px 0">Show '+past.length+' past event'+(past.length>1?'s':'')+'</summary>'+past.map(evCard).join('')+'</details>';}
   html+='</section>';
-  html+='<section class="event-section"><div class="section-head"><div><h2>Memories</h2><div class="sub">Photos and videos from club events, stored permanently and cached offline after first view.</div></div>'
+  html+='<section class="event-section"><div class="section-head"><div><h2>Memories</h2><div class="sub">Photos and videos from club events, curated into albums and cached offline after first view.</div></div>'
     +(isOfc?'<div class="section-actions"><button type="button" class="btn btn-primary" onclick="openAddEventMemory()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M4 7h4l2-3h4l2 3h4v12H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Upload memory</button></div>':'')
     +'</div>';
-  if(memories.length){html+='<div class="event-memory-grid">'+memories.map((mem,i)=>eventMemoryCardHtml(mem,i)).join('')+'</div>';}
+  if(albums.length){html+='<div class="event-albums">'+albums.map((album,i)=>eventAlbumCardHtml(album,i)).join('')+'</div>';}
   else{html+='<div class="event-memory-shell"><div><strong>No memories yet</strong><small>Once photos or videos are added here, they will stay in the club record permanently and can be opened later even when the device is offline.</small></div></div>';}
   html+='</section>';
   setTimeout(()=>{void hydrateEventMemoryMedia();void warmEventMemoryCache();},0);
