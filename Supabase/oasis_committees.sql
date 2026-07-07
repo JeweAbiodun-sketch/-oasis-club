@@ -12,6 +12,14 @@ create table if not exists committees (
   created_at timestamptz not null default now()
 );
 
+create table if not exists committee_plans (
+  id text primary key,
+  name text not null unique,
+  description text,
+  created_by text,
+  created_at timestamptz not null default now()
+);
+
 create table if not exists committee_members (
   id text primary key,
   committee_id text not null references committees(id) on delete cascade,
@@ -23,14 +31,18 @@ create table if not exists committee_members (
 
 alter table committees enable row level security;
 alter table committee_members enable row level security;
+alter table committee_plans enable row level security;
 
 drop policy if exists "Allow read committees" on committees;
 create policy "Allow read committees" on committees for select using (true);
 drop policy if exists "Allow read committee_members" on committee_members;
 create policy "Allow read committee_members" on committee_members for select using (true);
+drop policy if exists "Allow read committee plans" on committee_plans;
+create policy "Allow read committee plans" on committee_plans for select using (true);
 
 revoke insert, update, delete on committees from anon, authenticated;
 revoke insert, update, delete on committee_members from anon, authenticated;
+revoke insert, update, delete on committee_plans from anon, authenticated;
 
 -- ------------------------------------------------------------
 -- Officers manage committees (create/rename/delete) and their
@@ -111,13 +123,53 @@ begin
 end;
 $$;
 
+create or replace function add_committee_plan(
+  p_officer_pin text,
+  p_id text,
+  p_name text,
+  p_description text
+) returns void
+language plpgsql
+security definer
+as $$
+declare
+  v_planner_id text;
+begin
+  if not is_officer_pin(p_officer_pin) then
+    raise exception 'Not authorized to plan committees';
+  end if;
+
+  select id into v_planner_id from members where pin = p_officer_pin limit 1;
+  insert into committee_plans (id, name, description, created_by)
+  values (p_id, p_name, p_description, v_planner_id);
+end;
+$$;
+
+create or replace function delete_committee_plan(
+  p_officer_pin text,
+  p_id text
+) returns void
+language plpgsql
+security definer
+as $$
+begin
+  if not is_officer_pin(p_officer_pin) then
+    raise exception 'Not authorized to remove planned committees';
+  end if;
+  delete from committee_plans where id = p_id;
+end;
+$$;
+
 grant execute on function add_committee(text, text, text, text) to anon, authenticated;
 grant execute on function delete_committee(text, text) to anon, authenticated;
 grant execute on function add_committee_member(text, text, text, text, boolean) to anon, authenticated;
 grant execute on function remove_committee_member(text, text, text) to anon, authenticated;
+grant execute on function add_committee_plan(text, text, text, text) to anon, authenticated;
+grant execute on function delete_committee_plan(text, text) to anon, authenticated;
 
 alter publication supabase_realtime add table committees;
 alter publication supabase_realtime add table committee_members;
+alter publication supabase_realtime add table committee_plans;
 
 -- ------------------------------------------------------------
 -- Seed the existing Welfare Committee and Project Committee so

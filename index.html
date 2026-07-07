@@ -1455,6 +1455,10 @@ function rowsToCommittees(rows){
 function rowsToCommitteeMembers(rows){
   return rows.map(r=>({id:r.id,committeeId:r.committee_id,memberId:r.member_id,isChair:!!r.is_chair,addedAt:r.added_at}));
 }
+function rowsToCommitteePlans(rows){
+  return rows.map(r=>({id:r.id,name:r.name,description:r.description||'',createdBy:r.created_by||'',createdAt:r.created_at}))
+    .sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+}
 function rowsToMeetingAttendance(rows){
   return rows.map(r=>({id:r.id,minuteId:r.minute_id,memberId:r.member_id,recordedBy:r.recorded_by,createdAt:r.created_at}));
 }
@@ -1484,7 +1488,7 @@ async function loadData(){
   if(typeof window.supabase==='undefined'){
     console.error('Supabase library failed to load \u2014 check internet connection.');
     connectionStatus='offline';
-    DATA={members:[],minutes:[],transactions:[],meta:rowToMeta(null),events:[],eventMemories:[],newsPosts:[],birthdayComments:[],polls:[]};
+    DATA={members:[],minutes:[],transactions:[],meta:rowToMeta(null),events:[],eventMemories:[],newsPosts:[],birthdayComments:[],polls:[],committeePlans:[]};
     return;
   }
   sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
@@ -1495,7 +1499,7 @@ async function loadData(){
 async function fetchAllData(){
   try{
     const localBirthdayComments=loadBirthdayCommentsCache();
-    const[membersRes,minutesRes,txRes,metaRes,eventsRes,eventMemoriesRes,newsPostsRes,pollsRes,paymentSubmissionsRes,tasksRes,loansRes,repaymentsRes,purseRes,releaseRequestsRes,pledgesRes,committeesRes,committeeMembersRes,attendanceRes,qaCacheRes]=await Promise.all([
+    const[membersRes,minutesRes,txRes,metaRes,eventsRes,eventMemoriesRes,newsPostsRes,pollsRes,paymentSubmissionsRes,tasksRes,loansRes,repaymentsRes,purseRes,releaseRequestsRes,pledgesRes,committeesRes,committeeMembersRes,committeePlansRes,attendanceRes,qaCacheRes]=await Promise.all([
       sb.from('members').select('*'),
       sb.from('minutes').select('*'),
       sb.from('transactions').select('*'),
@@ -1513,6 +1517,7 @@ async function fetchAllData(){
       sb.from('club_pledges').select('*').order('created_at',{ascending:false}),
       sb.from('committees').select('*').order('created_at',{ascending:true}),
       sb.from('committee_members').select('*'),
+      sb.from('committee_plans').select('*').order('created_at',{ascending:false}),
       sb.from('meeting_attendance').select('*'),
       sb.from('asst_qa_cache').select('*').order('last_used_at',{ascending:false}).limit(500)
     ]);
@@ -1538,6 +1543,7 @@ async function fetchAllData(){
       pledges:rowsToPledges(pledgesRes.data||[]),
       committees:rowsToCommittees(committeesRes.data||[]),
       committeeMembers:rowsToCommitteeMembers(committeeMembersRes.data||[]),
+      committeePlans:rowsToCommitteePlans(committeePlansRes.data||[]),
       meetingAttendance:rowsToMeetingAttendance(attendanceRes.data||[]),
       qaCache:rowsToQaCache(qaCacheRes.data||[])
     };
@@ -1564,6 +1570,7 @@ async function fetchAllData(){
       localStorage.setItem(PLEDGES_STORE,JSON.stringify(DATA.pledges));
       localStorage.setItem(COMMITTEES_STORE,JSON.stringify(DATA.committees));
       localStorage.setItem(COMMITTEE_MEMBERS_STORE,JSON.stringify(DATA.committeeMembers));
+      localStorage.setItem(COMMITTEE_PLANS_STORE,JSON.stringify(DATA.committeePlans));
       localStorage.setItem(MEETING_ATTENDANCE_STORE,JSON.stringify(DATA.meetingAttendance));
       localStorage.setItem(QA_CACHE_STORE,JSON.stringify(DATA.qaCache));
     }catch(_){}
@@ -1575,7 +1582,7 @@ async function fetchAllData(){
     connectionStatus='offline';
     if(!DATA||!DATA.members){
       DATA={members:[],minutes:[],transactions:[],meta:rowToMeta(null),
-        events:[],eventMemories:[],newsPosts:[],birthdayComments:[],polls:[]};
+        events:[],eventMemories:[],newsPosts:[],birthdayComments:[],polls:[],committeePlans:[]};
     }
     // Restore events/news/polls from offline cache
     if(!DATA.events||!DATA.events.length)try{DATA.events=JSON.parse(localStorage.getItem(EVENTS_STORE)||'[]');}catch(_){}
@@ -1592,6 +1599,7 @@ async function fetchAllData(){
     if(!DATA.pledges||!DATA.pledges.length)try{DATA.pledges=JSON.parse(localStorage.getItem(PLEDGES_STORE)||'[]');}catch(_){}
     if(!DATA.committees||!DATA.committees.length)try{DATA.committees=JSON.parse(localStorage.getItem(COMMITTEES_STORE)||'[]');}catch(_){}
     if(!DATA.committeeMembers||!DATA.committeeMembers.length)try{DATA.committeeMembers=JSON.parse(localStorage.getItem(COMMITTEE_MEMBERS_STORE)||'[]');}catch(_){}
+    if(!DATA.committeePlans||!DATA.committeePlans.length)try{DATA.committeePlans=JSON.parse(localStorage.getItem(COMMITTEE_PLANS_STORE)||'[]');}catch(_){}
     if(!DATA.meetingAttendance||!DATA.meetingAttendance.length)try{DATA.meetingAttendance=JSON.parse(localStorage.getItem(MEETING_ATTENDANCE_STORE)||'[]');}catch(_){}
     if(!DATA.qaCache||!DATA.qaCache.length)try{DATA.qaCache=JSON.parse(localStorage.getItem(QA_CACHE_STORE)||'[]');}catch(_){}
   }
@@ -1615,6 +1623,7 @@ function subscribeToRealtime(){
     .on('postgres_changes',{event:'*',schema:'public',table:'club_pledges'},handleRealtimeChange)
     .on('postgres_changes',{event:'*',schema:'public',table:'committees'},handleRealtimeChange)
     .on('postgres_changes',{event:'*',schema:'public',table:'committee_members'},handleRealtimeChange)
+    .on('postgres_changes',{event:'*',schema:'public',table:'committee_plans'},handleRealtimeChange)
     .on('postgres_changes',{event:'*',schema:'public',table:'meeting_attendance'},handleRealtimeChange)
     .on('postgres_changes',{event:'*',schema:'public',table:'asst_qa_cache'},handleRealtimeChange)
     .on('postgres_changes',{event:'*',schema:'public',table:'club_polls'},handleRealtimeChange)
@@ -3592,6 +3601,7 @@ const WELFARE_RELEASE_REQUESTS_STORE='oasis-welfare-release-requests-v1';
 const PLEDGES_STORE='oasis-pledges-v1';
 const COMMITTEES_STORE='oasis-committees-v1';
 const COMMITTEE_MEMBERS_STORE='oasis-committee-members-v1';
+const COMMITTEE_PLANS_STORE='oasis-committee-plans-v1';
 const MEETING_ATTENDANCE_STORE='oasis-meeting-attendance-v1';
 const QA_CACHE_STORE='oasis-qa-cache-v1';
 const SEEN_STORE='oasis-last-seen-v1';
@@ -5759,12 +5769,31 @@ async function deletePledge(id){
 }
 
 /* ---------- Committees (add/remove committees and their members) ---------- */
+function committeePlanCard(plan){
+  return `<div class="card" style="margin-bottom:12px;border-style:dashed;">
+    <div class="card-head">
+      <div>
+        <h2>${escHtml(plan.name)}</h2>
+        <div class="cell-muted" style="font-size:12px;margin-top:2px;">Planned committee</div>
+      </div>
+      <span class="badge badge-due">In queue</span>
+    </div>
+    ${plan.description?`<p class="cell-muted" style="margin:0 0 12px;">${escHtml(plan.description)}</p>`:`<p class="cell-muted" style="margin:0 0 12px;">No notes yet. Add a short note so the next officer knows what this committee is for.</p>`}
+    <div class="cell-muted" style="font-size:11.5px;margin-bottom:12px;">Added ${plan.createdAt?fmtDate((plan.createdAt||'').slice(0,10)):'recently'}</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
+      <button type="button" class="btn btn-primary" style="font-size:12px;padding:6px 12px;" onclick="promoteCommitteePlan('${plan.id}')">Create committee</button>
+      <button type="button" class="btn" style="font-size:12px;padding:6px 12px;" onclick="deleteCommitteePlan('${plan.id}')">Remove</button>
+    </div>
+  </div>`;
+}
+
 function pageCommittees(){
   if(!isOfficerSessionNow()){
     return `<div class="page-head"><div><h1>Committees</h1></div></div>
     ${emptyState('This page is restricted','Only club Executive Officers can manage committees and their membership.')}`;
   }
   const committees=(DATA.committees||[]).slice().sort((a,b)=>a.name.localeCompare(b.name));
+  const plans=(DATA.committeePlans||[]).slice().sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
   function committeeCard(c){
     const members=(DATA.committeeMembers||[]).filter(cm=>cm.committeeId===c.id);
     const chair=members.find(m=>m.isChair);
@@ -5788,10 +5817,81 @@ function pageCommittees(){
     </div>`;
   }
   return `<div class="page-head">
-    <div><h1>Committees</h1><div class="sub">Add or remove committees and assign members</div></div>
-    <button type="button" class="btn btn-primary" onclick="openAddCommittee()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M12 5v14M5 12h14"/></svg>New committee</button>
+    <div><h1>Committees</h1><div class="sub">A shared space for current committees and future committee plans</div></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button type="button" class="btn" onclick="openAddCommitteePlan()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M12 5v14M5 12h14"/></svg>Plan committee</button>
+      <button type="button" class="btn btn-primary" onclick="openAddCommittee()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M12 5v14M5 12h14"/></svg>New committee</button>
+    </div>
   </div>
-  ${committees.length?committees.map(committeeCard).join(''):emptyState('No committees yet','Create your first committee, e.g. Welfare Committee or Project Committee.')}`;
+  <div class="card" style="margin-bottom:14px;">
+    <div class="card-head"><h2>Committee space</h2><span class="meta">${plans.length} planned, ${committees.length} active</span></div>
+    <p class="cell-muted" style="margin:0;">Use this page to keep active committees in one place and hold future committees here until they are ready to be created for real.</p>
+  </div>
+  <div class="two-col-cards" style="margin-bottom:14px;">
+    <div class="card">
+      <div class="card-head"><h2>Future committees</h2><span class="meta">Planning shelf</span></div>
+      ${plans.length?plans.map(committeePlanCard).join(''):emptyState('No planned committees yet','Reserve this space for a future welfare committee, building committee, or any new committee you want to introduce later.')}
+    </div>
+    <div class="card">
+      <div class="card-head"><h2>Active committees</h2><span class="meta">Current registry</span></div>
+      ${committees.length?committees.map(committeeCard).join(''):emptyState('No committees yet','Create your first committee, e.g. Welfare Committee or Project Committee.')}
+    </div>
+  </div>`;
+}
+
+function openAddCommitteePlan(){
+  openModal(`<h3>Plan a Committee</h3>
+    <p class="cell-muted" style="margin:0 0 12px;font-size:12.5px;">This keeps a future committee on the shared planning shelf until you are ready to create it.</p>
+    <div class="field"><label>Committee name</label><input type="text" id="cp-name" placeholder="e.g. Building Committee"/></div>
+    <div class="field"><label>Notes (optional)</label><textarea id="cp-desc" rows="3" placeholder="What should this committee handle?"></textarea></div>
+    <div class="modal-actions"><button type="button" class="btn" onclick="closeModal()">Cancel</button><button type="button" class="btn btn-primary" onclick="submitAddCommitteePlan()">Save plan</button></div>`);
+}
+
+async function submitAddCommitteePlan(){
+  const name=(document.getElementById('cp-name').value||'').trim();
+  const desc=(document.getElementById('cp-desc').value||'').trim();
+  if(!name){showToast('Committee name is required.');return;}
+  const pin=getCurrentAuthPin();
+  const btn=document.querySelector('#modal-content .btn-primary');
+  if(btn){btn.disabled=true;btn.textContent='Saving\u2026';}
+  try{
+    const{error}=await sb.rpc('add_committee_plan',{p_officer_pin:pin,p_id:uid(),p_name:name,p_description:desc});
+    if(error)throw error;
+    closeModal();
+    showToast('Committee plan saved.');
+  }catch(e){
+    if(btn){btn.disabled=false;btn.textContent='Save plan';}
+    showToast('Could not save: '+(e.message||'unknown error'));
+  }
+}
+
+async function promoteCommitteePlan(planId){
+  const plan=(DATA.committeePlans||[]).find(p=>p.id===planId);
+  if(!plan)return;
+  if(!confirm(`Create "${plan.name}" as an active committee now?`))return;
+  const pin=getCurrentAuthPin();
+  const btn=document.querySelector(`[onclick="promoteCommitteePlan('${planId}')"]`);
+  if(btn){btn.disabled=true;btn.textContent='Creating…';}
+  try{
+    const createRes=await sb.rpc('add_committee',{p_officer_pin:pin,p_id:uid(),p_name:plan.name,p_description:plan.description||''});
+    if(createRes.error)throw createRes.error;
+    const deleteRes=await sb.rpc('delete_committee_plan',{p_officer_pin:pin,p_id:planId});
+    if(deleteRes.error)throw deleteRes.error;
+    showToast('Committee created from the planning shelf.');
+  }catch(e){
+    if(btn){btn.disabled=false;btn.textContent='Create committee';}
+    showToast('Could not create committee: '+(e.message||'unknown error'));
+  }
+}
+
+async function deleteCommitteePlan(planId){
+  if(!confirm('Remove this planned committee?'))return;
+  const pin=getCurrentAuthPin();
+  try{
+    const{error}=await sb.rpc('delete_committee_plan',{p_officer_pin:pin,p_id:planId});
+    if(error)throw error;
+    showToast('Planned committee removed.');
+  }catch(e){showToast('Could not remove: '+(e.message||'unknown error'));}
 }
 
 function openAddCommittee(){
