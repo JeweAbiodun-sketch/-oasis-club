@@ -6147,9 +6147,34 @@ function paymentReviewCard(p,canApprove){
 }
 async function approvePayment(id){
   const pin=getCurrentAuthPin();
+  const sub=(DATA.paymentSubmissions||[]).find(s=>s.id===id);
   const{error}=await sb.rpc('approve_payment_evidence',{p_pin:pin,p_submission_id:id});
   if(error){showToast('Could not approve: '+error.message);return;}
+  // Welfare contributions live in the browser (localStorage 'oasis-welfare-v1'),
+  // not the database, so the approval RPC can't record them on the Welfare page.
+  // Lodge it here, on the reviewer's device, once the server approval succeeds.
+  if(sub&&sub.paymentType==='welfare'){
+    try{lodgeWelfareContribution(sub.memberId,Number(sub.amount));}catch(_){}
+  }
   showToast('Approved \u2014 records updated');
+}
+// Adds an approved welfare payment to the current financial year's
+// "Welfare Contributions" levy event so it shows on the Welfare Affair page.
+// Matches the yearly grouping the Welfare page migrates old events into.
+function lodgeWelfareContribution(memberId,amount){
+  if(!memberId||!amount)return;
+  const today=new Date().toISOString().slice(0,10);
+  const fy=fyLabelForDate(today);
+  const events=loadWelfare();
+  let ev=events.find(w=>w.type==='levy'&&w.title===`Welfare Contributions \u2014 ${fy}`);
+  if(!ev){
+    ev={id:uid(),date:today,title:`Welfare Contributions \u2014 ${fy}`,type:'levy',targetAmount:0,contributions:[]};
+    events.push(ev);
+  }
+  if(!Array.isArray(ev.contributions))ev.contributions=[];
+  ev.contributions.push({id:uid(),memberId,amount:Number(amount),paidDate:today});
+  saveWelfare(events);
+  if(currentPage==='welfare')render();
 }
 function openPaymentRejectPrompt(id){
   openModal(`
