@@ -6012,7 +6012,8 @@ function paymentTypeLabel(type){
     building_project:'Building Project contribution',
     welfare:'Welfare contribution',
     pledge:'Pledge',
-    grant:'Grant'
+    grant:'Grant',
+    loan:'Loan repayment'
   })[type]||'Payment';
 }
 function myPaymentSubmissionsList(memberId){
@@ -6049,6 +6050,7 @@ function openPaymentEvidenceForm(){
           <option value="welfare">Welfare contribution</option>
           <option value="pledge">Pledge</option>
           <option value="grant">Grant</option>
+          <option value="loan">Loan repayment</option>
         </select>
       </div>
       <div class="field"><label>Amount paid (&#8358;)</label><input type="number" id="pe-amount" min="1" step="1" required/></div>
@@ -6113,10 +6115,10 @@ function pagePaymentReview(){
   }
   const pending=(DATA.paymentSubmissions||[]).filter(p=>p.status==='pending');
   const decided=(DATA.paymentSubmissions||[]).filter(p=>p.status!=='pending').slice(0,20);
-  const canApprove=isTreasurerSession();
+  const canApprove=isTreasurerSession()||isFinancialSecretarySessionNow();
   return`
   <div class="page-head">
-    <div><h1>Payment Review</h1><div class="sub">${pending.length} awaiting review${canApprove?'':' \u00b7 Financial Secretary view \u2014 you can reject, only the Treasurer can approve'}</div></div>
+    <div><h1>Payment Review</h1><div class="sub">${pending.length} awaiting review</div></div>
   </div>
   ${pending.length?pending.map(p=>paymentReviewCard(p,canApprove)).join(''):emptyState('Nothing pending','New payment evidence from members will appear here.')}
   ${decided.length?`<div class="card-head" style="margin-top:24px;margin-bottom:10px;"><h2 style="font-size:14.5px;">Recently reviewed</h2></div>
