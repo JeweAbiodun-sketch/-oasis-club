@@ -61,10 +61,9 @@ create policy "payment proofs can be uploaded" on storage.objects
   with check (bucket_id = 'payment-proofs');
 
 -- ============================================================
--- HELPERS: distinguish Treasurer specifically from Financial
--- Secretary specifically, since (unlike everywhere else in this
--- app) the three officer logins do NOT have equal rights here --
--- only the Treasurer can approve, though either can reject.
+-- HELPERS: both the Treasurer and Financial Secretary can review
+-- payment evidence with equal authority, including approving or
+-- rejecting a submission.
 -- ============================================================
 
 create or replace function public.is_treasurer_pin(p_pin text)
@@ -134,7 +133,8 @@ $$;
 grant execute on function public.submit_payment_evidence(text,text,numeric,text,text) to anon, authenticated;
 
 -- ============================================================
--- RPC: approve a payment submission. TREASURER ONLY.
+-- RPC: approve a payment submission. Treasurer and Financial
+-- Secretary share this right.
 -- On approval: a 'dues' submission adds to the member's
 -- dues_paid total; a 'building_project' submission is recorded
 -- as an income transaction on the Finance page.
@@ -153,8 +153,8 @@ declare
   v_sub record;
   v_member_name text;
 begin
-  if not is_treasurer_pin(p_pin) then
-    raise exception 'Only the Treasurer can approve a payment submission';
+  if not is_treasurer_or_financial_secretary_pin(p_pin) then
+    raise exception 'The Treasurer and Financial Secretary can approve a payment submission';
   end if;
 
   select * into v_sub from payment_submissions where id = p_submission_id and status = 'pending';
@@ -184,8 +184,8 @@ $$;
 grant execute on function public.approve_payment_evidence(text,uuid) to anon, authenticated;
 
 -- ============================================================
--- RPC: reject a payment submission. Treasurer OR Financial
--- Secretary can do this.
+-- RPC: reject a payment submission. Treasurer and Financial
+-- Secretary can both do this.
 -- ============================================================
 
 create or replace function public.reject_payment_evidence(
@@ -200,7 +200,7 @@ set search_path = public
 as $$
 begin
   if not is_treasurer_or_financial_secretary_pin(p_pin) then
-    raise exception 'Only the Treasurer or Financial Secretary can review a payment submission';
+    raise exception 'The Treasurer and Financial Secretary can review a payment submission';
   end if;
 
   update payment_submissions

@@ -19,10 +19,11 @@
 --                        written here; index.html's approvePayment() lodges it
 --                        client-side after this RPC succeeds.)
 --
--- This migration makes approval ADDITIVE: the durable Finance receipt
--- is still recorded (so the money can never fall out of the books),
--- and on top of that a Pledge also lands on the Pledges page and a
--- Loan repayment is applied against the member's active welfare loan.
+-- This migration keeps approval ADDITIVE: the durable Finance
+-- receipt is still recorded (so the money can never fall out of the
+-- books), and on top of that a Pledge also lands on the Pledges page
+-- and a Loan repayment is applied against the member's active
+-- welfare loan.
 --
 -- Loan safety: a repayment is only auto-applied when the member has
 -- EXACTLY ONE active loan (the unambiguous case). With zero or several
@@ -50,7 +51,7 @@ declare
   v_total_due numeric;
 begin
   if not is_treasurer_or_financial_secretary_pin(p_pin) then
-    raise exception 'Only the Treasurer or Financial Secretary can approve a payment submission';
+    raise exception 'The Treasurer and Financial Secretary can approve a payment submission';
   end if;
 
   select * into v_sub from payment_submissions where id = p_submission_id and status = 'pending';

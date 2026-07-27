@@ -1919,7 +1919,7 @@ function pageProfile(){
 
   <div class="card" style="max-width:520px;margin-top:18px;">
     <div class="card-head"><h2 style="font-size:14.5px;">Submit payment evidence</h2></div>
-    <p class="cell-muted" style="margin-top:-4px;">Upload proof of a payment and it'll be sent to the Treasurer and Financial Secretary for approval.</p>
+    <p class="cell-muted" style="margin-top:-4px;">Upload proof of payment and it will be routed to both the Treasurer and Financial Secretary for review.</p>
     <button type="button" class="btn btn-primary" style="font-size:12.5px;padding:7px 14px;" onclick="openPaymentEvidenceForm()">Upload proof of payment</button>
     ${myPaymentSubmissionsList(memberId)}
   </div>
@@ -6041,7 +6041,7 @@ function openPaymentEvidenceForm(){
   pendingPaymentProofFile=null;
   openModal(`
     <h3>Upload proof of payment</h3>
-    <p class="cell-muted" style="margin-top:-6px;">This will be sent to the Treasurer and Financial Secretary for approval. Your records update automatically once approved.</p>
+    <p class="cell-muted" style="margin-top:-6px;">This will be routed to both the Treasurer and Financial Secretary for review. Your records update automatically once approved.</p>
     <form id="payment-evidence-form">
       <div class="field"><label>What is this payment for?</label>
         <select id="pe-type">
@@ -6111,7 +6111,7 @@ function pagePaymentReview(){
   const canReview=isTreasurerSession()||isFinancialSecretarySessionNow();
   if(!canReview){
     return`<div class="page-head"><div><h1>Payment Review</h1></div></div>
-    <div class="card"><p class="cell-muted">Only the Treasurer or Financial Secretary can review payment evidence. Log in with one of those roles to see this page.</p></div>`;
+    <div class="card"><p class="cell-muted">The Treasurer and Financial Secretary can review, approve, or reject payment evidence. Log in with either role to see this page.</p></div>`;
   }
   const pending=(DATA.paymentSubmissions||[]).filter(p=>p.status==='pending');
   const decided=(DATA.paymentSubmissions||[]).filter(p=>p.status!=='pending').slice(0,20);

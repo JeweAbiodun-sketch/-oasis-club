@@ -14,13 +14,12 @@
 --    'loan' heading (loan repayment), to both the constraint and
 --    the RPC's validation.
 --
--- 2) approve_payment_evidence() was Treasurer-only; the Financial
---    Secretary could only reject. Approval is now open to either
---    officer, matching reject_payment_evidence()'s existing rule
---    (is_treasurer_or_financial_secretary_pin). It also now files
---    the approved amount under its correct heading label instead of
---    lumping every non-dues submission into a generic "Building
---    Project contribution" transaction line.
+-- 2) approve_payment_evidence() now gives the Treasurer and
+--    Financial Secretary equal authority to approve or reject proof
+--    of payment. It also files the approved amount under its
+--    correct heading label instead of lumping every non-dues
+--    submission into a generic "Building Project contribution"
+--    transaction line.
 -- ============================================================
 
 -- ============================================================
@@ -71,9 +70,9 @@ end;
 $$;
 
 -- ============================================================
--- PART 2: approval — Treasurer OR Financial Secretary, and each
--- heading is recorded under its own label rather than collapsing
--- into "Building Project contribution".
+-- PART 2: approval — Treasurer and Financial Secretary share the
+-- same review authority, and each heading is recorded under its own
+-- label rather than collapsing into "Building Project contribution".
 -- ============================================================
 
 create or replace function public.approve_payment_evidence(
@@ -91,7 +90,7 @@ declare
   v_head_label text;
 begin
   if not is_treasurer_or_financial_secretary_pin(p_pin) then
-    raise exception 'Only the Treasurer or Financial Secretary can approve a payment submission';
+    raise exception 'The Treasurer and Financial Secretary can approve a payment submission';
   end if;
 
   select * into v_sub from payment_submissions where id = p_submission_id and status = 'pending';
