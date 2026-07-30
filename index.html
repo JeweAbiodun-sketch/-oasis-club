@@ -542,6 +542,8 @@ body.dark .asst-chip{color:#a7e6d0;}
 .news-body ul,.news-body ol{margin:6px 0 6px 20px;}
 .news-attachment-chip{display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:6px 12px;border:1px solid var(--line-soft);border-radius:8px;font-size:12.5px;color:var(--teal-dark);text-decoration:none;background:#FAF7F0;}
 .news-attachment-chip:hover{background:#fff;}
+.rec-flash{animation:recFlash 1.6s ease;}
+@keyframes recFlash{0%{box-shadow:0 0 0 3px var(--gold);}100%{box-shadow:0 0 0 0 rgba(0,0,0,0);}}
 
 /* ── Polls page ── */
 .poll-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius-lg);padding:18px 20px;margin-bottom:12px;box-shadow:var(--shadow-sm);}
@@ -833,6 +835,7 @@ body.dark .asst-chip{color:#a7e6d0;}
   <button type="button" class="navlink" data-page="photos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="15" rx="2"/><circle cx="8.5" cy="10" r="2"/><path d="M21 16l-5-5-4.5 4.5L9 13l-6 6"/></svg>Photos</button>
   <button type="button" class="navlink" data-page="dues"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 9.5c0-1.4 1.3-2.5 3-2.5s3 .9 3 2.2c0 3-6 1.5-6 4.6 0 1.4 1.3 2.5 3 2.5s3-1 3-2.4"/></svg>Dues &amp; subscriptions</button>
   <button type="button" class="navlink" data-page="minutes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Meeting minutes</button>
+  <button type="button" class="navlink" data-page="recordings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0014 0M12 17v4M8 21h8"/></svg>Meeting recordings</button>
   <button type="button" class="navlink" data-page="tasks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="6" height="16" rx="1.5"/><rect x="9.5" y="4" width="6" height="16" rx="1.5"/><rect x="16" y="4" width="5" height="16" rx="1.5"/><path d="M5 8.5h2M5 12h2M11 8.5h2M11 12h2M11 15.5h2"/></svg>Project Board</button>
   <button type="button" class="navlink" data-page="finance"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 17l5-5 4 4 8-8"/><path d="M14 7h6v6"/></svg>Financial year</button>
   <button type="button" class="navlink" data-page="committee"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2l3 6 6.5.6-5 4.4 1.5 6.4L12 16l-6 3.4L7.5 13l-5-4.4L9 8z"/></svg>Executive Officers &amp; quorum</button>
@@ -1383,6 +1386,21 @@ function rowsToNewsPosts(rows){
     createdAt:r.created_at
   })).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
 }
+function rowsToMeetingRecordings(rows){
+  return rows.map(r=>({
+    id:r.id,
+    uploadedBy:r.uploaded_by,
+    title:r.title,
+    meetingDate:r.meeting_date,
+    meetingType:r.meeting_type,
+    note:r.note,
+    audioUrl:r.audio_url,
+    audioName:r.audio_name,
+    durationSeconds:r.duration_seconds==null?null:Number(r.duration_seconds),
+    fileSize:r.file_size==null?null:Number(r.file_size),
+    createdAt:r.created_at
+  })).sort((a,b)=>(b.meetingDate||'').localeCompare(a.meetingDate||'')||new Date(b.createdAt)-new Date(a.createdAt));
+}
 function rowsToBirthdayComments(rows){
   return rows.map(r=>({
     id:r.id,
@@ -1501,7 +1519,7 @@ async function loadData(){
 async function fetchAllData(){
   try{
     const localBirthdayComments=loadBirthdayCommentsCache();
-    const[membersRes,minutesRes,txRes,metaRes,eventsRes,eventMemoriesRes,newsPostsRes,pollsRes,paymentSubmissionsRes,tasksRes,loansRes,repaymentsRes,purseRes,releaseRequestsRes,pledgesRes,committeesRes,committeeMembersRes,committeePlansRes,attendanceRes,qaCacheRes]=await Promise.all([
+    const[membersRes,minutesRes,txRes,metaRes,eventsRes,eventMemoriesRes,newsPostsRes,pollsRes,paymentSubmissionsRes,tasksRes,loansRes,repaymentsRes,purseRes,releaseRequestsRes,pledgesRes,committeesRes,committeeMembersRes,committeePlansRes,attendanceRes,qaCacheRes,recordingsRes]=await Promise.all([
       sb.from('members').select('*'),
       sb.from('minutes').select('*'),
       sb.from('transactions').select('*'),
@@ -1521,7 +1539,8 @@ async function fetchAllData(){
       sb.from('committee_members').select('*'),
       sb.from('committee_plans').select('*').order('created_at',{ascending:false}),
       sb.from('meeting_attendance').select('*'),
-      sb.from('asst_qa_cache').select('*').order('last_used_at',{ascending:false}).limit(500)
+      sb.from('asst_qa_cache').select('*').order('last_used_at',{ascending:false}).limit(500),
+      sb.from('meeting_recordings').select('*').order('meeting_date',{ascending:false})
     ]);
     if(membersRes.error||minutesRes.error||txRes.error||metaRes.error){
       throw membersRes.error||minutesRes.error||txRes.error||metaRes.error;
@@ -1547,7 +1566,8 @@ async function fetchAllData(){
       committeeMembers:rowsToCommitteeMembers(committeeMembersRes.data||[]),
       committeePlans:rowsToCommitteePlans(committeePlansRes.data||[]),
       meetingAttendance:rowsToMeetingAttendance(attendanceRes.data||[]),
-      qaCache:rowsToQaCache(qaCacheRes.data||[])
+      qaCache:rowsToQaCache(qaCacheRes.data||[]),
+      recordings:rowsToMeetingRecordings((recordingsRes&&recordingsRes.data)||[])
     };
     try{
       const{error:lateFeeError}=await sb.rpc('apply_welfare_loan_late_fees');
@@ -1585,6 +1605,7 @@ async function fetchAllData(){
       localStorage.setItem(COMMITTEE_PLANS_STORE,JSON.stringify(DATA.committeePlans));
       localStorage.setItem(MEETING_ATTENDANCE_STORE,JSON.stringify(DATA.meetingAttendance));
       localStorage.setItem(QA_CACHE_STORE,JSON.stringify(DATA.qaCache));
+      localStorage.setItem(RECORDINGS_STORE,JSON.stringify(DATA.recordings));
     }catch(_){}
     connectionStatus='connected';
     // Refresh chatbot UI now that DATA.meta.chatbotApiKey is known
@@ -1600,6 +1621,7 @@ async function fetchAllData(){
     if(!DATA.events||!DATA.events.length)try{DATA.events=JSON.parse(localStorage.getItem(EVENTS_STORE)||'[]');}catch(_){}
     if(!DATA.eventMemories||!DATA.eventMemories.length)try{DATA.eventMemories=JSON.parse(localStorage.getItem(EVENT_MEMORIES_STORE)||'[]');}catch(_){}
     if(!DATA.newsPosts||!DATA.newsPosts.length)try{DATA.newsPosts=JSON.parse(localStorage.getItem(NEWS_STORE)||'[]');}catch(_){}
+    if(!DATA.recordings||!DATA.recordings.length)try{DATA.recordings=JSON.parse(localStorage.getItem(RECORDINGS_STORE)||'[]');}catch(_){}
     if(!DATA.birthdayComments||!DATA.birthdayComments.length)try{DATA.birthdayComments=JSON.parse(localStorage.getItem(BIRTHDAY_COMMENTS_STORE)||'[]');}catch(_){}
     if(!DATA.polls||!DATA.polls.length)try{DATA.polls=JSON.parse(localStorage.getItem(POLLS_STORE)||'[]');}catch(_){}
     if(!DATA.paymentSubmissions||!DATA.paymentSubmissions.length)try{DATA.paymentSubmissions=JSON.parse(localStorage.getItem(PAYMENT_SUBMISSIONS_STORE)||'[]');}catch(_){}
@@ -1622,6 +1644,7 @@ function subscribeToRealtime(){
   realtimeChannel=sb.channel('club-data-changes')
     .on('postgres_changes',{event:'*',schema:'public',table:'members'},handleRealtimeChange)
     .on('postgres_changes',{event:'*',schema:'public',table:'minutes'},handleRealtimeChange)
+    .on('postgres_changes',{event:'*',schema:'public',table:'meeting_recordings'},handleRealtimeChange)
     .on('postgres_changes',{event:'*',schema:'public',table:'transactions'},handleRealtimeChange)
     .on('postgres_changes',{event:'*',schema:'public',table:'club_meta'},handleRealtimeChange)
     .on('postgres_changes',{event:'*',schema:'public',table:'club_events'},handleRealtimeChange)
@@ -2646,6 +2669,7 @@ function pageMinutes(){
           <div>
             <div style="font-weight:500;font-size:14.5px;">${escHtml(m.title)}</div>
             <div class="cell-muted" style="margin-top:2px;">${fmtDate(m.date)} &middot; ${escHtml(m.type||'Monthly meeting')}</div>
+            ${minuteRecordingChip(m)}
           </div>
           <div style="display:flex;align-items:center;gap:8px;">
             <span class="badge ${daysSince(m.date)>21?'badge-overdue':'badge-paid'}">${daysSince(m.date)>21?'overdue':'on time'}</span>
@@ -2663,6 +2687,7 @@ function openMinutesDetail(id){
   openModal(`
     <h3>${escHtml(m.title)}</h3>
     <p class="cell-muted" style="margin-top:-6px;margin-bottom:14px;">${fmtDate(m.date)} &middot; ${escHtml(m.type||'Monthly meeting')} &middot; <span class="badge ${daysSince(m.date)>21?'badge-overdue':'badge-paid'}">${daysSince(m.date)>21?'published late':'published on time'}</span></p>
+    ${(()=>{const c=minuteRecordingChip(m);return c?`<div style="margin:-6px 0 14px;">${c}</div>`:'';})()}
     <div style="font-size:13.5px;color:var(--ink-soft);white-space:pre-wrap;line-height:1.6;max-height:50vh;overflow-y:auto;">${m.notes?escHtml(m.notes):'<span class="cell-muted">No notes were recorded for this meeting.</span>'}</div>
     <div class="modal-actions">
       <button type="button" class="btn" onclick="closeModal()">Close</button>
@@ -2714,6 +2739,262 @@ async function deleteMinutes(id){
     if(error)throw error;
     showToast('Minutes deleted');
   }catch(e){showToast('Could not delete: '+(e.message||'unknown error'));}
+}
+
+/* ============ MEETING RECORDINGS (audio archive) ============ */
+// Compression target: voice-optimized. Mono, 22.05 kHz, 48 kbps MP3 keeps
+// speech clear while making a 1-hour meeting roughly 20 MB. Change these
+// three constants to trade size for fidelity (e.g. 96 kbps / stereo).
+const REC_BITRATE_KBPS=48;
+const REC_MONO=true;
+const REC_SAMPLE_RATE=22050;
+// Above this original size we don't attempt in-browser compression (decoding
+// the whole file into memory can crash phone browsers) -- we upload as-is.
+const REC_COMPRESS_MAX_BYTES=80*1024*1024;
+let pendingRecordingFile=null;
+
+function recFmtBytes(n){
+  if(!n&&n!==0)return'';
+  if(n<1024)return n+' B';
+  if(n<1048576)return (n/1024).toFixed(0)+' KB';
+  return (n/1048576).toFixed(1)+' MB';
+}
+function recFmtDuration(sec){
+  if(!sec&&sec!==0)return'';
+  sec=Math.round(sec);
+  const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60;
+  const mm=String(m).padStart(h?2:1,'0'),ss=String(s).padStart(2,'0');
+  return h?`${h}:${mm}:${ss}`:`${mm}:${ss}`;
+}
+function recMeetingIcon(){return'\u{1F3A7}';}
+// A recording belongs to a minutes entry when they share the same meeting date.
+function recordingsForMinute(m){
+  if(!m||!m.date)return[];
+  return (DATA.recordings||[]).filter(r=>r.meetingDate===m.date);
+}
+function minuteRecordingChip(m){
+  const cnt=recordingsForMinute(m).length;
+  if(!cnt)return'';
+  return `<span class="news-attachment-chip" style="cursor:pointer;margin-top:8px;" onclick="event.stopPropagation();openRecordingForMinute('${m.date}')">\u{1F3A7} Recording${cnt>1?' ('+cnt+')':''}</span>`;
+}
+// Jump from a minutes entry to its recording: open the Recordings page,
+// then scroll to and briefly highlight the matching card.
+function openRecordingForMinute(date){
+  closeModal();
+  const target=(DATA.recordings||[]).find(r=>r.meetingDate===date);
+  navigate('recordings');
+  if(!target)return;
+  setTimeout(()=>{
+    const el=document.getElementById('rec-card-'+target.id);
+    if(el){el.scrollIntoView({behavior:'smooth',block:'center'});el.classList.add('rec-flash');setTimeout(()=>el.classList.remove('rec-flash'),1600);}
+  },60);
+}
+
+function pageRecordings(){
+  const recs=DATA.recordings||[];
+  const canManage=isOfficerSessionNow();
+  return`
+  <div class="page-head">
+    <div><h1>Meeting recordings</h1><div class="sub">${recs.length} recording${recs.length===1?'':'s'} &middot; Audio archive of club meetings, for reference</div></div>
+    ${canManage?`<button class="btn btn-primary" onclick="openRecordingForm()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>Add recording</button>`:''}
+  </div>
+  ${recs.length?recs.map(r=>recordingCard(r,canManage)).join(''):emptyState('No recordings yet',canManage?'Upload the audio of a monthly meeting to start the archive.':'Meeting audio posted by the executives will appear here.')}
+  `;
+}
+function recordingCard(r,canManage){
+  const uploader=DATA.members.find(m=>m.id===r.uploadedBy);
+  const meta=[r.meetingType||'Monthly meeting'];
+  if(r.durationSeconds)meta.push('⏱ '+recFmtDuration(r.durationSeconds));
+  if(r.fileSize)meta.push(recFmtBytes(r.fileSize));
+  return`
+  <div class="card" id="rec-card-${r.id}" style="margin-bottom:14px;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
+      <div>
+        <div style="font-weight:600;font-size:15px;">${recMeetingIcon()} ${escHtml(r.title)}</div>
+        <div class="cell-muted" style="margin-top:2px;">${fmtDate(r.meetingDate)} &middot; ${meta.map(escHtml).join(' &middot; ')}</div>
+      </div>
+      ${canManage?`<button class="icon-btn" onclick="deleteRecording('${r.id}')" aria-label="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2m2 0v14a1 1 0 01-1 1H6a1 1 0 01-1-1V6z"/></svg></button>`:''}
+    </div>
+    ${r.note?`<p style="margin:10px 0 0;font-size:13.5px;color:var(--ink-soft);line-height:1.55;white-space:pre-wrap;">${escHtml(r.note)}</p>`:''}
+    <audio controls preload="none" style="width:100%;margin-top:12px;" src="${r.audioUrl}"></audio>
+    <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:8px;">
+      <a href="${r.audioUrl}" download="${escHtml(r.audioName||'meeting-recording')}" target="_blank" rel="noopener" class="news-attachment-chip">⬇️ Download</a>
+      <span class="cell-muted" style="font-size:11.5px;">Added ${fmtDate((r.createdAt||'').slice(0,10))}${uploader?' by '+escHtml(uploader.name):''}</span>
+    </div>
+  </div>`;
+}
+
+function openRecordingForm(){
+  pendingRecordingFile=null;
+  openModal(`
+    <h3>Add meeting recording</h3>
+    <p class="cell-muted" style="margin-top:-6px;">Audio is compressed on your device before upload to save space. Long recordings may take a moment.</p>
+    <form id="recording-form">
+      <div class="field"><label>Title</label><input type="text" id="rec-title" placeholder="e.g. July Monthly Meeting" required/></div>
+      <div class="field-row">
+        <div class="field"><label>Meeting date</label><input type="date" id="rec-date" value="${new Date().toISOString().slice(0,10)}" required/></div>
+        <div class="field"><label>Type</label>
+          <select id="rec-type"><option>Monthly meeting</option><option>Annual General Meeting</option><option>Special General Meeting</option><option>Committee meeting</option></select>
+        </div>
+      </div>
+      <div class="field"><label>Note (optional)</label><textarea id="rec-note" rows="2" placeholder="Anything worth flagging about this recording&hellip;"></textarea></div>
+      <div class="field">
+        <label>Audio file</label>
+        <button type="button" class="btn" style="font-size:12.5px;padding:7px 14px;" onclick="document.getElementById('rec-file').click()">Choose audio</button>
+        <input type="file" id="rec-file" accept="audio/*,video/mp4" style="display:none"/>
+        <span id="rec-file-name" class="cell-muted" style="margin-left:8px;"></span>
+      </div>
+      <div id="rec-status" class="cell-muted" style="font-size:12.5px;min-height:16px;"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="rec-submit-btn">Upload recording</button>
+      </div>
+    </form>
+  `);
+  const fileInput=document.getElementById('rec-file');
+  fileInput.addEventListener('change',e=>{
+    const file=e.target.files[0];
+    if(!file)return;
+    pendingRecordingFile=file;
+    document.getElementById('rec-file-name').textContent=file.name+' ('+recFmtBytes(file.size)+')';
+  });
+  document.getElementById('recording-form').addEventListener('submit',submitRecording);
+}
+
+// Lazy-loads the MP3 encoder only when someone actually uploads audio.
+function loadLameJS(cb){
+  if(window.lamejs&&window.lamejs.Mp3Encoder){cb(true);return;}
+  const s=document.createElement('script');
+  s.src='https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js';
+  s.onload=()=>cb(!!(window.lamejs&&window.lamejs.Mp3Encoder));
+  s.onerror=()=>cb(false);
+  document.head.appendChild(s);
+}
+function floatTo16(input){
+  const out=new Int16Array(input.length);
+  for(let i=0;i<input.length;i++){const s=Math.max(-1,Math.min(1,input[i]));out[i]=s<0?s*0x8000:s*0x7FFF;}
+  return out;
+}
+// Returns {blob, durationSeconds} of a compressed MP3, or null if the device
+// can't do it (caller then uploads the original untouched).
+async function compressAudioToMp3(file,onProgress){
+  if(file.size>REC_COMPRESS_MAX_BYTES)return null;
+  const ready=await new Promise(res=>loadLameJS(res));
+  if(!ready)return null;
+  const AC=window.AudioContext||window.webkitAudioContext;
+  const OAC=window.OfflineAudioContext||window.webkitOfflineAudioContext;
+  if(!AC||!OAC)return null;
+  let ctx,audioBuf;
+  try{
+    const arr=await file.arrayBuffer();
+    ctx=new AC();
+    audioBuf=await ctx.decodeAudioData(arr);
+  }catch(_){ if(ctx&&ctx.close)try{ctx.close();}catch(__){} return null; }
+  const durationSeconds=Math.round(audioBuf.duration);
+  try{
+    const channels=REC_MONO?1:Math.min(2,audioBuf.numberOfChannels);
+    const length=Math.max(1,Math.ceil(audioBuf.duration*REC_SAMPLE_RATE));
+    const offline=new OAC(channels,length,REC_SAMPLE_RATE);
+    const src=offline.createBufferSource();
+    src.buffer=audioBuf;
+    src.connect(offline.destination); // stereo->mono is auto-downmixed here
+    src.start(0);
+    const rendered=await offline.startRendering();
+    if(ctx&&ctx.close)try{ctx.close();}catch(_){}
+    const enc=new window.lamejs.Mp3Encoder(channels,REC_SAMPLE_RATE,REC_BITRATE_KBPS);
+    const block=1152,mp3=[];
+    if(channels===1){
+      const data=floatTo16(rendered.getChannelData(0));
+      for(let i=0;i<data.length;i+=block){
+        const buf=enc.encodeBuffer(data.subarray(i,i+block));
+        if(buf.length)mp3.push(buf);
+        if((i/block)%200===0){onProgress&&onProgress(i/data.length);await new Promise(r=>setTimeout(r));}
+      }
+    }else{
+      const l=floatTo16(rendered.getChannelData(0));
+      const r=floatTo16(rendered.numberOfChannels>1?rendered.getChannelData(1):rendered.getChannelData(0));
+      for(let i=0;i<l.length;i+=block){
+        const buf=enc.encodeBuffer(l.subarray(i,i+block),r.subarray(i,i+block));
+        if(buf.length)mp3.push(buf);
+        if((i/block)%200===0){onProgress&&onProgress(i/l.length);await new Promise(res=>setTimeout(res));}
+      }
+    }
+    const end=enc.flush();
+    if(end.length)mp3.push(end);
+    onProgress&&onProgress(1);
+    const blob=new Blob(mp3,{type:'audio/mpeg'});
+    return{blob,durationSeconds};
+  }catch(_){ return null; }
+}
+
+async function submitRecording(e){
+  e.preventDefault();
+  const title=document.getElementById('rec-title').value.trim();
+  const date=document.getElementById('rec-date').value;
+  const type=document.getElementById('rec-type').value;
+  const note=document.getElementById('rec-note').value;
+  const status=document.getElementById('rec-status');
+  const submitBtn=document.getElementById('rec-submit-btn');
+  if(!title){showToast('Please add a title');return;}
+  if(!date){showToast('Please choose the meeting date');return;}
+  if(!pendingRecordingFile){showToast('Please choose an audio file');return;}
+  submitBtn.disabled=true;
+  try{
+    const original=pendingRecordingFile;
+    status.textContent='Preparing…';
+    let uploadFile=original,durationSeconds=null;
+    const compressed=await compressAudioToMp3(original,p=>{status.textContent='Compressing audio… '+Math.round(p*100)+'%';});
+    if(compressed&&compressed.blob&&compressed.blob.size<original.size){
+      uploadFile=compressed.blob;
+      durationSeconds=compressed.durationSeconds;
+      status.textContent='Compressed '+recFmtBytes(original.size)+' → '+recFmtBytes(uploadFile.size)+'. Uploading…';
+    }else{
+      status.textContent='Uploading '+recFmtBytes(original.size)+'… (couldn’t compress on this device)';
+    }
+    const isMp3=uploadFile!==original;
+    const baseName=(original.name||'recording').replace(/\.[^.]+$/,'');
+    const ext=isMp3?'mp3':(original.name.split('.').pop()||'audio');
+    const path=`${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;
+    const{error:uploadError}=await sb.storage.from('meeting-recordings').upload(path,uploadFile,{contentType:uploadFile.type||'audio/mpeg'});
+    if(uploadError)throw uploadError;
+    const{data:urlData}=sb.storage.from('meeting-recordings').getPublicUrl(path);
+    const pin=getCurrentAuthPin();
+    const{error:rpcError}=await sb.rpc('add_meeting_recording',{
+      p_officer_pin:pin,
+      p_title:title,
+      p_meeting_date:date,
+      p_meeting_type:type,
+      p_note:note,
+      p_audio_url:urlData.publicUrl,
+      p_audio_name:baseName+'.'+ext,
+      p_duration_seconds:durationSeconds,
+      p_file_size:uploadFile.size
+    });
+    if(rpcError)throw rpcError;
+    showToast('Recording posted');
+    closeModal();
+  }catch(err){
+    status.textContent='';
+    submitBtn.disabled=false;
+    showToast('Could not upload: '+(err.message||'unknown error'));
+  }
+}
+
+async function deleteRecording(id){
+  if(!confirm('Remove this recording? This cannot be undone.'))return;
+  const pin=getCurrentAuthPin();
+  try{
+    const rec=(DATA.recordings||[]).find(r=>r.id===id);
+    const{error}=await sb.rpc('delete_meeting_recording',{p_officer_pin:pin,p_id:id});
+    if(error)throw error;
+    // Best-effort removal of the stored file (the DB row is already gone).
+    if(rec&&rec.audioUrl){
+      const marker='/meeting-recordings/';
+      const idx=rec.audioUrl.indexOf(marker);
+      if(idx>-1){const objPath=decodeURIComponent(rec.audioUrl.slice(idx+marker.length));try{await sb.storage.from('meeting-recordings').remove([objPath]);}catch(_){}}
+    }
+    showToast('Recording removed');
+  }catch(e){showToast('Could not remove: '+(e.message||'unknown error'));}
 }
 
 /* ============ FINANCE ============ */
@@ -3616,6 +3897,7 @@ const COMMITTEE_MEMBERS_STORE='oasis-committee-members-v1';
 const COMMITTEE_PLANS_STORE='oasis-committee-plans-v1';
 const MEETING_ATTENDANCE_STORE='oasis-meeting-attendance-v1';
 const QA_CACHE_STORE='oasis-qa-cache-v1';
+const RECORDINGS_STORE='oasis-recordings-v1';
 const SEEN_STORE='oasis-last-seen-v1';
 let eventMemoriesWarmupPromise=null;
 let eventMediaDbPromise=null;
@@ -6911,6 +7193,7 @@ function render(){
   else if(currentPage==='photos')main.innerHTML=pagePhotos();
   else if(currentPage==='dues')main.innerHTML=pageDues();
   else if(currentPage==='minutes')main.innerHTML=pageMinutes();
+  else if(currentPage==='recordings')main.innerHTML=pageRecordings();
   else if(currentPage==='finance')main.innerHTML=pageFinance();
   else if(currentPage==='committee')main.innerHTML=pageCommittee();
   else if(currentPage==='constitution'){main.innerHTML=pageConstitution();setupConstitutionPage();}

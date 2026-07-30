@@ -236,5 +236,18 @@ grant execute on function apply_welfare_loan_late_fees() to anon, authenticated;
 grant execute on function approve_welfare_loan(text, text) to anon, authenticated;
 grant execute on function record_loan_repayment(text, text, text, numeric, date) to anon, authenticated;
 
-alter publication supabase_realtime add table welfare_loans;
-alter publication supabase_realtime add table welfare_loan_repayments;
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'welfare_loans'
+  ) then
+    alter publication supabase_realtime add table welfare_loans;
+  end if;
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'welfare_loan_repayments'
+  ) then
+    alter publication supabase_realtime add table welfare_loan_repayments;
+  end if;
+end $$;

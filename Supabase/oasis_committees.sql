@@ -167,9 +167,27 @@ grant execute on function remove_committee_member(text, text, text) to anon, aut
 grant execute on function add_committee_plan(text, text, text, text) to anon, authenticated;
 grant execute on function delete_committee_plan(text, text) to anon, authenticated;
 
-alter publication supabase_realtime add table committees;
-alter publication supabase_realtime add table committee_members;
-alter publication supabase_realtime add table committee_plans;
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'committees'
+  ) then
+    alter publication supabase_realtime add table committees;
+  end if;
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'committee_members'
+  ) then
+    alter publication supabase_realtime add table committee_members;
+  end if;
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'committee_plans'
+  ) then
+    alter publication supabase_realtime add table committee_plans;
+  end if;
+end $$;
 
 -- ------------------------------------------------------------
 -- Seed the existing Welfare Committee and Project Committee so

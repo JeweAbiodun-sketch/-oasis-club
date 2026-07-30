@@ -132,4 +132,12 @@ grant execute on function reject_member_news(text, text) to anon, authenticated;
 -- 6. Enable realtime sync for the pending table (so PRO sees new
 --    submissions live, same as everything else in the app).
 -- ------------------------------------------------------------
-alter publication supabase_realtime add table club_news_pending;
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'club_news_pending'
+  ) then
+    alter publication supabase_realtime add table club_news_pending;
+  end if;
+end $$;

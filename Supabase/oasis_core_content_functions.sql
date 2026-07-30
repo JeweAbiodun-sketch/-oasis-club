@@ -266,6 +266,24 @@ grant execute on function add_club_poll(text, text, text, jsonb, text, text) to 
 grant execute on function delete_club_poll(text, text) to anon, authenticated;
 grant execute on function vote_club_poll(text, text, text, text) to anon, authenticated;
 
-alter publication supabase_realtime add table club_events;
-alter publication supabase_realtime add table club_news;
-alter publication supabase_realtime add table club_polls;
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'club_events'
+  ) then
+    alter publication supabase_realtime add table club_events;
+  end if;
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'club_news'
+  ) then
+    alter publication supabase_realtime add table club_news;
+  end if;
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'club_polls'
+  ) then
+    alter publication supabase_realtime add table club_polls;
+  end if;
+end $$;

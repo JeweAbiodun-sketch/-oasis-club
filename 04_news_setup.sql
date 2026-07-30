@@ -226,7 +226,18 @@ grant execute on function public.delete_news_post(text,uuid) to anon, authentica
 -- ============================================================
 -- REALTIME
 -- ============================================================
-alter publication supabase_realtime add table public.news_posts;
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_publication_tables
+    where pubname = 'supabase_realtime'
+      and schemaname = 'public'
+      and tablename = 'news_posts'
+  ) then
+    alter publication supabase_realtime add table public.news_posts;
+  end if;
+end $$;
 
 -- ============================================================
 -- Done.

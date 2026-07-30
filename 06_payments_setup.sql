@@ -140,6 +140,8 @@ grant execute on function public.submit_payment_evidence(text,text,numeric,text,
 -- as an income transaction on the Finance page.
 -- ============================================================
 
+drop function if exists public.approve_payment_evidence(text,text);
+
 create or replace function public.approve_payment_evidence(
   p_pin text,
   p_submission_id uuid
@@ -256,7 +258,18 @@ grant execute on function public.delete_payment_evidence(text,uuid) to anon, aut
 -- ============================================================
 -- REALTIME
 -- ============================================================
-alter publication supabase_realtime add table public.payment_submissions;
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_publication_tables
+    where pubname = 'supabase_realtime'
+      and schemaname = 'public'
+      and tablename = 'payment_submissions'
+  ) then
+    alter publication supabase_realtime add table public.payment_submissions;
+  end if;
+end $$;
 
 -- ============================================================
 -- Done.

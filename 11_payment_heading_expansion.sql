@@ -75,6 +75,8 @@ $$;
 -- label rather than collapsing into "Building Project contribution".
 -- ============================================================
 
+drop function if exists public.approve_payment_evidence(text,text);
+
 create or replace function public.approve_payment_evidence(
   p_pin text,
   p_submission_id uuid

@@ -56,4 +56,12 @@ $$;
 grant execute on function save_asst_qa(text, text, text, text) to anon, authenticated;
 grant execute on function bump_asst_qa_hit(text) to anon, authenticated;
 
-alter publication supabase_realtime add table asst_qa_cache;
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'asst_qa_cache'
+  ) then
+    alter publication supabase_realtime add table asst_qa_cache;
+  end if;
+end $$;

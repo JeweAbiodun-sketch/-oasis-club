@@ -94,4 +94,12 @@ $$;
 grant execute on function release_welfare_fund(text, text, numeric, text, date) to anon, authenticated;
 grant execute on function log_welfare_expense(text, text, numeric, text, date) to anon, authenticated;
 
-alter publication supabase_realtime add table welfare_purse_entries;
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'welfare_purse_entries'
+  ) then
+    alter publication supabase_realtime add table welfare_purse_entries;
+  end if;
+end $$;

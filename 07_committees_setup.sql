@@ -159,8 +159,21 @@ grant execute on function public.remove_committee_member(text,text,text) to anon
 -- ============================================================
 -- REALTIME
 -- ============================================================
-alter publication supabase_realtime add table public.committees;
-alter publication supabase_realtime add table public.committee_members;
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'committees'
+  ) then
+    alter publication supabase_realtime add table public.committees;
+  end if;
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'committee_members'
+  ) then
+    alter publication supabase_realtime add table public.committee_members;
+  end if;
+end $$;
 
 -- ============================================================
 -- Done.

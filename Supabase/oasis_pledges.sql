@@ -65,4 +65,12 @@ $$;
 grant execute on function add_club_pledge(text, text, text, text, numeric, text, date) to anon, authenticated;
 grant execute on function delete_club_pledge(text, text) to anon, authenticated;
 
-alter publication supabase_realtime add table club_pledges;
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'club_pledges'
+  ) then
+    alter publication supabase_realtime add table club_pledges;
+  end if;
+end $$;
