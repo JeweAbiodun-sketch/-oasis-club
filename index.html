@@ -1401,6 +1401,22 @@ function rowsToMeetingRecordings(rows){
     createdAt:r.created_at
   })).sort((a,b)=>(b.meetingDate||'').localeCompare(a.meetingDate||'')||new Date(b.createdAt)-new Date(a.createdAt));
 }
+function rowsToWelfareEvents(evRows,cRows){
+  const byEvent={};
+  (cRows||[]).forEach(r=>{
+    (byEvent[r.event_id]=byEvent[r.event_id]||[]).push({id:r.id,memberId:r.member_id,amount:Number(r.amount),paidDate:r.paid_date||''});
+  });
+  return (evRows||[]).map(e=>({
+    id:e.id,
+    title:e.title,
+    type:e.type||'other',
+    date:e.event_date,
+    targetAmount:e.target_amount==null?'':String(e.target_amount),
+    description:e.description||'',
+    contributions:byEvent[e.id]||[],
+    createdAt:e.created_at
+  })).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+}
 function rowsToBirthdayComments(rows){
   return rows.map(r=>({
     id:r.id,
@@ -1519,7 +1535,7 @@ async function loadData(){
 async function fetchAllData(){
   try{
     const localBirthdayComments=loadBirthdayCommentsCache();
-    const[membersRes,minutesRes,txRes,metaRes,eventsRes,eventMemoriesRes,newsPostsRes,pollsRes,paymentSubmissionsRes,tasksRes,loansRes,repaymentsRes,purseRes,releaseRequestsRes,pledgesRes,committeesRes,committeeMembersRes,committeePlansRes,attendanceRes,qaCacheRes,recordingsRes]=await Promise.all([
+    const[membersRes,minutesRes,txRes,metaRes,eventsRes,eventMemoriesRes,newsPostsRes,pollsRes,paymentSubmissionsRes,tasksRes,loansRes,repaymentsRes,purseRes,releaseRequestsRes,pledgesRes,committeesRes,committeeMembersRes,committeePlansRes,attendanceRes,qaCacheRes,recordingsRes,welfareEventsRes,welfareContribRes]=await Promise.all([
       sb.from('members').select('*'),
       sb.from('minutes').select('*'),
       sb.from('transactions').select('*'),
@@ -1540,7 +1556,9 @@ async function fetchAllData(){
       sb.from('committee_plans').select('*').order('created_at',{ascending:false}),
       sb.from('meeting_attendance').select('*'),
       sb.from('asst_qa_cache').select('*').order('last_used_at',{ascending:false}).limit(500),
-      sb.from('meeting_recordings').select('*').order('meeting_date',{ascending:false})
+      sb.from('meeting_recordings').select('*').order('meeting_date',{ascending:false}),
+      sb.from('welfare_events').select('*'),
+      sb.from('welfare_contributions').select('*')
     ]);
     if(membersRes.error||minutesRes.error||txRes.error||metaRes.error){
       throw membersRes.error||minutesRes.error||txRes.error||metaRes.error;
@@ -1567,7 +1585,8 @@ async function fetchAllData(){
       committeePlans:rowsToCommitteePlans(committeePlansRes.data||[]),
       meetingAttendance:rowsToMeetingAttendance(attendanceRes.data||[]),
       qaCache:rowsToQaCache(qaCacheRes.data||[]),
-      recordings:rowsToMeetingRecordings((recordingsRes&&recordingsRes.data)||[])
+      recordings:rowsToMeetingRecordings((recordingsRes&&recordingsRes.data)||[]),
+      welfareEvents:rowsToWelfareEvents((welfareEventsRes&&welfareEventsRes.data)||[],(welfareContribRes&&welfareContribRes.data)||[])
     };
     try{
       const{error:lateFeeError}=await sb.rpc('apply_welfare_loan_late_fees');
@@ -1606,6 +1625,7 @@ async function fetchAllData(){
       localStorage.setItem(MEETING_ATTENDANCE_STORE,JSON.stringify(DATA.meetingAttendance));
       localStorage.setItem(QA_CACHE_STORE,JSON.stringify(DATA.qaCache));
       localStorage.setItem(RECORDINGS_STORE,JSON.stringify(DATA.recordings));
+      localStorage.setItem(WELFARE_EVENTS_STORE,JSON.stringify(DATA.welfareEvents));
     }catch(_){}
     connectionStatus='connected';
     // Refresh chatbot UI now that DATA.meta.chatbotApiKey is known
@@ -1622,6 +1642,7 @@ async function fetchAllData(){
     if(!DATA.eventMemories||!DATA.eventMemories.length)try{DATA.eventMemories=JSON.parse(localStorage.getItem(EVENT_MEMORIES_STORE)||'[]');}catch(_){}
     if(!DATA.newsPosts||!DATA.newsPosts.length)try{DATA.newsPosts=JSON.parse(localStorage.getItem(NEWS_STORE)||'[]');}catch(_){}
     if(!DATA.recordings||!DATA.recordings.length)try{DATA.recordings=JSON.parse(localStorage.getItem(RECORDINGS_STORE)||'[]');}catch(_){}
+    if(!DATA.welfareEvents||!DATA.welfareEvents.length)try{DATA.welfareEvents=JSON.parse(localStorage.getItem(WELFARE_EVENTS_STORE)||'[]');}catch(_){}
     if(!DATA.birthdayComments||!DATA.birthdayComments.length)try{DATA.birthdayComments=JSON.parse(localStorage.getItem(BIRTHDAY_COMMENTS_STORE)||'[]');}catch(_){}
     if(!DATA.polls||!DATA.polls.length)try{DATA.polls=JSON.parse(localStorage.getItem(POLLS_STORE)||'[]');}catch(_){}
     if(!DATA.paymentSubmissions||!DATA.paymentSubmissions.length)try{DATA.paymentSubmissions=JSON.parse(localStorage.getItem(PAYMENT_SUBMISSIONS_STORE)||'[]');}catch(_){}
@@ -1645,6 +1666,8 @@ function subscribeToRealtime(){
     .on('postgres_changes',{event:'*',schema:'public',table:'members'},handleRealtimeChange)
     .on('postgres_changes',{event:'*',schema:'public',table:'minutes'},handleRealtimeChange)
     .on('postgres_changes',{event:'*',schema:'public',table:'meeting_recordings'},handleRealtimeChange)
+    .on('postgres_changes',{event:'*',schema:'public',table:'welfare_events'},handleRealtimeChange)
+    .on('postgres_changes',{event:'*',schema:'public',table:'welfare_contributions'},handleRealtimeChange)
     .on('postgres_changes',{event:'*',schema:'public',table:'transactions'},handleRealtimeChange)
     .on('postgres_changes',{event:'*',schema:'public',table:'club_meta'},handleRealtimeChange)
     .on('postgres_changes',{event:'*',schema:'public',table:'club_events'},handleRealtimeChange)
@@ -5142,7 +5165,10 @@ async function handleWelfareUpload(input){
     }
   }
   const welfare=Object.values(evMap);
-  saveWelfare(welfare);input.value='';render();
+  const pin=getCurrentAuthPin();
+  const{error}=await sb.rpc('officer_replace_all_welfare',{p_officer_pin:pin,p_events:welfare});
+  input.value='';
+  if(error){showToast('Could not import: '+error.message);return;}
   showToast('✓ '+welfare.length+' welfare event'+(welfare.length!==1?'s':'')+' imported.');
 }
 
@@ -5627,16 +5653,24 @@ function maybeNotifyBirthdayNotice(){
 
 /* ====================== WELFARE REGISTER ====================== */
 const WELFARE_STORE='oasis-welfare-v1';
+const WELFARE_EVENTS_STORE='oasis-welfare-events-v1';
+// Welfare contributions now live in Supabase (welfare_events / welfare_contributions)
+// and sync across devices like everything else. loadWelfare() returns the synced
+// data from DATA; the localStorage cache and bundled seed are offline-only fallbacks.
 function loadWelfare(){
+  if(Array.isArray(DATA.welfareEvents)&&DATA.welfareEvents.length){
+    return DATA.welfareEvents.map(e=>({...e,contributions:(e.contributions||[]).slice()}));
+  }
   try{
-    const stored=JSON.parse(localStorage.getItem(WELFARE_STORE)||'[]');
-    if(Array.isArray(stored)&&stored.length)return stored;
+    const cached=JSON.parse(localStorage.getItem(WELFARE_EVENTS_STORE)||'[]');
+    if(Array.isArray(cached)&&cached.length)return cached;
   }catch(_){}
   const seed=(window.WELFARE_LEDGER_SEED&&Array.isArray(window.WELFARE_LEDGER_SEED.events))
     ?window.WELFARE_LEDGER_SEED.events:[];
   return JSON.parse(JSON.stringify(seed));
 }
-function saveWelfare(a){localStorage.setItem(WELFARE_STORE,JSON.stringify(a));}
+// Kept for the offline cache only — writes no longer define the source of truth.
+function saveWelfare(a){try{localStorage.setItem(WELFARE_EVENTS_STORE,JSON.stringify(a));}catch(_){}}
 const WELFARE_LABELS={bereavement:'Bereavement',baby:'New baby',illness:'Illness',levy:'Club levy',other:'Other'};
 let welfareYearFilter='all';
 function pageWelfare(){
@@ -6443,20 +6477,24 @@ async function approvePayment(id){
 // Adds an approved welfare payment to the current financial year's
 // "Welfare Contributions" levy event so it shows on the Welfare Affair page.
 // Matches the yearly grouping the Welfare page migrates old events into.
-function lodgeWelfareContribution(memberId,amount){
+async function lodgeWelfareContribution(memberId,amount){
   if(!memberId||!amount)return;
   const today=new Date().toISOString().slice(0,10);
   const fy=fyLabelForDate(today);
-  const events=loadWelfare();
-  let ev=events.find(w=>w.type==='levy'&&w.title===`Welfare Contributions \u2014 ${fy}`);
-  if(!ev){
-    ev={id:uid(),date:today,title:`Welfare Contributions \u2014 ${fy}`,type:'levy',targetAmount:0,contributions:[]};
-    events.push(ev);
-  }
-  if(!Array.isArray(ev.contributions))ev.contributions=[];
-  ev.contributions.push({id:uid(),memberId,amount:Number(amount),paidDate:today});
-  saveWelfare(events);
-  if(currentPage==='welfare')render();
+  const title=`Welfare Contributions \u2014 ${fy}`;
+  // Attach to the current financial year's levy event; create it if missing.
+  // (The RPC creates the event when p_event_id doesn't exist yet.)
+  const existing=(DATA.welfareEvents||[]).find(w=>w.type==='levy'&&w.title===title);
+  const eventId=existing?existing.id:('wlf-lv-'+fy.replace('/',''));
+  const pin=getCurrentAuthPin();
+  try{
+    const{error}=await sb.rpc('officer_add_welfare_contribution',{
+      p_officer_pin:pin,p_id:uid(),p_event_id:eventId,p_member_id:memberId,
+      p_amount:Number(amount),p_paid_date:today,
+      p_event_title:title,p_event_type:'levy',p_event_date:today
+    });
+    if(error)throw error;
+  }catch(e){showToast('Approved, but could not add to Welfare page: '+(e.message||'error'));}
 }
 function openPaymentRejectPrompt(id){
   openModal(`
@@ -6844,16 +6882,20 @@ function openAddWelfare(){
     <div class="field"><label>Description (optional)</label><textarea id="wf-desc" rows="2"></textarea></div>
     <div class="modal-actions"><button type="button" class="btn" onclick="closeModal()">Cancel</button><button type="button" class="btn btn-primary" onclick="submitAddWelfare()">Save</button></div>`);
 }
-function submitAddWelfare(){
+async function submitAddWelfare(){
   const title=(document.getElementById('wf-title').value||'').trim();
   const date=document.getElementById('wf-date').value;
   if(!title||!date){showToast('Title and date are required.');return;}
-  const item={id:uid(),title,type:document.getElementById('wf-type').value,date,
-    targetAmount:document.getElementById('wf-target').value||'',
-    description:(document.getElementById('wf-desc').value||'').trim(),
-    contributions:[],createdAt:new Date().toISOString()};
-  const arr=loadWelfare();arr.unshift(item);saveWelfare(arr);
-  closeModal();render();showToast('Welfare entry created.');
+  const pin=getCurrentAuthPin();
+  const{error}=await sb.rpc('officer_add_welfare_event',{
+    p_officer_pin:pin,p_id:uid(),p_title:title,
+    p_type:document.getElementById('wf-type').value,
+    p_event_date:date,
+    p_target_amount:document.getElementById('wf-target').value||null,
+    p_description:(document.getElementById('wf-desc').value||'').trim()||null
+  });
+  if(error){showToast('Could not save: '+error.message);return;}
+  closeModal();showToast('Welfare entry created.');
 }
 function openWelfareContrib(welfareId){
   const w=loadWelfare().find(x=>x.id===welfareId);
@@ -6868,21 +6910,26 @@ function openWelfareContrib(welfareId){
     </div>
     <div class="modal-actions"><button type="button" class="btn" onclick="closeModal()">Cancel</button><button type="button" class="btn btn-primary" onclick="submitWelfareContrib('${welfareId}')">Save</button></div>`);
 }
-function submitWelfareContrib(welfareId){
+async function submitWelfareContrib(welfareId){
   const memberId=document.getElementById('wc-member').value;
   const amount=document.getElementById('wc-amount').value;
   const date=document.getElementById('wc-date').value;
   if(!amount||!date){showToast('Amount and date are required.');return;}
-  const arr=loadWelfare();
-  const w=arr.find(x=>x.id===welfareId);
-  if(!w)return;
-  if(!w.contributions)w.contributions=[];
-  w.contributions.push({id:uid(),memberId,amount:Number(amount),paidDate:date});
-  saveWelfare(arr);closeModal();render();showToast('Contribution recorded.');
+  const pin=getCurrentAuthPin();
+  const{error}=await sb.rpc('officer_add_welfare_contribution',{
+    p_officer_pin:pin,p_id:uid(),p_event_id:welfareId,p_member_id:memberId,
+    p_amount:Number(amount),p_paid_date:date,
+    p_event_title:null,p_event_type:null,p_event_date:null
+  });
+  if(error){showToast('Could not record: '+error.message);return;}
+  closeModal();showToast('Contribution recorded.');
 }
-function deleteWelfare(id){
+async function deleteWelfare(id){
   if(!confirm('Delete this welfare entry and all contributions?'))return;
-  saveWelfare(loadWelfare().filter(w=>w.id!==id));render();
+  const pin=getCurrentAuthPin();
+  const{error}=await sb.rpc('officer_delete_welfare_event',{p_officer_pin:pin,p_id:id});
+  if(error){showToast('Could not delete: '+error.message);return;}
+  showToast('Welfare entry deleted.');
 }
 
 /* ====================== FINES LOG ====================== */

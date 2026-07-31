@@ -1,174 +1,253 @@
 window.WELFARE_LEDGER_SEED = {
-  "title": "Oasis welfare from oasis-welfare-2026-06-28.csv",
+  "title": "Oasis welfare rebuilt from STATEMENT OF ACCOUNT 23 April 2026",
   "events": [
     {
-      "id": "mqlbam9ybfo3",
+      "id": "wlf-lv-2526",
       "title": "Welfare Contributions — 2025/2026",
       "type": "levy",
       "date": "2025-12-26",
       "targetAmount": "",
       "contributions": [
         {
-          "id": "mqlbam9ybfo3-1",
+          "id": "wlf-lv-2526-m002",
+          "memberId": "m002",
+          "amount": 24000,
+          "paidDate": "2026-03-15"
+        },
+        {
+          "id": "wlf-lv-2526-m003",
+          "memberId": "m003",
+          "amount": 48000,
+          "paidDate": "2026-03-13"
+        },
+        {
+          "id": "wlf-lv-2526-m004",
           "memberId": "m004",
-          "amount": 96000,
+          "amount": 24000,
           "paidDate": "2026-03-29"
         },
         {
-          "id": "mqlbam9ybfo3-2",
+          "id": "wlf-lv-2526-m009",
           "memberId": "m009",
           "amount": 14000,
           "paidDate": "2025-12-26"
-        },
-        {
-          "id": "mqlbam9ybfo3-3",
-          "memberId": "m002",
-          "amount": 96000,
-          "paidDate": "2026-03-15"
         }
       ],
       "createdAt": "2026-06-28T00:00:00.000Z"
     },
     {
-      "id": "mql7zz481pz2",
-      "title": "Issued to Adebayo Taiwo — uncle's burial support",
-      "type": "other",
-      "date": "2025-05-13",
-      "targetAmount": "30000",
-      "contributions": [],
-      "createdAt": "2026-06-28T00:00:00.000Z"
-    },
-    {
-      "id": "mql7zz48bkro",
-      "title": "Issued to Olatunde Kunle — extra AGM 2024 expenses",
-      "type": "other",
-      "date": "2025-01-17",
-      "targetAmount": "16500",
-      "contributions": [],
-      "createdAt": "2026-06-28T00:00:00.000Z"
-    },
-    {
-      "id": "mql7zz48i82n",
-      "title": "Atolani Femi — Accident hospital bill assistance",
-      "type": "other",
-      "date": "2025-01-02",
-      "targetAmount": "10000",
-      "contributions": [],
-      "createdAt": "2026-06-28T00:00:00.000Z"
-    },
-    {
-      "id": "mqlbam9ytx7b",
+      "id": "wlf-lv-2425",
       "title": "Welfare Contributions — 2024/2025",
       "type": "levy",
       "date": "2024-12-18",
       "targetAmount": "",
       "contributions": [
         {
-          "id": "mqlbam9ytx7b-1",
-          "memberId": "m007",
-          "amount": 66000,
-          "paidDate": "2025-07-30"
-        },
-        {
-          "id": "mqlbam9ytx7b-2",
-          "memberId": "m009",
-          "amount": 40000,
-          "paidDate": "2025-02-23"
-        },
-        {
-          "id": "mqlbam9ytx7b-3",
+          "id": "wlf-lv-2425-m001",
           "memberId": "m001",
-          "amount": 112000,
+          "amount": 28000,
           "paidDate": "2025-07-26"
         },
         {
-          "id": "mqlbam9ytx7b-4",
+          "id": "wlf-lv-2425-m002",
           "memberId": "m002",
           "amount": 5000,
           "paidDate": "2025-08-13"
+        },
+        {
+          "id": "wlf-lv-2425-m004",
+          "memberId": "m004",
+          "amount": 24000,
+          "paidDate": "2025-02-22"
+        },
+        {
+          "id": "wlf-lv-2425-m007",
+          "memberId": "m007",
+          "amount": 24000,
+          "paidDate": "2025-07-13"
+        },
+        {
+          "id": "wlf-lv-2425-m009",
+          "memberId": "m009",
+          "amount": 10000,
+          "paidDate": "2025-02-23"
+        },
+        {
+          "id": "wlf-lv-2425-m015",
+          "memberId": "m015",
+          "amount": 24000,
+          "paidDate": "2025-02-23"
         }
       ],
       "createdAt": "2026-06-28T00:00:00.000Z"
     },
     {
-      "id": "mql7zz48msq3",
-      "title": "Issued — Adebayo Olanrewaju father's burial support",
-      "type": "other",
-      "date": "2024-10-21",
-      "targetAmount": "20000",
-      "contributions": [],
-      "createdAt": "2026-06-28T00:00:00.000Z"
-    },
-    {
-      "id": "mql7zz48y664",
-      "title": "Issued out — Ayodeji Bisi brother's wedding",
-      "type": "other",
-      "date": "2024-04-21",
-      "targetAmount": "20000",
-      "contributions": [],
-      "createdAt": "2026-06-28T00:00:00.000Z"
-    },
-    {
-      "id": "mqlbam9ypz4m",
+      "id": "wlf-lv-2324",
       "title": "Welfare Contributions — 2023/2024",
       "type": "levy",
       "date": "2024-01-26",
       "targetAmount": "",
       "contributions": [
         {
-          "id": "mqlbam9ypz4m-1",
-          "memberId": "m007",
-          "amount": 51000,
-          "paidDate": "2024-09-16"
-        },
-        {
-          "id": "mqlbam9ypz4m-2",
-          "memberId": "m008",
-          "amount": 54000,
-          "paidDate": "2024-09-18"
-        },
-        {
-          "id": "mqlbam9ypz4m-3",
-          "memberId": "m009",
-          "amount": 18000,
-          "paidDate": "2024-06-28"
-        },
-        {
-          "id": "mqlbam9ypz4m-4",
+          "id": "wlf-lv-2324-m001",
           "memberId": "m001",
           "amount": 12000,
           "paidDate": "2024-05-26"
         },
         {
-          "id": "mqlbam9ypz4m-5",
+          "id": "wlf-lv-2324-m002",
           "memberId": "m002",
-          "amount": 10000,
+          "amount": 2500,
           "paidDate": "2024-07-26"
+        },
+        {
+          "id": "wlf-lv-2324-m004",
+          "memberId": "m004",
+          "amount": 12000,
+          "paidDate": "2024-06-30"
+        },
+        {
+          "id": "wlf-lv-2324-m006",
+          "memberId": "m006",
+          "amount": 2000,
+          "paidDate": "2024-05-26"
+        },
+        {
+          "id": "wlf-lv-2324-m007",
+          "memberId": "m007",
+          "amount": 24000,
+          "paidDate": "2024-09-18"
+        },
+        {
+          "id": "wlf-lv-2324-m008",
+          "memberId": "m008",
+          "amount": 18000,
+          "paidDate": "2024-09-20"
+        },
+        {
+          "id": "wlf-lv-2324-m009",
+          "memberId": "m009",
+          "amount": 6000,
+          "paidDate": "2024-06-29"
+        },
+        {
+          "id": "wlf-lv-2324-m011",
+          "memberId": "m011",
+          "amount": 10000,
+          "paidDate": "2024-09-17"
+        },
+        {
+          "id": "wlf-lv-2324-m012",
+          "memberId": "m012",
+          "amount": 10000,
+          "paidDate": "2024-06-29"
+        },
+        {
+          "id": "wlf-lv-2324-m020",
+          "memberId": "m020",
+          "amount": 2000,
+          "paidDate": "2024-04-16"
         }
       ],
       "createdAt": "2026-06-28T00:00:00.000Z"
     },
     {
-      "id": "mql7zz484kli",
-      "title": "Issued to Olatunde Kunle — AGM hosting assistance",
+      "id": "wlf-lv-2223",
+      "title": "Welfare Contributions — 2022/2023",
+      "type": "levy",
+      "date": "2023-02-26",
+      "targetAmount": "",
+      "contributions": [
+        {
+          "id": "wlf-lv-2223-m001",
+          "memberId": "m001",
+          "amount": 4000,
+          "paidDate": "2023-08-27"
+        },
+        {
+          "id": "wlf-lv-2223-m002",
+          "memberId": "m002",
+          "amount": 1000,
+          "paidDate": "2023-04-04"
+        },
+        {
+          "id": "wlf-lv-2223-m004",
+          "memberId": "m004",
+          "amount": 12000,
+          "paidDate": "2023-03-10"
+        },
+        {
+          "id": "wlf-lv-2223-m006",
+          "memberId": "m006",
+          "amount": 4000,
+          "paidDate": "2023-04-15"
+        },
+        {
+          "id": "wlf-lv-2223-m007",
+          "memberId": "m007",
+          "amount": 12000,
+          "paidDate": "2023-08-04"
+        },
+        {
+          "id": "wlf-lv-2223-m009",
+          "memberId": "m009",
+          "amount": 4000,
+          "paidDate": "2023-05-28"
+        },
+        {
+          "id": "wlf-lv-2223-m011",
+          "memberId": "m011",
+          "amount": 4000,
+          "paidDate": "2023-04-23"
+        },
+        {
+          "id": "wlf-lv-2223-m013",
+          "memberId": "m013",
+          "amount": 12000,
+          "paidDate": "2023-02-26"
+        },
+        {
+          "id": "wlf-lv-2223-m015",
+          "memberId": "m015",
+          "amount": 12000,
+          "paidDate": "2023-03-25"
+        },
+        {
+          "id": "wlf-lv-2223-m016",
+          "memberId": "m016",
+          "amount": 3000,
+          "paidDate": "2023-04-30"
+        },
+        {
+          "id": "wlf-lv-2223-m019",
+          "memberId": "m019",
+          "amount": 1000,
+          "paidDate": "2023-05-28"
+        }
+      ],
+      "createdAt": "2026-06-28T00:00:00.000Z"
+    },
+    {
+      "id": "wlf-misc-agmextra",
+      "title": "Extra balance from AGM contributions — added to welfare fund",
       "type": "other",
-      "date": "2023-11-20",
-      "targetAmount": "30000",
+      "date": "2024-12-18",
+      "targetAmount": "",
       "contributions": [],
       "createdAt": "2026-06-28T00:00:00.000Z"
     },
     {
-      "id": "mql7zz48ym9n",
-      "title": "Issued out — Olatunde Kunle in-law burial",
+      "id": "wlf-out-1",
+      "title": "Issued out to complete the contribution towards Abiodun's grandma burial",
       "type": "other",
-      "date": "2023-09-13",
-      "targetAmount": "20000",
+      "date": "2023-04-07",
+      "targetAmount": "8000",
       "contributions": [],
       "createdAt": "2026-06-28T00:00:00.000Z"
     },
     {
-      "id": "mql7zz48k1vm",
-      "title": "Issued out — Adebayo Lanre in-law burial",
+      "id": "wlf-out-2",
+      "title": "Issued out to Adebayo Lanre for his inlaw burial",
       "type": "other",
       "date": "2023-07-20",
       "targetAmount": "20000",
@@ -176,58 +255,66 @@ window.WELFARE_LEDGER_SEED = {
       "createdAt": "2026-06-28T00:00:00.000Z"
     },
     {
-      "id": "mql7zz48gq1j",
-      "title": "Issued out — Abiodun's grandma burial",
+      "id": "wlf-out-3",
+      "title": "Issued out to Olatunde Kunles for his inlaw burial",
       "type": "other",
-      "date": "2023-04-09",
-      "targetAmount": "8000",
+      "date": "2023-10-02",
+      "targetAmount": "20000",
       "contributions": [],
       "createdAt": "2026-06-28T00:00:00.000Z"
     },
     {
-      "id": "mqlbam9y76m2",
-      "title": "Welfare Contributions — 2022/2023",
-      "type": "levy",
-      "date": "2023-02-26",
-      "targetAmount": "",
-      "contributions": [
-        {
-          "id": "mqlbam9y76m2-1",
-          "memberId": "m007",
-          "amount": 18000,
-          "paidDate": "2023-08-04"
-        },
-        {
-          "id": "mqlbam9y76m2-2",
-          "memberId": "m013",
-          "amount": 12000,
-          "paidDate": "2023-02-26"
-        },
-        {
-          "id": "mqlbam9y76m2-3",
-          "memberId": "m009",
-          "amount": 10000,
-          "paidDate": "2023-05-28"
-        },
-        {
-          "id": "mqlbam9y76m2-4",
-          "memberId": "m016",
-          "amount": 9000,
-          "paidDate": "2023-04-30"
-        },
-        {
-          "id": "mqlbam9y76m2-5",
-          "memberId": "m001",
-          "amount": 13000,
-          "paidDate": "2023-08-27"
-        },
-        {
-          "id": "mqlbam9y76m2-6",
-          "memberId": "m002",
-          "amount": 4000,
-          "paidDate": "2023-04-04"
-        }
-      ],
+      "id": "wlf-out-4",
+      "title": "Issued to Olatude Kunle as Assitance for hosting of AGM",
+      "type": "other",
+      "date": "2023-12-21",
+      "targetAmount": "30000",
+      "contributions": [],
+      "createdAt": "2026-06-28T00:00:00.000Z"
+    },
+    {
+      "id": "wlf-out-5",
+      "title": "Issued out to Ayodeji Bisi for his brother's wedding",
+      "type": "other",
+      "date": "2024-04-21",
+      "targetAmount": "20000",
+      "contributions": [],
+      "createdAt": "2026-06-28T00:00:00.000Z"
+    },
+    {
+      "id": "wlf-out-6",
+      "title": "Adebayo Olanrewaju Father's burial support",
+      "type": "other",
+      "date": "2024-10-21",
+      "targetAmount": "20000",
+      "contributions": [],
+      "createdAt": "2026-06-28T00:00:00.000Z"
+    },
+    {
+      "id": "wlf-out-7",
+      "title": "Atolani Femi Accident Hospital Bill Assistance",
+      "type": "other",
+      "date": "2025-01-02",
+      "targetAmount": "10000",
+      "contributions": [],
+      "createdAt": "2026-06-28T00:00:00.000Z"
+    },
+    {
+      "id": "wlf-out-8",
+      "title": "Issued to Olatude Kunle as extra expenses AGM 2024",
+      "type": "other",
+      "date": "2025-01-16",
+      "targetAmount": "16500",
+      "contributions": [],
+      "createdAt": "2026-06-28T00:00:00.000Z"
+    },
+    {
+      "id": "wlf-out-9",
+      "title": "Issued to Adebayo Taiwo as his Uncle's burial support",
+      "type": "other",
+      "date": "2025-04-27",
+      "targetAmount": "30000",
+      "contributions": [],
       "createdAt": "2026-06-28T00:00:00.000Z"
     }
   ]
