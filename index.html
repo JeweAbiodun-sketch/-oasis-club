@@ -2670,6 +2670,7 @@ async function updateDuesYearLabel(val){
 
 /* ============ MINUTES ============ */
 let minutesSortOrder='desc';
+let pendingMinutesAudio=null;
 function setMinutesSort(order){minutesSortOrder=order;render();}
 function pageMinutes(){
   const sorted=[...DATA.minutes].sort((a,b)=>minutesSortOrder==='asc'?a.date.localeCompare(b.date):b.date.localeCompare(a.date));
@@ -2710,14 +2711,22 @@ function openMinutesDetail(id){
   openModal(`
     <h3>${escHtml(m.title)}</h3>
     <p class="cell-muted" style="margin-top:-6px;margin-bottom:14px;">${fmtDate(m.date)} &middot; ${escHtml(m.type||'Monthly meeting')} &middot; <span class="badge ${daysSince(m.date)>21?'badge-overdue':'badge-paid'}">${daysSince(m.date)>21?'published late':'published on time'}</span></p>
-    ${(()=>{const c=minuteRecordingChip(m);return c?`<div style="margin:-6px 0 14px;">${c}</div>`:'';})()}
-    <div style="font-size:13.5px;color:var(--ink-soft);white-space:pre-wrap;line-height:1.6;max-height:50vh;overflow-y:auto;">${m.notes?escHtml(m.notes):'<span class="cell-muted">No notes were recorded for this meeting.</span>'}</div>
+    ${(()=>{
+      const recs=recordingsForMinute(m);
+      if(!recs.length)return'';
+      return `<div style="margin:0 0 14px;">${recs.map(r=>`
+        <div class="cell-muted" style="font-size:12px;margin-bottom:4px;">\u{1F3A7} ${escHtml(r.audioName||'Meeting recording')}${r.durationSeconds?' &middot; '+recFmtDuration(r.durationSeconds):''}</div>
+        <audio controls preload="none" style="width:100%;margin-bottom:10px;" src="${r.audioUrl}"></audio>
+      `).join('')}</div>`;
+    })()}
+    <div style="font-size:13.5px;color:var(--ink-soft);white-space:pre-wrap;line-height:1.6;max-height:50vh;overflow-y:auto;">${m.notes?escHtml(m.notes):(recordingsForMinute(m).length?'<span class="cell-muted">No written notes — the audio above is the record of this meeting.</span>':'<span class="cell-muted">No notes were recorded for this meeting.</span>')}</div>
     <div class="modal-actions">
       <button type="button" class="btn" onclick="closeModal()">Close</button>
     </div>
   `);
 }
 function openMinutesForm(){
+  pendingMinutesAudio=null;
   openModal(`
     <h3>Log meeting minutes</h3>
     <form id="minutes-form">
@@ -2729,26 +2738,55 @@ function openMinutesForm(){
         </div>
       </div>
       <div class="field"><label>Notes / key resolutions</label><textarea id="m-notes" placeholder="Summary of what was discussed and decided&hellip;"></textarea></div>
+      <div class="field">
+        <label>Meeting audio (optional)</label>
+        <button type="button" class="btn" style="font-size:12.5px;padding:7px 14px;" onclick="document.getElementById('m-audio').click()">Choose audio</button>
+        <input type="file" id="m-audio" accept="audio/*,video/mp4" style="display:none"/>
+        <span id="m-audio-name" class="cell-muted" style="margin-left:8px;"></span>
+        <div class="cell-muted" style="font-size:11.5px;margin-top:5px;">Attach the recording of this meeting. It is compressed on your device, then filed with these minutes and in the Recordings archive.</div>
+      </div>
+      <div id="m-status" class="cell-muted" style="font-size:12.5px;min-height:16px;"></div>
       <div class="modal-actions"><button type="button" class="btn" onclick="closeModal()">Cancel</button><button type="submit" class="btn btn-primary">Save minutes</button></div>
     </form>
   `);
+  document.getElementById('m-audio').addEventListener('change',e=>{
+    const file=e.target.files[0];
+    if(!file){pendingMinutesAudio=null;document.getElementById('m-audio-name').textContent='';return;}
+    pendingMinutesAudio=file;
+    document.getElementById('m-audio-name').textContent=file.name+' ('+recFmtBytes(file.size)+')';
+  });
   document.getElementById('minutes-form').addEventListener('submit',async e=>{
     e.preventDefault();
     const title=document.getElementById('m-title').value.trim();
     if(!title)return;
+    const date=document.getElementById('m-date').value;
+    const type=document.getElementById('m-type').value;
+    const note=document.getElementById('m-notes').value;
+    const status=document.getElementById('m-status');
     const pin=getCurrentAuthPin();
     const submitBtn=e.target.querySelector('button[type=submit]');
     submitBtn.disabled=true;submitBtn.textContent='Saving\u2026';
     try{
       const{error}=await sb.rpc('officer_add_minutes',{
         p_officer_pin:pin,p_id:uid(),p_title:title,
-        p_date:document.getElementById('m-date').value,
-        p_type:document.getElementById('m-type').value,
-        p_notes:document.getElementById('m-notes').value
+        p_date:date,p_type:type,p_notes:note
       });
       if(error)throw error;
-      closeModal();showToast('Minutes saved');
+      // Minutes text is saved. If audio was attached, file it against the same
+      // meeting date so it links to this minute (and appears in Recordings).
+      if(pendingMinutesAudio){
+        try{
+          await uploadMeetingAudio(pendingMinutesAudio,{title,date,type,note},t=>{status.textContent=t;});
+          closeModal();showToast('Minutes and recording saved');
+        }catch(audioErr){
+          closeModal();
+          showToast('Minutes saved, but audio upload failed \u2014 you can add it later from Recordings ('+(audioErr.message||'unknown error')+')');
+        }
+      }else{
+        closeModal();showToast('Minutes saved');
+      }
     }catch(err){
+      status.textContent='';
       submitBtn.disabled=false;submitBtn.textContent='Save minutes';
       showToast('Could not save: '+(err.message||'unknown error'));
     }
@@ -2950,6 +2988,45 @@ async function compressAudioToMp3(file,onProgress){
   }catch(_){ return null; }
 }
 
+// Compress (best-effort), upload to the meeting-recordings bucket, and register
+// the recording against a meeting date. Shared by the Recordings form and the
+// Log-minutes form, so audio attached to a minute lands in the same archive and
+// auto-links to that minute by shared date (see recordingsForMinute).
+// onStatus(text) is optional and reports progress. Throws on failure.
+async function uploadMeetingAudio(file,{title,date,type,note},onStatus){
+  const original=file;
+  onStatus&&onStatus('Preparing…');
+  let uploadFile=original,durationSeconds=null;
+  const compressed=await compressAudioToMp3(original,p=>{onStatus&&onStatus('Compressing audio… '+Math.round(p*100)+'%');});
+  if(compressed&&compressed.blob&&compressed.blob.size<original.size){
+    uploadFile=compressed.blob;
+    durationSeconds=compressed.durationSeconds;
+    onStatus&&onStatus('Compressed '+recFmtBytes(original.size)+' → '+recFmtBytes(uploadFile.size)+'. Uploading…');
+  }else{
+    onStatus&&onStatus('Uploading '+recFmtBytes(original.size)+'… (couldn’t compress on this device)');
+  }
+  const isMp3=uploadFile!==original;
+  const baseName=(original.name||'recording').replace(/\.[^.]+$/,'');
+  const ext=isMp3?'mp3':((original.name||'').split('.').pop()||'audio');
+  const path=`${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;
+  const{error:uploadError}=await sb.storage.from('meeting-recordings').upload(path,uploadFile,{contentType:uploadFile.type||'audio/mpeg'});
+  if(uploadError)throw uploadError;
+  const{data:urlData}=sb.storage.from('meeting-recordings').getPublicUrl(path);
+  const pin=getCurrentAuthPin();
+  const{error:rpcError}=await sb.rpc('add_meeting_recording',{
+    p_officer_pin:pin,
+    p_title:title,
+    p_meeting_date:date,
+    p_meeting_type:type,
+    p_note:note||null,
+    p_audio_url:urlData.publicUrl,
+    p_audio_name:baseName+'.'+ext,
+    p_duration_seconds:durationSeconds,
+    p_file_size:uploadFile.size
+  });
+  if(rpcError)throw rpcError;
+}
+
 async function submitRecording(e){
   e.preventDefault();
   const title=document.getElementById('rec-title').value.trim();
@@ -2963,37 +3040,7 @@ async function submitRecording(e){
   if(!pendingRecordingFile){showToast('Please choose an audio file');return;}
   submitBtn.disabled=true;
   try{
-    const original=pendingRecordingFile;
-    status.textContent='Preparing…';
-    let uploadFile=original,durationSeconds=null;
-    const compressed=await compressAudioToMp3(original,p=>{status.textContent='Compressing audio… '+Math.round(p*100)+'%';});
-    if(compressed&&compressed.blob&&compressed.blob.size<original.size){
-      uploadFile=compressed.blob;
-      durationSeconds=compressed.durationSeconds;
-      status.textContent='Compressed '+recFmtBytes(original.size)+' → '+recFmtBytes(uploadFile.size)+'. Uploading…';
-    }else{
-      status.textContent='Uploading '+recFmtBytes(original.size)+'… (couldn’t compress on this device)';
-    }
-    const isMp3=uploadFile!==original;
-    const baseName=(original.name||'recording').replace(/\.[^.]+$/,'');
-    const ext=isMp3?'mp3':(original.name.split('.').pop()||'audio');
-    const path=`${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;
-    const{error:uploadError}=await sb.storage.from('meeting-recordings').upload(path,uploadFile,{contentType:uploadFile.type||'audio/mpeg'});
-    if(uploadError)throw uploadError;
-    const{data:urlData}=sb.storage.from('meeting-recordings').getPublicUrl(path);
-    const pin=getCurrentAuthPin();
-    const{error:rpcError}=await sb.rpc('add_meeting_recording',{
-      p_officer_pin:pin,
-      p_title:title,
-      p_meeting_date:date,
-      p_meeting_type:type,
-      p_note:note,
-      p_audio_url:urlData.publicUrl,
-      p_audio_name:baseName+'.'+ext,
-      p_duration_seconds:durationSeconds,
-      p_file_size:uploadFile.size
-    });
-    if(rpcError)throw rpcError;
+    await uploadMeetingAudio(pendingRecordingFile,{title,date,type,note},t=>{status.textContent=t;});
     showToast('Recording posted');
     closeModal();
   }catch(err){
