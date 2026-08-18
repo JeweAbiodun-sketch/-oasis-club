@@ -621,6 +621,11 @@ body.dark .asst-chip{color:#a7e6d0;}
 .birthday-row{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--line-soft);}
 .birthday-row:last-child{border-bottom:none;}
 .birthday-today-banner{background:var(--gold-light);border-radius:10px;padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;font-size:14px;font-weight:500;color:#7a5800;}
+/* Gentle "add your birthday" nudge on the profile when no DOB is set yet. */
+.profile-bday-nudge{display:flex;align-items:flex-start;gap:11px;background:var(--gold-light);border:1px solid rgba(217,169,58,.35);border-radius:12px;padding:11px 14px;margin-bottom:14px;animation:birthdayRise .5s cubic-bezier(.22,1,.36,1) both;}
+.profile-bday-nudge .pbn-emoji{font-size:22px;line-height:1.1;flex-shrink:0;}
+.profile-bday-nudge strong{display:block;color:#7a5800;font-size:14px;margin-bottom:2px;}
+.profile-bday-nudge span{display:block;color:var(--ink-soft);font-size:12.5px;line-height:1.5;}
 .birthday-entrance{animation:birthdayRise .55s cubic-bezier(.22,1,.36,1) both;}
 @keyframes birthdayRise{from{opacity:0;transform:translateY(18px) scale(.985);}to{opacity:1;transform:translateY(0) scale(1);}}
 .birthday-spotlight-card{position:relative;overflow:hidden;background:linear-gradient(180deg,#fffaf0 0%,#fff 100%);border:1px solid rgba(217,169,58,.38);box-shadow:0 20px 50px -28px rgba(120,92,14,.35);}
@@ -1953,8 +1958,9 @@ function pageProfile(){
     }
   </div>
 
-  <div class="card" style="max-width:520px;margin-top:18px;">
+  <div class="card" style="max-width:520px;margin-top:18px;${getMemberDob(memberId)?'':'border-color:rgba(217,169,58,.5);'}">
     <div class="card-head"><h2>Date of birth</h2></div>
+    ${getMemberDob(memberId)?'':`<div class="profile-bday-nudge"><span class="pbn-emoji">&#127874;</span><div><strong>Add your birthday</strong><span>Set it once and the club will celebrate you on the day. It only shows on the members' birthday board — not your age.</span></div></div>`}
     <p class="cell-muted" style="margin-bottom:12px;">Used for the birthday board on the Overview dashboard.</p>
     <div style="display:flex;align-items:center;gap:10px;">
       <input type="date" id="pf-dob" value="${escHtml(getMemberDob(memberId))}" style="flex:1;max-width:200px;"/>
@@ -4064,9 +4070,60 @@ function checkPin(){
     errEl.textContent='';
     updateNavForSession();
     showToast('Welcome, '+member.name);
+    syncLocalBirthdayToServer();
+    maybeNudgeAddBirthday();
   }else{
     errEl.textContent='Incorrect PIN. Please try again.';
     document.getElementById('pin-input').value='';document.getElementById('pin-input').focus();
+  }
+}
+// Gentle, once-per-session prompt for a member who hasn't set a birthday yet,
+// pointing them to My profile. The flag stops it repeating on every in-app
+// navigation; a fresh app open is a fresh login, so it shows again then.
+// Officers on a role PIN have no personal profile, so getCurrentMemberId() is
+// null for them and they are never nudged.
+let birthdayNudgeShown=false;
+function maybeNudgeAddBirthday(){
+  if(birthdayNudgeShown)return;
+  const id=getCurrentMemberId();
+  if(!id||getMemberDob(id))return;
+  birthdayNudgeShown=true;
+  // Delay so it follows the "Welcome" toast instead of replacing it, and skip
+  // it if they're already on the profile (the inline banner covers that).
+  setTimeout(()=>{if(currentPage!=='profile')showToast('\u{1F382} Add your birthday in My profile so the club can celebrate you');},2600);
+}
+// One-time-per-session repair: if this member's birthday exists only in this
+// device's local storage (entered before the shared database had a dob column),
+// quietly push it to the server so it reaches the birthday board on every
+// device. Silent and automatic -- the member does nothing. If the server isn't
+// ready yet (migration not applied) or we're offline, it keeps the local copy
+// and a future session tries again.
+let birthdaySyncAttempted=false;
+async function syncLocalBirthdayToServer(){
+  if(birthdaySyncAttempted||!sb)return;
+  const id=getCurrentMemberId();
+  if(!id)return;
+  const mem=DATA.members.find(m=>m.id===id);
+  if(!mem)return;
+  const localDob=getExtra(id,'dob');
+  if(!localDob||mem.dob)return; // nothing local to sync, or the server already has it
+  birthdaySyncAttempted=true;
+  try{
+    const{error}=await sb.rpc('update_member_profile',{
+      p_member_id:mem.id,
+      p_current_pin:mem.pin,
+      p_name:mem.name,
+      p_phone:mem.phone||'',
+      p_email:mem.email||'',
+      p_photo:mem.photo||null,
+      p_dob:localDob
+    });
+    if(error)throw error;
+    mem.dob=localDob;   // reflect on this device immediately
+    render();
+    showToast('\u{1F382} Your birthday is now saved for the whole club');
+  }catch(_){
+    birthdaySyncAttempted=false; // let a later session retry once the DB is ready
   }
 }
 document.addEventListener('DOMContentLoaded',()=>{
@@ -7699,6 +7756,8 @@ function setupServiceWorker(){
     document.getElementById('pin-gate').classList.add('show');
   }
   render();
+  syncLocalBirthdayToServer();
+  maybeNudgeAddBirthday();
 })();
 </script>
 
