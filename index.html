@@ -544,6 +544,7 @@ body.dark .asst-chip{color:#a7e6d0;}
 .news-attachment-chip:hover{background:#fff;}
 .rec-flash{animation:recFlash 1.6s ease;}
 @keyframes recFlash{0%{box-shadow:0 0 0 3px var(--gold);}100%{box-shadow:0 0 0 0 rgba(0,0,0,0);}}
+@keyframes recBlink{0%,50%{opacity:1;}51%,100%{opacity:.15;}}
 
 /* ── Polls page ── */
 .poll-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius-lg);padding:18px 20px;margin-bottom:12px;box-shadow:var(--shadow-sm);}
@@ -662,6 +663,44 @@ body.dark .asst-chip{color:#a7e6d0;}
 .birthday-wish-paragraphs{display:flex;flex-direction:column;gap:10px;font-family:'Source Serif 4',serif;font-size:16px;line-height:1.7;color:var(--ink);}
 .birthday-wish-paragraphs p{margin:0;}
 .birthday-notice-footer{font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);padding-top:4px;}
+
+/* ── Birthday flamboyance (balloons, shimmer, halo, age badge, wish CTA) ── */
+/* Floating balloons drift up inside the (overflow:hidden) spotlight card. */
+.birthday-balloons{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0;}
+.birthday-balloon{position:absolute;bottom:-70px;width:34px;height:44px;border-radius:50% 50% 48% 48%;opacity:0;will-change:transform,opacity;}
+.birthday-balloon::after{content:'';position:absolute;left:50%;bottom:-10px;width:1px;height:13px;background:rgba(120,92,14,.45);transform:translateX(-50%);}
+.birthday-balloon:nth-child(1){left:7%;background:radial-gradient(circle at 34% 30%,#f3d688,#d9a93a);animation:balloonRise 12s linear infinite;}
+.birthday-balloon:nth-child(2){left:27%;width:28px;height:37px;background:radial-gradient(circle at 34% 30%,#7fd8d0,#0f766e);animation:balloonRise 15s linear infinite 2.5s;}
+.birthday-balloon:nth-child(3){left:50%;background:radial-gradient(circle at 34% 30%,#f6c1a0,#e08a4c);animation:balloonRise 13s linear infinite 1s;}
+.birthday-balloon:nth-child(4){left:71%;width:30px;height:39px;background:radial-gradient(circle at 34% 30%,#f3d688,#d9a93a);animation:balloonRise 16s linear infinite 3.5s;}
+.birthday-balloon:nth-child(5){left:88%;width:26px;height:34px;background:radial-gradient(circle at 34% 30%,#c9b3f0,#7c5cd0);animation:balloonRise 14s linear infinite .8s;}
+@keyframes balloonRise{0%{transform:translateY(0) rotate(-3deg);opacity:0;}12%{opacity:.55;}82%{opacity:.5;}100%{transform:translateY(-680px) rotate(3deg);opacity:0;}}
+/* Keep all card content above the balloons. */
+.birthday-spotlight-card>.birthday-spotlight-top,.birthday-spotlight-card>.birthday-hero,.birthday-spotlight-card>.birthday-spotlight-wish,.birthday-spotlight-card>.birthday-wish-cta,.birthday-spotlight-card>.birthday-mini-count,.birthday-spotlight-card>.birthday-comments{position:relative;z-index:1;}
+/* Spinning gold halo behind the featured photo. */
+.birthday-halo{position:relative;display:inline-block;}
+.birthday-halo::before{content:'';position:absolute;inset:-5px;border-radius:50%;background:conic-gradient(from 0deg,#d9a93a,#f4e0a1,#0f766e,#14b8a6,#f4e0a1,#d9a93a);animation:haloSpin 6s linear infinite;z-index:0;filter:blur(.3px);}
+.birthday-halo .birthday-avatar,.birthday-halo .birthday-avatar-ph{position:relative;z-index:1;}
+@keyframes haloSpin{to{transform:rotate(360deg);}}
+/* The prominent "Wish … Happy Birthday" call to action. */
+.birthday-wish-cta{display:inline-flex;align-items:center;gap:8px;margin-top:16px;padding:13px 22px;border:none;border-radius:14px;background:linear-gradient(135deg,#0f766e 0%,#14b8a6 100%);color:#fff;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 12px 26px -12px rgba(15,118,110,.75);transition:transform .15s ease,box-shadow .15s ease;animation:ctaBreathe 2.6s ease-in-out infinite;}
+.birthday-wish-cta:hover{transform:translateY(-2px);}
+.birthday-wish-cta:active{transform:translateY(0);}
+@keyframes ctaBreathe{0%,100%{box-shadow:0 12px 26px -12px rgba(15,118,110,.7);}50%{box-shadow:0 14px 32px -8px rgba(20,184,166,.9);}}
+.birthday-wish-pulse{animation:wishPulse 1.4s ease;}
+@keyframes wishPulse{0%{box-shadow:0 0 0 0 rgba(217,169,58,.7);}70%{box-shadow:0 0 0 12px rgba(217,169,58,0);}100%{box-shadow:0 0 0 0 rgba(217,169,58,0);}}
+/* Gold-foil shimmer on the title — only where text-clip is supported, so the
+   text never turns invisible on browsers that can't do it. */
+@supports ((-webkit-background-clip:text) or (background-clip:text)){
+  .birthday-spotlight-title{background:linear-gradient(100deg,var(--ink) 0%,var(--ink) 40%,#d9a93a 47%,#f4e0a1 50%,#d9a93a 53%,var(--ink) 60%,var(--ink) 100%);background-size:220% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;animation:birthdayShimmer 4.5s ease-in-out infinite;}
+}
+@keyframes birthdayShimmer{0%,100%{background-position:120% 0;}50%{background-position:-20% 0;}}
+/* Respect reduced-motion: stop every birthday animation and restore solid title. */
+@media (prefers-reduced-motion: reduce){
+  .birthday-balloon,.birthday-halo::before,.birthday-wish-cta,.birthday-spotlight-title{animation:none!important;}
+  .birthday-balloon{display:none;}
+  .birthday-spotlight-title{-webkit-text-fill-color:var(--ink)!important;color:var(--ink)!important;}
+}
 
 /* ── Welfare register ── */
 .welfare-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius-lg);padding:18px 20px;margin-bottom:12px;box-shadow:var(--shadow-sm);}
@@ -1799,7 +1838,8 @@ function closeMobileNav(){
   document.getElementById('nav-backdrop').classList.remove('show');
 }
 
-function closeModal(){document.getElementById('modal-bg').classList.remove('show');document.getElementById('modal-content').innerHTML='';}
+let modalCloseCleanup=null;
+function closeModal(){if(typeof modalCloseCleanup==='function'){const fn=modalCloseCleanup;modalCloseCleanup=null;try{fn();}catch(_){}}document.getElementById('modal-bg').classList.remove('show');document.getElementById('modal-content').innerHTML='';}
 function openModal(html){document.getElementById('modal-content').innerHTML=html;document.getElementById('modal-bg').classList.add('show');}
 document.getElementById('modal-bg').addEventListener('click',e=>{if(e.target.id==='modal-bg')closeModal();});
 
@@ -2811,7 +2851,13 @@ const REC_MONO=true;
 const REC_SAMPLE_RATE=22050;
 // Above this original size we don't attempt in-browser compression (decoding
 // the whole file into memory can crash phone browsers) -- we upload as-is.
-const REC_COMPRESS_MAX_BYTES=80*1024*1024;
+// Kept high so long meetings (a 4-hour recording is ~275 MB at 192 kbps) still
+// get compressed down under the bucket cap rather than being rejected raw.
+const REC_COMPRESS_MAX_BYTES=300*1024*1024;
+// Hard ceiling enforced by the storage bucket (see 15_meeting_recordings_setup.sql).
+// If a file is still bigger than this after our best-effort compression, the
+// upload would be rejected server-side, so we stop early with a clear message.
+const REC_BUCKET_MAX_BYTES=100*1024*1024;
 let pendingRecordingFile=null;
 
 function recFmtBytes(n){
@@ -2900,7 +2946,19 @@ function openRecordingForm(){
       </div>
       <div class="field"><label>Note (optional)</label><textarea id="rec-note" rows="2" placeholder="Anything worth flagging about this recording&hellip;"></textarea></div>
       <div class="field">
-        <label>Audio file</label>
+        <label>Record the meeting live</label>
+        <div id="rec-live-wrap" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+          <button type="button" class="btn" id="rec-live-btn" style="font-size:12.5px;padding:7px 14px;" onclick="toggleInAppRecording()">
+            <span id="rec-live-dot" style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#e5484d;margin-right:7px;vertical-align:middle;opacity:0;"></span>
+            <span id="rec-live-label">● Start recording</span>
+          </button>
+          <span id="rec-live-timer" class="cell-muted" style="font-variant-numeric:tabular-nums;font-size:13px;"></span>
+        </div>
+        <div class="cell-muted" style="font-size:11.5px;margin-top:5px;">Records with this device's microphone. Keep the app open and the screen on while recording.</div>
+      </div>
+      <div class="cell-muted" style="text-align:center;font-size:11.5px;margin:4px 0 10px;">— or —</div>
+      <div class="field">
+        <label>Upload an existing file</label>
         <button type="button" class="btn" style="font-size:12.5px;padding:7px 14px;" onclick="document.getElementById('rec-file').click()">Choose audio</button>
         <input type="file" id="rec-file" accept="audio/*,video/mp4" style="display:none"/>
         <span id="rec-file-name" class="cell-muted" style="margin-left:8px;"></span>
@@ -2916,10 +2974,92 @@ function openRecordingForm(){
   fileInput.addEventListener('change',e=>{
     const file=e.target.files[0];
     if(!file)return;
+    cancelInAppRecording();
+    const liveTimer=document.getElementById('rec-live-timer');if(liveTimer)liveTimer.textContent='';
     pendingRecordingFile=file;
     document.getElementById('rec-file-name').textContent=file.name+' ('+recFmtBytes(file.size)+')';
   });
   document.getElementById('recording-form').addEventListener('submit',submitRecording);
+  modalCloseCleanup=cancelInAppRecording;
+}
+
+/* ---- In-app live recording (device microphone) ---- */
+let recMediaRecorder=null,recStream=null,recChunks=[],recTimerId=null,recStartMs=0;
+function recFmtClock(sec){const m=Math.floor(sec/60),s=sec%60;return m+':'+(s<10?'0':'')+s;}
+function recUpdateTimer(){
+  const t=document.getElementById('rec-live-timer');
+  if(!t)return;
+  t.textContent=recFmtClock(Math.floor((Date.now()-recStartMs)/1000))+' — recording…';
+}
+// Pick a MIME type the browser can both record and (later) decode for compression.
+function recPickMime(){
+  const prefs=['audio/webm;codecs=opus','audio/webm','audio/mp4','audio/ogg;codecs=opus'];
+  if(!window.MediaRecorder||!MediaRecorder.isTypeSupported)return'';
+  for(const m of prefs)if(MediaRecorder.isTypeSupported(m))return m;
+  return'';
+}
+async function toggleInAppRecording(){
+  if(recMediaRecorder&&recMediaRecorder.state!=='inactive'){stopInAppRecording();return;}
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia||!window.MediaRecorder){
+    showToast('This device/browser can’t record audio in-app. Please upload a file instead.');
+    return;
+  }
+  try{
+    recStream=await navigator.mediaDevices.getUserMedia({audio:true});
+  }catch(err){
+    showToast('Microphone access was blocked. Allow the mic, or upload a file instead.');
+    return;
+  }
+  const mime=recPickMime();
+  try{
+    recMediaRecorder=mime?new MediaRecorder(recStream,{mimeType:mime}):new MediaRecorder(recStream);
+  }catch(_){ recMediaRecorder=new MediaRecorder(recStream); }
+  recChunks=[];
+  recMediaRecorder.ondataavailable=e=>{if(e.data&&e.data.size)recChunks.push(e.data);};
+  recMediaRecorder.onstop=finalizeInAppRecording;
+  recMediaRecorder.start();
+  recStartMs=Date.now();
+  recTimerId=setInterval(recUpdateTimer,500);
+  recUpdateTimer();
+  const dot=document.getElementById('rec-live-dot'),label=document.getElementById('rec-live-label');
+  if(dot){dot.style.opacity='1';dot.style.animation='recBlink 1s steps(2,start) infinite';}
+  if(label)label.textContent='■ Stop recording';
+}
+function stopInAppRecording(){
+  if(recTimerId){clearInterval(recTimerId);recTimerId=null;}
+  if(recMediaRecorder&&recMediaRecorder.state!=='inactive'){
+    try{recMediaRecorder.stop();}catch(_){finalizeInAppRecording();}
+  }
+}
+function finalizeInAppRecording(){
+  if(recStream){recStream.getTracks().forEach(t=>{try{t.stop();}catch(_){}});recStream=null;}
+  const durationSec=Math.floor((Date.now()-recStartMs)/1000);
+  const type=(recMediaRecorder&&recMediaRecorder.mimeType)||(recChunks[0]&&recChunks[0].type)||'audio/webm';
+  const blob=new Blob(recChunks,{type});
+  recChunks=[];
+  recMediaRecorder=null;
+  const dot=document.getElementById('rec-live-dot'),label=document.getElementById('rec-live-label'),timer=document.getElementById('rec-live-timer');
+  if(dot){dot.style.opacity='0';dot.style.animation='';}
+  if(label)label.textContent='● Start recording';
+  if(!blob.size){if(timer)timer.textContent='';return;}
+  const ext=/mp4/.test(type)?'m4a':(/ogg/.test(type)?'ogg':'webm');
+  const stamp=(document.getElementById('rec-date')&&document.getElementById('rec-date').value)||new Date().toISOString().slice(0,10);
+  const file=new File([blob],'meeting-'+stamp+'.'+ext,{type});
+  pendingRecordingFile=file;
+  if(timer)timer.textContent='Recorded '+recFmtClock(durationSec)+' ('+recFmtBytes(file.size)+')';
+  const nameEl=document.getElementById('rec-file-name');
+  if(nameEl)nameEl.textContent='';
+}
+// Called when the modal closes: abort any in-progress recording and free the mic
+// WITHOUT keeping the blob (the user is leaving the form).
+function cancelInAppRecording(){
+  if(recTimerId){clearInterval(recTimerId);recTimerId=null;}
+  if(recMediaRecorder&&recMediaRecorder.state!=='inactive'){
+    recMediaRecorder.onstop=null;
+    try{recMediaRecorder.stop();}catch(_){}
+  }
+  if(recStream){recStream.getTracks().forEach(t=>{try{t.stop();}catch(_){}});recStream=null;}
+  recMediaRecorder=null;recChunks=[];
 }
 
 // Lazy-loads the MP3 encoder only when someone actually uploads audio.
@@ -3005,6 +3145,14 @@ async function uploadMeetingAudio(file,{title,date,type,note},onStatus){
   }else{
     onStatus&&onStatus('Uploading '+recFmtBytes(original.size)+'… (couldn’t compress on this device)');
   }
+  // The bucket rejects anything over its cap. Stop here with a message the user
+  // can act on, instead of letting the server bounce it with a cryptic error.
+  if(uploadFile.size>REC_BUCKET_MAX_BYTES){
+    const compressedNote=(uploadFile!==original)
+      ?'Even after compression it is '+recFmtBytes(uploadFile.size)+'. '
+      :'It couldn’t be compressed on this device and is '+recFmtBytes(uploadFile.size)+'. ';
+    throw new Error('This recording is too large to upload (limit '+recFmtBytes(REC_BUCKET_MAX_BYTES)+'). '+compressedNote+'Try a shorter recording, or compress it to a lower bitrate before uploading.');
+  }
   const isMp3=uploadFile!==original;
   const baseName=(original.name||'recording').replace(/\.[^.]+$/,'');
   const ext=isMp3?'mp3':((original.name||'').split('.').pop()||'audio');
@@ -3035,9 +3183,10 @@ async function submitRecording(e){
   const note=document.getElementById('rec-note').value;
   const status=document.getElementById('rec-status');
   const submitBtn=document.getElementById('rec-submit-btn');
+  if(recMediaRecorder&&recMediaRecorder.state!=='inactive'){showToast('Please stop the recording first');return;}
   if(!title){showToast('Please add a title');return;}
   if(!date){showToast('Please choose the meeting date');return;}
-  if(!pendingRecordingFile){showToast('Please choose an audio file');return;}
+  if(!pendingRecordingFile){showToast('Please record or choose an audio file');return;}
   submitBtn.disabled=true;
   try{
     await uploadMeetingAudio(pendingRecordingFile,{title,date,type,note},t=>{status.textContent=t;});
@@ -5492,7 +5641,7 @@ function birthdayCommentItemHtml(comment){
 function birthdayCommentsSectionHtml(birthdayKey){
   const comments=birthdayCommentsForKey(birthdayKey);
   const currentId=getCurrentMemberId();
-  return `<div class="birthday-comments">
+  return `<div class="birthday-comments" id="birthday-comments-${birthdayKey}">
     <div class="birthday-comments-head">
       <div>
         <div class="birthday-comments-title">Birthday wishes</div>
@@ -5515,9 +5664,11 @@ function birthdaySpotlightCardHtml(todayBdays,birthdayPost,birthdayKey){
   const wishHtml=birthdayPost?birthdayPost.bodyHtml:birthdayNoticeBodyHtml(loadBirthdayWishBlocksDraft(birthdayKey),birthdayKey);
   const comments=birthdayCommentsForKey(birthdayKey);
   const leadToday=todayBdays[0];
+  const ctaName=todayBdays.length>1?'them':escHtml((leadToday&&leadToday.name||'').split(' ')[0]||'them');
   return `
   <div class="card birthday-spotlight-card birthday-entrance">
     <div class="birthday-spotlight-glow"></div>
+    <div class="birthday-balloons" aria-hidden="true"><span class="birthday-balloon"></span><span class="birthday-balloon"></span><span class="birthday-balloon"></span><span class="birthday-balloon"></span><span class="birthday-balloon"></span></div>
     <div class="birthday-spotlight-top">
       <div>
         <div class="card-head" style="margin-bottom:10px;">
@@ -5527,13 +5678,82 @@ function birthdaySpotlightCardHtml(todayBdays,birthdayPost,birthdayKey){
         <div class="birthday-spotlight-title">Today we celebrate ${escHtml(todayBdays.map(m=>m.name).join(todayBdays.length>1?', ':' '))}</div>
         <p class="cell-muted" style="margin-top:8px;">A thoughtful wish is being kept in the main notice feed, with a unique message for each celebrant and room for everyone else to add their greetings below.</p>
       </div>
-      <div class="birthday-spotlight-photo">${birthdayAvatarHtml(leadToday||todayBdays[0],true)}</div>
+      <div class="birthday-spotlight-photo"><div class="birthday-halo">${birthdayAvatarHtml(leadToday||todayBdays[0],true)}</div></div>
     </div>
     <div class="birthday-hero">${birthdaySpotlightPeopleHtml(todayBdays)}</div>
     <div class="birthday-spotlight-wish">${wishHtml||'Drafting a thoughtful birthday wish…'}</div>
+    <button type="button" class="birthday-wish-cta" onclick="scrollToBirthdayWish('${birthdayKey}')">&#127881; Wish ${ctaName} a Happy Birthday</button>
     ${comments.length?`<div class="birthday-mini-count">${comments.length} birthday wish${comments.length===1?'':'es'} so far</div>`:''}
     ${birthdayCommentsSectionHtml(birthdayKey)}
   </div>`;
+}
+// The "Wish … Happy Birthday" CTA: jump whoever clicks it straight to the wish
+// box, focus it and give it a quick pulse. Logged-out members are scrolled to
+// the wishes section (which shows the login prompt) with a nudge.
+function scrollToBirthdayWish(birthdayKey){
+  const ta=document.getElementById('birthday-comment-'+birthdayKey);
+  if(ta){
+    ta.scrollIntoView({behavior:'smooth',block:'center'});
+    setTimeout(()=>{try{ta.focus({preventScroll:true});}catch(_){ta.focus();}ta.classList.add('birthday-wish-pulse');setTimeout(()=>ta.classList.remove('birthday-wish-pulse'),1500);},380);
+  }else{
+    const sec=document.getElementById('birthday-comments-'+birthdayKey);
+    if(sec)sec.scrollIntoView({behavior:'smooth',block:'center'});
+    showToast('Log in to leave a birthday wish \u{1F389}');
+  }
+}
+// A gold/teal confetti burst that rains once and cleans itself up. Skipped when
+// the OS asks for reduced motion.
+function launchBirthdayConfetti(){
+  if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  const canvas=document.createElement('canvas');
+  canvas.style.cssText='position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:99999;';
+  document.body.appendChild(canvas);
+  const ctx=canvas.getContext('2d');
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  function size(){canvas.width=Math.floor(innerWidth*dpr);canvas.height=Math.floor(innerHeight*dpr);}
+  size();
+  const colors=['#d9a93a','#e8c56b','#0f766e','#14b8a6','#fff4d6','#f5b301','#7c5cd0'];
+  const N=Math.min(150,Math.max(60,Math.round(innerWidth/6)));
+  const parts=[];
+  for(let i=0;i<N;i++)parts.push({
+    x:Math.random()*canvas.width,
+    y:-Math.random()*canvas.height*0.5,
+    w:(5+Math.random()*7)*dpr,
+    h:(8+Math.random()*8)*dpr,
+    c:colors[i%colors.length],
+    vx:(-1+Math.random()*2)*dpr,
+    vy:(2+Math.random()*3.5)*dpr,
+    rot:Math.random()*Math.PI,
+    vr:-0.2+Math.random()*0.4,
+    sway:Math.random()*Math.PI*2
+  });
+  const start=performance.now(),DUR=4000;
+  function frame(now){
+    const t=now-start;
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    const fade=t>DUR-800?Math.max(0,(DUR-t)/800):1;
+    for(const p of parts){
+      p.sway+=0.05;
+      p.x+=p.vx+Math.sin(p.sway)*0.6*dpr;
+      p.y+=p.vy;
+      p.rot+=p.vr;
+      if(p.y>canvas.height+20){p.y=-20;p.x=Math.random()*canvas.width;}
+      ctx.save();ctx.globalAlpha=fade;ctx.translate(p.x,p.y);ctx.rotate(p.rot);
+      ctx.fillStyle=p.c;ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);ctx.restore();
+    }
+    if(t<DUR)requestAnimationFrame(frame);else canvas.remove();
+  }
+  requestAnimationFrame(frame);
+}
+// Fire the confetti once per set of celebrants per app session, only on the
+// News page where the Spotlight card actually lives.
+let birthdayFlourishFired={};
+function maybeBirthdayFlourish(page,todayBdays){
+  if(page!=='news'||!todayBdays||!todayBdays.length)return;
+  const key=todayBdays.map(m=>m.id).slice().sort().join('|');
+  if(birthdayFlourishFired[key])return;
+  birthdayFlourishFired[key]=true;
+  setTimeout(launchBirthdayConfetti,350);
 }
 async function submitBirthdayComment(birthdayKey){
   const textarea=document.getElementById('birthday-comment-'+birthdayKey);
@@ -7303,6 +7523,7 @@ function render(){
   else if(currentPage==='tasks')main.innerHTML=pageTasks();
   const todayBdays=todaysBirthdays();
   if(todayBdays.length)void syncBirthdayNoticePost(todayBdays,birthdayCacheKey(todayBdays));
+  maybeBirthdayFlourish(currentPage,todayBdays);
   maybeNotifyBirthdayNotice();
   maybeNotifyBirthdayToday();
 }
