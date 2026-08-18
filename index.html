@@ -2240,6 +2240,7 @@ function pageOverview(){
   </div>
 
   ${(()=>{
+    if(!canSeeUpcomingBirthdays())return '';
     const bdays=upcomingBirthdays(30);
     const todayBdays=todaysBirthdays();
     if(!bdays.length)return '';
@@ -3802,6 +3803,19 @@ function isSecretaryNow(){
   const s=sessionStorage.getItem(SESSION_KEY)||'';
   if(s==='role:secretary')return true;
   if(s.startsWith('member:')){const m=DATA.members.find(x=>x.id===s.slice(7));return !!(m&&m.role==='Secretary');}
+  return false;
+}
+// The Overview "upcoming Birthdays (next 30 days)" list is limited to the two
+// roles responsible for member welfare and comms: the Secretary and the PRO.
+// Secretary may sign in with the officer PIN (role:secretary) or personally;
+// PRO has no officer PIN, so only a personal login as a PRO member counts.
+function canSeeUpcomingBirthdays(){
+  const s=sessionStorage.getItem(SESSION_KEY)||'';
+  if(s==='role:secretary')return true;
+  if(s.startsWith('member:')){
+    const m=DATA.members.find(x=>x.id===s.slice(7));
+    return !!(m&&['Secretary','PRO'].includes(m.role)&&!['suspended','dismissed'].includes(m.status));
+  }
   return false;
 }
 // Replaces the old isProSessionNow() (PRO-only), which was narrower than
