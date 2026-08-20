@@ -898,7 +898,7 @@ body.dark .asst-chip{color:#a7e6d0;}
   <button type="button" class="navlink active" data-page="overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Overview</button>
   <button type="button" class="navlink" data-page="profile" id="nav-profile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.9 3.1-7 7-7s7 3.1 7 7"/></svg>My profile</button>
   <button type="button" class="navlink" data-page="members"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.5 2.7-6 6-6s6 2.5 6 6"/><circle cx="17" cy="9" r="2.6"/><path d="M15.5 14c2.5.3 4.5 2.3 4.5 5"/></svg>Members</button>
-  <button type="button" class="navlink" data-page="photos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="15" rx="2"/><circle cx="8.5" cy="10" r="2"/><path d="M21 16l-5-5-4.5 4.5L9 13l-6 6"/></svg>Photos</button>
+  <button type="button" class="navlink" data-page="photos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="15" rx="2"/><circle cx="8.5" cy="10" r="2"/><path d="M21 16l-5-5-4.5 4.5L9 13l-6 6"/></svg>Members' Photos</button>
   <button type="button" class="navlink" data-page="dues"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 9.5c0-1.4 1.3-2.5 3-2.5s3 .9 3 2.2c0 3-6 1.5-6 4.6 0 1.4 1.3 2.5 3 2.5s3-1 3-2.4"/></svg>Dues &amp; subscriptions</button>
   <button type="button" class="navlink" data-page="minutes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Meeting minutes</button>
   <button type="button" class="navlink" data-page="recordings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0014 0M12 17v4M8 21h8"/></svg>Meeting recordings</button>
@@ -1694,6 +1694,10 @@ async function fetchAllData(){
       localStorage.setItem(WELFARE_EVENTS_STORE,JSON.stringify(DATA.welfareEvents));
     }catch(_){}
     connectionStatus='connected';
+    // Pre-cache event/function photos & videos into IndexedDB in the background
+    // so the Memories archive opens offline even if the member never visited the
+    // Events page this session. Fire-and-forget; guarded internally by onLine.
+    try{if(typeof warmEventMemoryCache==='function')setTimeout(()=>{void warmEventMemoryCache();},1500);}catch(_){}
     // Refresh chatbot UI now that DATA.meta.chatbotApiKey is known
     if(typeof asstUpdateUI==='function')asstUpdateUI();
   }catch(e){
@@ -2410,7 +2414,7 @@ function pagePhotos(){
   const withPhoto=all.filter(m=>m.photo).length;
   return `
   <div class="page-head">
-    <div><h1>Photos</h1><div class="sub">${withPhoto} of ${all.length} members have uploaded a photo</div></div>
+    <div><h1>Members' Photos</h1><div class="sub">${withPhoto} of ${all.length} members have uploaded a photo</div></div>
   </div>
   <div class="card">
     <p class="cell-muted" style="margin-bottom:16px;">Each member can upload their own photo from their profile on the Members page. Tap a member here to open their record.</p>
@@ -4387,6 +4391,40 @@ function eventMemoryTypeForFile(file){
 function eventMemoryLabel(type){
   return type==='video'?'Video':'Photo';
 }
+// Photo compression settings. A modern phone photo (4-12MB) drops to a few
+// hundred KB at these values with no visible loss for on-screen viewing, which
+// keeps both the upload and every member's offline cache light. Videos are NOT
+// compressed (no practical in-browser transcoder) -- they rely on the 60MB cap.
+const EVENT_IMG_MAX_EDGE=1600;
+const EVENT_IMG_QUALITY=0.82;
+const EVENT_IMG_MIN_BYTES=350*1024; // already-small images are left untouched
+// Best-effort on-device downscale+re-encode to JPEG. Returns a smaller File, or
+// null to signal "upload the original" (animated GIFs, tiny images, images that
+// wouldn't shrink, or any decode/encode failure all fall through safely).
+async function compressEventImage(file){
+  try{
+    if(!file||!String(file.type||'').startsWith('image/'))return null;
+    if(String(file.type).includes('gif'))return null;       // preserve animation
+    if(file.size<=EVENT_IMG_MIN_BYTES)return null;
+    const url=URL.createObjectURL(file);
+    let img;
+    try{
+      img=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=()=>rej(new Error('decode'));i.src=url;});
+    }catch(_){ URL.revokeObjectURL(url); return null; }
+    const w=img.naturalWidth||img.width, h=img.naturalHeight||img.height;
+    if(!w||!h){URL.revokeObjectURL(url);return null;}
+    const scale=Math.min(1,EVENT_IMG_MAX_EDGE/Math.max(w,h));
+    const cw=Math.max(1,Math.round(w*scale)), ch=Math.max(1,Math.round(h*scale));
+    const canvas=document.createElement('canvas');canvas.width=cw;canvas.height=ch;
+    const ctx=canvas.getContext('2d');
+    ctx.drawImage(img,0,0,cw,ch);
+    URL.revokeObjectURL(url);
+    const blob=await new Promise(res=>canvas.toBlob(res,'image/jpeg',EVENT_IMG_QUALITY));
+    if(!blob||blob.size>=file.size)return null;             // no real gain -> keep original
+    const base=(file.name||'photo').replace(/\.[^.]+$/,'');
+    return new File([blob],base+'.jpg',{type:'image/jpeg'});
+  }catch(_){ return null; }
+}
 function eventAlbumMeta(memories,event){
   const items=memories||[];
   const photos=items.filter(m=>m.mediaType!=='video').length;
@@ -4479,7 +4517,7 @@ function pageEvents(){
   const now=new Date(); now.setHours(0,0,0,0);
   const upcoming=evts.filter(e=>new Date(e.date+'T00:00:00')>=now).sort((a,b)=>a.date.localeCompare(b.date));
   const past=evts.filter(e=>new Date(e.date+'T00:00:00')<now).sort((a,b)=>b.date.localeCompare(a.date));
-  const typeBadge={general:'badge-active',agm:'badge-due',social:'badge-inactive',committee:'badge-overdue'};
+  const typeBadge={general:'badge-active',agm:'badge-due',social:'badge-inactive',committee:'badge-overdue',function:'badge-due'};
   function evCard(ev){
     const dd=new Date(ev.date+'T00:00:00');
     return '<div class="ev-card">'
@@ -4503,7 +4541,7 @@ function pageEvents(){
   const heroLines={
     top:'Event',
     title:'Upcoming plans, permanent memories.',
-    body:'This page holds the club’s next events at the top, then keeps photos and videos below as a lasting archive. Once a memory is viewed, it is cached on the device so it can still open offline later.'
+    body:'This page holds the club’s next events and functions at the top, then keeps photos and videos below as a lasting archive. Memories are saved to this device automatically so they open even when you are offline.'
   };
   let html='<section class="event-hero">'
     +'<div class="event-hero-grid">'
@@ -4511,7 +4549,7 @@ function pageEvents(){
     +'<div class="event-hero-note">'
     +'<span class="event-hero-pill">'+upcoming.length+' upcoming event'+(upcoming.length===1?'':'s')+'</span>'
     +'<span class="event-hero-pill">'+albums.length+' album'+(albums.length===1?'':'s')+'</span>'
-    +'<span class="event-hero-pill">Offline after first view</span>'
+    +'<span class="event-hero-pill">Saved for offline</span>'
     +'</div></div>'
     +'<div class="event-hero-metrics">'
     +'<div class="event-hero-metric"><span class="value">'+upcoming.length+'</span><span class="label">Upcoming events</span></div>'
@@ -4531,7 +4569,7 @@ function pageEvents(){
   else{html+='<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><div class="title">No upcoming events</div><div class="hint">'+(isOfc?'Use the button above to add your first event.':'Nothing scheduled yet — check back soon.')+'</div></div>';}
   if(past.length){html+='<details style="margin-top:20px"><summary style="cursor:pointer;font-size:13px;color:var(--ink-faint);padding:8px 0">Show '+past.length+' past event'+(past.length>1?'s':'')+'</summary>'+past.map(evCard).join('')+'</details>';}
   html+='</section>';
-  html+='<section class="event-section"><div class="section-head"><div><h2>Memories</h2><div class="sub">Photos and videos from club events, curated into albums and cached offline after first view.</div></div>'
+  html+='<section class="event-section"><div class="section-head"><div><h2>Memories</h2><div class="sub">Photos and videos from club events and functions, curated into albums and saved on your device for offline viewing.</div></div>'
     +(isOfc?'<div class="section-actions"><button type="button" class="btn btn-primary" onclick="openAddEventMemory()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M4 7h4l2-3h4l2 3h4v12H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Upload memory</button></div>':'')
     +'</div>';
   if(albums.length){html+='<div class="event-albums">'+albums.map((album,i)=>eventAlbumCardHtml(album,i)).join('')+'</div>';}
@@ -4585,7 +4623,7 @@ function openAddEvent(){
     +'</div>'
     +'<div class="field"><label>Location (optional)</label><input type="text" id="ev-loc" placeholder="e.g. Club Hall, Otun Ekiti"/></div>'
     +'<div class="field"><label>Meeting link (optional)</label><input type="url" id="ev-meeting-link" placeholder="e.g. https://meet.google.com/abc-defg-hij"/></div>'
-    +'<div class="field"><label>Type</label><select id="ev-type"><option value="general">General meeting</option><option value="committee">Committee meeting</option><option value="agm">AGM</option><option value="social">Social event</option></select></div>'
+    +'<div class="field"><label>Type</label><select id="ev-type"><optgroup label="Meetings"><option value="general">General meeting</option><option value="committee">Committee meeting</option><option value="agm">AGM</option></optgroup><optgroup label="Functions &amp; socials"><option value="function">Function (party, ceremony, outing)</option><option value="social">Social event</option></optgroup></select></div>'
     +'<div class="field"><label>Description (optional)</label><textarea id="ev-desc" rows="3"></textarea></div>'
     +'<div class="modal-actions"><button type="button" class="btn" onclick="closeModal()">Cancel</button><button type="button" class="btn btn-primary" onclick="submitAddEvent()">Add event</button></div>');
 }
@@ -4599,7 +4637,7 @@ function openAddEventMemory(){
     +'<div class="field"><label>Title</label><input type="text" id="mem-title" placeholder="e.g. Gala Night Highlights"/></div>'
     +'<div class="field"><label>Caption (optional)</label><textarea id="mem-caption" rows="3" placeholder="A short note about the memory"></textarea></div>'
     +'<div class="field"><label>Photos or videos</label><input type="file" id="mem-files" accept="image/*,video/*" multiple/></div>'
-    +'<div class="cell-muted" style="font-size:12px;line-height:1.6;margin-bottom:6px;">Video files can be large. For the smoothest offline experience, keep each file reasonably sized.</div>'
+    +'<div class="cell-muted" style="font-size:12px;line-height:1.6;margin-bottom:6px;">Photos are automatically optimised on your device before upload, so they stay sharp but light for offline viewing. Videos are not compressed — keep each one under 60MB.</div>'
     +'<div class="modal-actions"><button type="button" class="btn" onclick="closeModal()">Cancel</button><button type="button" class="btn btn-primary" onclick="submitAddEventMemory()">Save memories</button></div>');
 }
 
@@ -4617,9 +4655,17 @@ async function submitAddEventMemory(){
   const fallbackTitle=title||(event?event.title:'Event memory');
   try{
     let saved=0;
-    for(const file of files){
-      if(file.size>60*1024*1024)throw new Error('Please keep each memory file under 60MB.');
-      const ext=(file.name.split('.').pop()||'bin').toLowerCase();
+    for(const original of files){
+      const isVideo=eventMemoryTypeForFile(original)==='video';
+      let file=original;
+      if(!isVideo){
+        if(saveBtn)saveBtn.textContent='Optimising…';
+        const compressed=await compressEventImage(original);
+        if(compressed)file=compressed;
+        if(saveBtn)saveBtn.textContent='Saving…';
+      }
+      if(file.size>60*1024*1024)throw new Error(isVideo?'This video is over 60MB — please trim it or record at a lower quality, then try again.':'This photo is over 60MB and could not be optimised on this device.');
+      const ext=((file.name||'').split('.').pop()||'bin').toLowerCase();
       const path=`${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;
       const mediaType=eventMemoryTypeForFile(file);
       const bucket='event-memories';
