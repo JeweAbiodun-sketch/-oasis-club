@@ -655,7 +655,7 @@ body.dark .asst-chip{color:#a7e6d0;}
 .birthday-comment-body{flex:1;background:#fff;border:1px solid var(--line-soft);border-radius:14px;padding:10px 12px;box-shadow:var(--shadow-xs);}
 .birthday-comment-top{display:flex;justify-content:space-between;gap:10px;font-size:12px;margin-bottom:5px;}
 .birthday-comment-top span{color:var(--ink-faint);}
-.birthday-comment-text{font-size:13.5px;line-height:1.55;color:var(--ink);}
+.birthday-comment-text{font-size:13.5px;line-height:1.55;color:var(--ink);white-space:pre-wrap;overflow-wrap:anywhere;}
 .birthday-comment-form textarea{width:100%;resize:vertical;min-height:74px;}
 .birthday-notice-copy{display:flex;flex-direction:column;gap:14px;}
 .birthday-notice-loading{padding:18px;border-radius:16px;background:rgba(217,169,58,.1);border:1px dashed rgba(217,169,58,.4);font-size:13.5px;font-weight:600;color:#7a5800;text-align:center;}
@@ -1994,6 +1994,17 @@ function pageProfile(){
       ${getMemberDob(memberId)?`<button type="button" class="btn" style="font-size:13px;" onclick="clearProfileDob('${memberId}')">Clear</button>`:''}
     </div>
   </div>
+
+  ${(()=>{
+    const wishes=birthdayWishesForMember(memberId);
+    if(!wishes.length)return '';
+    return `<div class="card birthday-spotlight-card" style="max-width:520px;margin-top:18px;">
+      <div class="birthday-spotlight-glow"></div>
+      <div class="card-head" style="position:relative;z-index:1;"><h2>&#127874; Your birthday wishes</h2><span class="badge badge-due">${wishes.length} kept</span></div>
+      <p class="cell-muted" style="margin-bottom:14px;position:relative;z-index:1;">Every birthday wish the club has left for you, kept here for good &mdash; so you can revisit them long after the day.</p>
+      <div class="birthday-comments-list" style="position:relative;z-index:1;">${wishes.map(birthdayCommentItemHtml).join('')}</div>
+    </div>`;
+  })()}
 
   ${(()=>{
     const stats=getMemberAttendanceStats(memberId);
@@ -5820,8 +5831,23 @@ function birthdayNoticeWishText(bodyHtml){
     return String(bodyHtml||'').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim();
   }
 }
+// Max length of a member's birthday wish. The database column is plain TEXT
+// (no server limit), so this is purely a sanity cap against runaway pastes --
+// generous enough for a heartfelt paragraph. Kept in one place so the textarea
+// maxlength, the live counter and this submit-time guard never disagree.
+const BIRTHDAY_WISH_MAXLEN=1000;
 function birthdayCommentText(text){
-  return String(text||'').replace(/\s+/g,' ').trim().slice(0,180);
+  // Collapse runs of spaces/tabs but KEEP line breaks so paragraphs survive.
+  return String(text||'').replace(/[ \t]+/g,' ').replace(/\n{3,}/g,'\n\n').trim().slice(0,BIRTHDAY_WISH_MAXLEN);
+}
+function updateBirthdayWishCount(ta){
+  if(!ta)return;
+  const key=ta.id.replace('birthday-comment-','');
+  const el=document.getElementById('birthday-comment-count-'+key);
+  if(!el)return;
+  const n=ta.value.length;
+  el.textContent=n+' / '+BIRTHDAY_WISH_MAXLEN;
+  el.style.color=n>=BIRTHDAY_WISH_MAXLEN?'var(--red)':'var(--ink-faint)';
 }
 function birthdayCommentKey(birthdayKey){
   return 'birthday-comment-'+birthdayKey+'-'+Date.now()+'-'+Math.random().toString(36).slice(2,8);
@@ -5829,6 +5855,17 @@ function birthdayCommentKey(birthdayKey){
 function birthdayCommentsForKey(birthdayKey){
   const comments=(DATA&&Array.isArray(DATA.birthdayComments)&&DATA.birthdayComments.length)?DATA.birthdayComments:loadBirthdayCommentsCache();
   return comments.filter(c=>c.noticeKey===birthdayKey).slice().sort((a,b)=>(a.createdAt||'').localeCompare(b.createdAt||''));
+}
+// Every wish ever left for one member, across all their birthdays. The notice
+// key is the celebrant id(s) joined by '|', so a member's wishes are any row
+// whose key includes their id (covers solo and shared-birthday days alike).
+// Newest first, so the profile keepsake reads most-recent birthday on top.
+function birthdayWishesForMember(memberId){
+  if(!memberId)return[];
+  const comments=(DATA&&Array.isArray(DATA.birthdayComments)&&DATA.birthdayComments.length)?DATA.birthdayComments:loadBirthdayCommentsCache();
+  return comments
+    .filter(c=>String(c.noticeKey||'').split('|').includes(memberId))
+    .slice().sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
 }
 function birthdayAvatarHtml(mem,featured){
   const cls='birthday-avatar'+(featured?' birthday-avatar--featured':'');
@@ -5872,7 +5909,8 @@ function birthdayCommentsSectionHtml(birthdayKey){
     ${currentId?`<div class="birthday-comment-form">
       <div class="field" style="margin-bottom:10px;">
         <label>Your wish</label>
-        <textarea id="birthday-comment-${birthdayKey}" rows="3" maxlength="180" placeholder="Write a short birthday wish"></textarea>
+        <textarea id="birthday-comment-${birthdayKey}" rows="5" maxlength="${BIRTHDAY_WISH_MAXLEN}" placeholder="Write your birthday wish — take all the room you need" oninput="updateBirthdayWishCount(this)"></textarea>
+        <div id="birthday-comment-count-${birthdayKey}" class="cell-muted" style="font-size:11.5px;text-align:right;margin-top:4px;">0 / ${BIRTHDAY_WISH_MAXLEN}</div>
       </div>
       <div class="modal-actions" style="justify-content:flex-start;">
         <button type="button" class="btn btn-primary" onclick="submitBirthdayComment('${birthdayKey}')">Post wish</button>
