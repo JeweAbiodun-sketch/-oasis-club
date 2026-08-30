@@ -261,6 +261,9 @@ CREATE OR REPLACE FUNCTION change_member_pin(
   p_new_pin     TEXT
 ) RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS $$
 BEGIN
+  p_current_pin := trim(p_current_pin);
+  p_new_pin := trim(p_new_pin);
+
   IF NOT EXISTS (SELECT 1 FROM members WHERE id = p_member_id AND pin = p_current_pin) THEN
     RAISE EXCEPTION 'Unauthorized: current PIN is incorrect';
   END IF;
@@ -289,8 +292,14 @@ CREATE OR REPLACE FUNCTION officer_upsert_member(
   p_dob         TEXT    DEFAULT NULL
 ) RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS $$
 BEGIN
+  p_officer_pin := trim(p_officer_pin);
+  p_pin := NULLIF(trim(COALESCE(p_pin, '')), '');
+
   IF NOT is_officer_pin(p_officer_pin) THEN
     RAISE EXCEPTION 'Unauthorized: invalid officer PIN';
+  END IF;
+  IF p_pin IS NOT NULL AND p_pin !~ '^\d{4}$' THEN
+    RAISE EXCEPTION 'Member PIN must be exactly 4 digits';
   END IF;
   INSERT INTO members (id, name, role, status, phone, email, joined, photo, pin, dues_paid, dob)
   VALUES (

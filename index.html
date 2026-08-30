@@ -3830,6 +3830,13 @@ const EDITOR_PINS={
 };
 const SESSION_KEY='oasis-club-session-v1';
 
+function normalizePin(value){
+  return String(value ?? '').trim().replace(/\s+/g,'');
+}
+function normalizeStatus(value){
+  return String(value ?? '').trim().toLowerCase();
+}
+
 function getCurrentAuthPin(){
   const value=sessionStorage.getItem(SESSION_KEY)||'';
   if(value.startsWith('role:')){
@@ -3837,7 +3844,7 @@ function getCurrentAuthPin(){
   }
   if(value.startsWith('member:')){
     const mem=DATA.members.find(m=>m.id===value.slice(7));
-    return mem?mem.pin:null;
+    return mem?normalizePin(mem.pin):null;
   }
   return null;
 }
@@ -3992,7 +3999,7 @@ function populatePinSelect(){
   sel.appendChild(officerGroup);
   const memberGroup=document.createElement('optgroup');
   memberGroup.label='Members';
-  DATA.members.filter(m=>m.status!=='dismissed'&&m.status!=='suspended').forEach(m=>{
+  DATA.members.filter(m=>normalizeStatus(m.status)!=='dismissed'&&normalizeStatus(m.status)!=='suspended').forEach(m=>{
     const opt=document.createElement('option');
     opt.value='member:'+m.id;
     opt.textContent=m.name;
@@ -4022,8 +4029,9 @@ function onPinSelectChange(){
   if(v.startsWith('role:')){showPinState('signin');focusPinInput();return;}
   const m=DATA.members.find(x=>x.id===v.slice(7));
   if(!m){showPinState('signin');return;}
-  if(m.status==='suspended'||m.status==='dismissed'){renderLocked(m);return;}
-  if(!m.pin){renderSetup(m);return;}
+  const status=normalizeStatus(m.status);
+  if(status==='suspended'||status==='dismissed'){renderLocked(m);return;}
+  if(!normalizePin(m.pin)){renderSetup(m);return;}
   showPinState('signin');focusPinInput();
 }
 function renderSetup(m){
@@ -4034,8 +4042,9 @@ function renderSetup(m){
   document.getElementById('setup-pin').focus();
 }
 function renderLocked(m){
-  document.getElementById('locked-badge').textContent=(m.status==='dismissed'?'Membership ended':'Membership suspended');
-  document.getElementById('locked-msg').innerHTML='Your membership is currently <b>'+m.status+'</b>, so sign-in is blocked. Please contact the Secretary to have your access restored.';
+  const status=normalizeStatus(m.status);
+  document.getElementById('locked-badge').textContent=(status==='dismissed'?'Membership ended':'Membership suspended');
+  document.getElementById('locked-msg').innerHTML='Your membership is currently <b>'+status+'</b>, so sign-in is blocked. Please contact the Secretary to have your access restored.';
   showPinState('locked');
 }
 function resetPinGate(){
@@ -4046,12 +4055,14 @@ function resetPinGate(){
 async function submitFirstPin(){
   const v=document.getElementById('pin-role').value;
   const errEl=document.getElementById('pin-error');
-  const a=document.getElementById('setup-pin').value.trim();
-  const b=document.getElementById('setup-confirm').value.trim();
+  const a=normalizePin(document.getElementById('setup-pin').value);
+  const b=normalizePin(document.getElementById('setup-confirm').value);
   if(!/^\d{4}$/.test(a)){errEl.textContent='Choose a 4-digit PIN (numbers only).';return;}
   if(a!==b){errEl.textContent='Those PINs don\u2019t match \u2014 try again.';return;}
   const member=DATA.members.find(m=>m.id===v.slice(7));
   if(!member){errEl.textContent='Member not found.';return;}
+  const duplicate=DATA.members.some(m=>m.id!==member.id && normalizePin(m.pin)===a);
+  if(duplicate){errEl.textContent='That PIN is already in use by another member. Please choose a different one.';return;}
   // NOTE: members are created with a PIN already, so this path rarely runs.
   // To persist a brand-new PIN, route it through your Supabase RPC here.
   member.pin=a;
@@ -4078,10 +4089,10 @@ function toggleTheme(){
 
 function checkPin(){
   const value=document.getElementById('pin-role').value;
-  const pin=document.getElementById('pin-input').value.trim();
+  const pin=normalizePin(document.getElementById('pin-input').value);
   const errEl=document.getElementById('pin-error');
   if(!value){errEl.textContent='Please select your name first';return;}
-  if(!pin){errEl.textContent='Enter your PIN';return;}
+  if(!/^\d{4}$/.test(pin)){errEl.textContent='Enter a valid 4-digit PIN';return;}
 
   if(value.startsWith('role:')){
     const role=value.slice(5);
@@ -4101,8 +4112,9 @@ function checkPin(){
   const memberId=value.slice(7);
   const member=DATA.members.find(m=>m.id===memberId);
   if(!member){errEl.textContent='Member not found.';return;}
-  if(member.status==='suspended'||member.status==='dismissed'){ renderLocked(member); return; }
-  if(member.pin===pin){
+  const status=normalizeStatus(member.status);
+  if(status==='suspended'||status==='dismissed'){ renderLocked(member); return; }
+  if(normalizePin(member.pin)===pin){
     sessionStorage.setItem(SESSION_KEY,value);
     recordLogin(member.id);
     document.getElementById('pin-gate').classList.remove('show');
@@ -4181,7 +4193,8 @@ function checkSession(){
   const memberId=value.slice(7);
   const member=DATA.members.find(m=>m.id===memberId);
   if(!member)return null;
-  if(member.status==='suspended'||member.status==='dismissed')return null; // access auto-revoked
+  const status=normalizeStatus(member.status);
+  if(status==='suspended'||status==='dismissed')return null; // access auto-revoked
   return value;
 }
 function getCurrentMemberId(){
