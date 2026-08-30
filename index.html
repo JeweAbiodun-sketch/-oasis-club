@@ -2280,7 +2280,7 @@ function pageOverview(){
   <div class="card">
     <div class="card-head"><h2>Recent minutes</h2><span class="meta" style="cursor:pointer;" onclick="navigate('minutes')">View all &rarr;</span></div>
     ${recentMinutes.length?`<table><tbody>${recentMinutes.map(m=>`
-      <tr><td class="cell-name">${escHtml(m.title)}</td><td class="cell-muted">${fmtDate(m.date)}</td><td><span class="badge ${daysSince(m.date)>21?'badge-overdue':'badge-paid'}">${daysSince(m.date)>21?'publish overdue':'within 21 days'}</span></td></tr>
+      <tr><td class="cell-name">${escHtml(m.title)}</td><td class="cell-muted">${fmtDate(m.date)}</td><td>${minuteStatusBadge(m)}</td></tr>
     `).join('')}</tbody></table>`:emptyState('No minutes recorded yet','Add your first meeting minutes from the Minutes page.')}
   </div>
 
@@ -2315,6 +2315,27 @@ function currentMonthKey(){
 }
 function todayLong(){return new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});}
 function daysSince(d){return Math.floor((Date.now()-new Date(d+'T00:00:00').getTime())/86400000);}
+// Article 11 compliance for a minute: was it PUBLISHED within 21 days OF THE
+// MEETING? This must compare when the minute was posted (createdAt) against the
+// meeting date -- NOT "now" -- otherwise a minute that was filed on time still
+// flips to "overdue" as the weeks pass. Returns true=late, false=on time,
+// null=can't tell (no post timestamp on older records).
+function minutePublishedLate(m){
+  if(!m||!m.date||!m.createdAt)return null;
+  const meeting=new Date(m.date+'T00:00:00').getTime();
+  const posted=new Date(m.createdAt).getTime();
+  if(isNaN(meeting)||isNaN(posted))return null;
+  return Math.floor((posted-meeting)/86400000)>21;
+}
+// Shared status badge for a minute. Neutral "recorded" when the timing is
+// unknown, so an old minute with no timestamp is never falsely flagged late.
+function minuteStatusBadge(m){
+  const late=minutePublishedLate(m);
+  if(late===null)return '<span class="badge badge-active">recorded</span>';
+  return late
+    ?'<span class="badge badge-overdue">published late</span>'
+    :'<span class="badge badge-paid">on time</span>';
+}
 function upcomingMeetingDate(){
   const now=new Date();
   let d=new Date(now.getFullYear(),now.getMonth()+1,0);
@@ -2782,7 +2803,7 @@ function pageMinutes(){
             ${minuteRecordingChip(m)}
           </div>
           <div style="display:flex;align-items:center;gap:8px;">
-            <span class="badge ${daysSince(m.date)>21?'badge-overdue':'badge-paid'}">${daysSince(m.date)>21?'overdue':'on time'}</span>
+            ${minuteStatusBadge(m)}
             ${(()=>{const att=getMinuteAttendance(m.id);const cnt=att.present.length;const tot=DATA.members.filter(isActiveMember).length;if(canEdit)return`<button class="btn" style="font-size:11.5px;padding:4px 9px;" onclick="event.stopPropagation();openAttendanceModal('${m.id}')" title="Mark attendance">&#10003; ${cnt?cnt+'/'+tot+' present':'Attendance'}</button>`;return cnt?`<span class="badge badge-active" style="font-size:11px;">${cnt}/${tot}</span>`:'';})()}
             ${canEdit?`<button class="icon-btn" onclick="event.stopPropagation();deleteMinutes('${m.id}')" aria-label="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2m2 0v14a1 1 0 01-1 1H6a1 1 0 01-1-1V6z"/></svg></button>`:''}
           </div>
@@ -2796,7 +2817,7 @@ function openMinutesDetail(id){
   if(!m)return;
   openModal(`
     <h3>${escHtml(m.title)}</h3>
-    <p class="cell-muted" style="margin-top:-6px;margin-bottom:14px;">${fmtDate(m.date)} &middot; ${escHtml(m.type||'Monthly meeting')} &middot; <span class="badge ${daysSince(m.date)>21?'badge-overdue':'badge-paid'}">${daysSince(m.date)>21?'published late':'published on time'}</span></p>
+    <p class="cell-muted" style="margin-top:-6px;margin-bottom:14px;">${fmtDate(m.date)} &middot; ${escHtml(m.type||'Monthly meeting')} &middot; ${minuteStatusBadge(m)}</p>
     ${(()=>{
       const recs=recordingsForMinute(m);
       if(!recs.length)return'';
@@ -4489,6 +4510,7 @@ function buildEventAlbums(memories,events){
   return albums;
 }
 function eventMemoryCardHtml(mem,index){
+  const isOfc=isOfficerSessionNow(); // whether to show the officer-only delete control
   const isVideo=mem.mediaType==='video';
   const dateText=mem.eventDate?new Date(mem.eventDate+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):(mem.createdAt?new Date(mem.createdAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'');
   const safeTitle=escHtml(mem.title||'Event memory');
