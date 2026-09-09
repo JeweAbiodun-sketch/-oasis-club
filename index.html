@@ -845,6 +845,7 @@ body.dark .asst-chip{color:#a7e6d0;}
           <input type="password" id="pin-input" inputmode="numeric" maxlength="6" placeholder="&middot;&middot;&middot;&middot;" />
         </div>
         <div class="pin-actions"><button type="button" class="btn btn-primary" onclick="checkPin()">Unlock</button></div>
+        <button type="button" class="pin-back" onclick="openPinReset()">Forgot your PIN?</button>
         <button type="button" class="pin-back" onclick="showPinState('welcome')">&larr; Back</button>
       </div>
 
@@ -873,6 +874,36 @@ body.dark .asst-chip{color:#a7e6d0;}
         <h2>Access is paused</h2>
         <div class="pin-sub" id="locked-msg"></div>
         <div class="pin-actions"><button type="button" class="btn btn-primary" onclick="resetPinGate()">Choose a different name</button></div>
+      </div>
+
+      <!-- STATE: PIN reset step 1 — request a code by email -->
+      <div class="pin-state" id="pin-reset-request">
+        <div class="pin-intro-h">Reset your PIN</div>
+        <div class="pin-intro-sub">Enter the email address registered to your membership. We&rsquo;ll send a one-time code to it.</div>
+        <div class="pin-field">
+          <label for="reset-email">Registered email</label>
+          <input type="email" id="reset-email" inputmode="email" autocomplete="email" placeholder="you@example.com" />
+        </div>
+        <div id="reset-request-msg" class="pin-sub" style="min-height:16px;margin:6px 0;"></div>
+        <div class="pin-actions"><button type="button" class="btn btn-primary" id="reset-request-btn" onclick="submitPinResetRequest()">Send reset code</button></div>
+        <button type="button" class="pin-back" onclick="showPinState('signin')">&larr; Back to sign in</button>
+      </div>
+
+      <!-- STATE: PIN reset step 2 — enter code + new PIN -->
+      <div class="pin-state" id="pin-reset-confirm">
+        <div class="pin-intro-h">Enter your code</div>
+        <div class="pin-intro-sub">Check your email for the 6-digit code, then choose a new 4-digit PIN.</div>
+        <div class="pin-field">
+          <label for="reset-code">6-digit code</label>
+          <input type="text" id="reset-code" class="pin-code" inputmode="numeric" maxlength="6" placeholder="&middot;&middot;&middot;&middot;&middot;&middot;" />
+        </div>
+        <div class="pin-field">
+          <label for="reset-newpin">New 4-digit PIN</label>
+          <input type="password" id="reset-newpin" class="pin-code" inputmode="numeric" maxlength="4" placeholder="&middot;&middot;&middot;&middot;" />
+        </div>
+        <div id="reset-confirm-msg" class="pin-sub" style="min-height:16px;margin:6px 0;"></div>
+        <div class="pin-actions"><button type="button" class="btn btn-primary" id="reset-confirm-btn" onclick="submitPinResetConfirm()">Set new PIN</button></div>
+        <button type="button" class="pin-back" onclick="showPinState('reset-request')">&larr; Use a different email</button>
       </div>
 
       <div id="pin-error"></div>
@@ -4031,11 +4062,80 @@ function populatePinSelect(){
 }
 
 function showPinState(id){
-  ['welcome','signin','setup','locked'].forEach(s=>{
+  ['welcome','signin','setup','locked','reset-request','reset-confirm'].forEach(s=>{
     const el=document.getElementById('pin-'+s);
     if(el)el.classList.toggle('on', s===id);
   });
   const err=document.getElementById('pin-error'); if(err)err.textContent='';
+}
+/* ===== Self-service PIN reset by email (calls the pin-reset Edge Function) ===== */
+async function callPinResetFn(payload){
+  const res=await fetch(SUPABASE_URL+'/functions/v1/pin-reset',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+SUPABASE_ANON_KEY,'apikey':SUPABASE_ANON_KEY},
+    body:JSON.stringify(payload)
+  });
+  let data={}; try{data=await res.json();}catch(_){}
+  return{ok:res.ok,data};
+}
+function openPinReset(){
+  // Prefill the email if the chosen member has one on file (convenience only;
+  // the emailed code is what actually proves ownership).
+  const v=document.getElementById('pin-role').value||'';
+  const email=document.getElementById('reset-email');
+  if(email){
+    let pre='';
+    if(v.startsWith('member:')){const m=DATA.members.find(x=>x.id===v.slice(7));if(m&&m.email)pre=m.email;}
+    email.value=pre;
+  }
+  document.getElementById('reset-request-msg').textContent='';
+  showPinState('reset-request');
+  if(email)email.focus();
+}
+async function submitPinResetRequest(){
+  const emailEl=document.getElementById('reset-email');
+  const msg=document.getElementById('reset-request-msg');
+  const btn=document.getElementById('reset-request-btn');
+  const email=(emailEl.value||'').trim();
+  if(!email||!email.includes('@')){msg.style.color='var(--red)';msg.textContent='Please enter a valid email address.';return;}
+  btn.disabled=true;btn.textContent='Sending…';msg.style.color='var(--ink-soft)';msg.textContent='';
+  try{
+    const{data}=await callPinResetFn({action:'request',email});
+    // Always a generic reply, so we never reveal whether the email is on file.
+    msg.style.color='var(--teal-dark)';
+    msg.textContent=(data&&data.message)||'If that email is registered, a reset code has been sent.';
+    document.getElementById('reset-code').value='';
+    document.getElementById('reset-newpin').value='';
+    // Carry the email forward to the confirm step.
+    pendingResetEmail=email;
+    setTimeout(()=>{showPinState('reset-confirm');document.getElementById('reset-code').focus();},900);
+  }catch(err){
+    msg.style.color='var(--red)';msg.textContent='Could not send the code. Please check your connection and try again.';
+  }finally{ btn.disabled=false;btn.textContent='Send reset code'; }
+}
+let pendingResetEmail='';
+async function submitPinResetConfirm(){
+  const msg=document.getElementById('reset-confirm-msg');
+  const btn=document.getElementById('reset-confirm-btn');
+  const code=(document.getElementById('reset-code').value||'').trim();
+  const newPin=(document.getElementById('reset-newpin').value||'').trim();
+  if(!/^\d{6}$/.test(code)){msg.style.color='var(--red)';msg.textContent='Enter the 6-digit code from your email.';return;}
+  if(!/^\d{4}$/.test(newPin)){msg.style.color='var(--red)';msg.textContent='Your new PIN must be exactly 4 digits.';return;}
+  btn.disabled=true;btn.textContent='Setting…';msg.style.color='var(--ink-soft)';msg.textContent='';
+  try{
+    const{ok,data}=await callPinResetFn({action:'confirm',email:pendingResetEmail,code,newPin});
+    if(!ok){msg.style.color='var(--red)';msg.textContent=(data&&data.error)||'That code is invalid or has expired.';btn.disabled=false;btn.textContent='Set new PIN';return;}
+    msg.style.color='var(--teal-dark)';msg.textContent='PIN updated! Refreshing…';
+    // Pull the updated member record (with the new PIN) so sign-in works, then
+    // return the member to the sign-in screen with their new PIN ready to use.
+    try{await fetchAllData();}catch(_){}
+    populatePinSelect();
+    showToast('Your PIN has been reset — please sign in with your new PIN.');
+    setTimeout(()=>{showPinState('signin');},600);
+  }catch(err){
+    msg.style.color='var(--red)';msg.textContent='Something went wrong. Please try again.';
+    btn.disabled=false;btn.textContent='Set new PIN';
+  }
 }
 function focusPinInput(){const el=document.getElementById('pin-input');if(el)el.focus();}
 function enterSignin(){
