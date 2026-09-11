@@ -2956,6 +2956,10 @@ const REC_COMPRESS_MAX_BYTES=300*1024*1024;
 // If a file is still bigger than this after our best-effort compression, the
 // upload would be rejected server-side, so we stop early with a clear message.
 const REC_BUCKET_MAX_BYTES=100*1024*1024;
+// When the lightweight (lamejs) compressor fails on a file at least this big,
+// fall back to ffmpeg.wasm. Below this size a raw upload is fine (resumable
+// upload handles it), so it isn't worth fetching the ~25MB ffmpeg core.
+const REC_FFMPEG_MIN_BYTES=20*1024*1024;
 let pendingRecordingFile=null;
 
 function recFmtBytes(n){
@@ -3226,6 +3230,107 @@ async function compressAudioToMp3(file,onProgress){
   }catch(_){ return null; }
 }
 
+// Lazily load tus-js-client (resumable uploads) only when we actually upload.
+function loadTus(cb){
+  if(window.tus&&window.tus.Upload){cb(true);return;}
+  const s=document.createElement('script');
+  s.src='https://cdn.jsdelivr.net/npm/tus-js-client@4.3.1/dist/tus.min.js';
+  s.onload=()=>cb(!!(window.tus&&window.tus.Upload));
+  s.onerror=()=>cb(false);
+  document.head.appendChild(s);
+}
+// Resumable (TUS) upload to Supabase Storage: sends the file in 6 MB chunks and
+// retries dropped chunks, so a large recording survives a flaky mobile signal
+// instead of failing outright. Resolves {fellBack:false} on success; resolves
+// {fellBack:true} if tus-js-client can't load (caller then uses the plain
+// single-shot upload). Rejects only on a genuine upload error.
+function uploadToStorageResumable(bucket,objectName,file,contentType,onProgress){
+  return new Promise((resolve,reject)=>{
+    loadTus(ok=>{
+      if(!ok){resolve({fellBack:true});return;}
+      const upload=new window.tus.Upload(file,{
+        endpoint:SUPABASE_URL+'/storage/v1/upload/resumable',
+        retryDelays:[0,1000,3000,5000,10000,20000],
+        headers:{authorization:'Bearer '+SUPABASE_ANON_KEY,apikey:SUPABASE_ANON_KEY,'x-upsert':'true'},
+        uploadDataDuringCreation:true,
+        removeFingerprintOnSuccess:true,
+        chunkSize:6*1024*1024, // Supabase requires exactly 6 MB chunks
+        metadata:{bucketName:bucket,objectName:objectName,contentType:contentType||'application/octet-stream',cacheControl:'3600'},
+        onError:err=>reject(err),
+        onProgress:(sent,total)=>{if(onProgress&&total)onProgress(sent/total);},
+        onSuccess:()=>resolve({fellBack:false})
+      });
+      // Resume an interrupted attempt for this same file if one exists.
+      upload.findPreviousUploads().then(prev=>{
+        if(prev&&prev.length)upload.resumeFromPreviousUpload(prev[0]);
+        upload.start();
+      }).catch(()=>upload.start());
+    });
+  });
+}
+
+// Heavy-duty audio compression via ffmpeg.wasm — the reliable fallback for when
+// the lightweight lamejs path can't handle a file (long recordings blow a phone
+// browser's memory when fully decoded to PCM; ffmpeg streams internally and
+// copes). The ~25MB single-threaded core (no COOP/COEP headers needed) is
+// fetched on demand and cached for next time. Returns an audio/mpeg Blob, or
+// null if ffmpeg is unavailable / fails, so the caller can proceed with the raw
+// file. Loaded once per session.
+let ffmpegInstancePromise=null;
+function loadScriptOnce(src){
+  return new Promise((res,rej)=>{
+    if(document.querySelector('script[data-ffsrc="'+src+'"]')){res();return;}
+    const s=document.createElement('script');
+    s.src=src;s.setAttribute('data-ffsrc',src);
+    s.onload=()=>res();s.onerror=()=>rej(new Error('Could not load '+src));
+    document.head.appendChild(s);
+  });
+}
+async function loadFFmpeg(onStatus){
+  if(ffmpegInstancePromise)return ffmpegInstancePromise;
+  ffmpegInstancePromise=(async()=>{
+    onStatus&&onStatus('Loading compressor… (first time only, ~25MB)');
+    // ffmpeg.js + its worker (814.ffmpeg.js) are served SAME-ORIGIN from
+    // vendor/ffmpeg/ on purpose: that lets ffmpeg spawn a CLASSIC worker resolved
+    // next to ffmpeg.js. (Passing classWorkerURL, or loading ffmpeg.js from a CDN,
+    // makes it a *module* worker, which has no importScripts and can't load the
+    // core — that path fails.) The big ~25MB core WASM still streams from the CDN
+    // on demand and is cached after first use, so only ~10KB is self-hosted.
+    // If the vendor files aren't deployed, this throws and the caller falls back
+    // to uploading the raw file (resumable upload handles that).
+    await loadScriptOnce('vendor/ffmpeg/ffmpeg.js');
+    await loadScriptOnce('vendor/ffmpeg/util.js');
+    const FFmpeg=window.FFmpegWASM.FFmpeg, toBlobURL=window.FFmpegUtil.toBlobURL;
+    const ff=new FFmpeg();
+    const coreBase='https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
+    await ff.load({
+      coreURL:await toBlobURL(coreBase+'/ffmpeg-core.js','text/javascript'),
+      wasmURL:await toBlobURL(coreBase+'/ffmpeg-core.wasm','application/wasm')
+    });
+    return ff;
+  })().catch(err=>{ffmpegInstancePromise=null;throw err;});
+  return ffmpegInstancePromise;
+}
+async function compressAudioWithFfmpeg(file,onProgress,onStatus){
+  try{
+    const ff=await loadFFmpeg(onStatus);
+    const m=(file.name||'').match(/\.[a-z0-9]+$/i);
+    const inName='input'+((m&&m[0])||'.mp3');
+    const outName='out.mp3';
+    const prog=e=>{const p=e&&typeof e.progress==='number'?e.progress:0;onProgress&&onProgress(Math.max(0,Math.min(1,p)));};
+    ff.on('progress',prog);
+    await ff.writeFile(inName,new Uint8Array(await file.arrayBuffer()));
+    // Match the lamejs target: mono, 22.05 kHz, 48 kbps MP3 — clear for voice.
+    await ff.exec(['-i',inName,'-ac','1','-ar','22050','-b:a','48k','-y',outName]);
+    const data=await ff.readFile(outName);
+    try{ff.off&&ff.off('progress',prog);}catch(_){}
+    try{await ff.deleteFile(inName);await ff.deleteFile(outName);}catch(_){}
+    const bytes=(data instanceof Uint8Array)?data:new Uint8Array(data);
+    const blob=new Blob([bytes],{type:'audio/mpeg'});
+    return blob.size?blob:null;
+  }catch(_){ return null; }
+}
+
 // Compress (best-effort), upload to the meeting-recordings bucket, and register
 // the recording against a meeting date. Shared by the Recordings form and the
 // Log-minutes form, so audio attached to a minute lands in the same archive and
@@ -3240,6 +3345,16 @@ async function uploadMeetingAudio(file,{title,date,type,note},onStatus){
     uploadFile=compressed.blob;
     durationSeconds=compressed.durationSeconds;
     onStatus&&onStatus('Compressed '+recFmtBytes(original.size)+' → '+recFmtBytes(uploadFile.size)+'. Uploading…');
+  }else if(original.size>REC_FFMPEG_MIN_BYTES){
+    // The lightweight compressor couldn't handle it (usually a long recording
+    // that won't fit in a phone browser's memory). Fall back to ffmpeg.wasm.
+    const ffBlob=await compressAudioWithFfmpeg(original,p=>{onStatus&&onStatus('Compressing audio… '+Math.round(p*100)+'%');},onStatus);
+    if(ffBlob&&ffBlob.size<original.size){
+      uploadFile=ffBlob;
+      onStatus&&onStatus('Compressed '+recFmtBytes(original.size)+' → '+recFmtBytes(uploadFile.size)+'. Uploading…');
+    }else{
+      onStatus&&onStatus('Uploading '+recFmtBytes(original.size)+'… (couldn’t compress on this device)');
+    }
   }else{
     onStatus&&onStatus('Uploading '+recFmtBytes(original.size)+'… (couldn’t compress on this device)');
   }
@@ -3255,8 +3370,21 @@ async function uploadMeetingAudio(file,{title,date,type,note},onStatus){
   const baseName=(original.name||'recording').replace(/\.[^.]+$/,'');
   const ext=isMp3?'mp3':((original.name||'').split('.').pop()||'audio');
   const path=`${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;
-  const{error:uploadError}=await sb.storage.from('meeting-recordings').upload(path,uploadFile,{contentType:uploadFile.type||'audio/mpeg'});
-  if(uploadError)throw uploadError;
+  const contentType=uploadFile.type||'audio/mpeg';
+  // Prefer a resumable upload (survives dropped mobile connections). If tus can't
+  // load or the resumable attempt errors, fall back to the plain single-shot upload.
+  let resumableOk=false;
+  try{
+    const r=await uploadToStorageResumable('meeting-recordings',path,uploadFile,contentType,p=>{
+      onStatus&&onStatus('Uploading… '+Math.round(p*100)+'%');
+    });
+    resumableOk=!(r&&r.fellBack);
+  }catch(_){ resumableOk=false; }
+  if(!resumableOk){
+    onStatus&&onStatus('Uploading '+recFmtBytes(uploadFile.size)+'…');
+    const{error:uploadError}=await sb.storage.from('meeting-recordings').upload(path,uploadFile,{contentType});
+    if(uploadError)throw uploadError;
+  }
   const{data:urlData}=sb.storage.from('meeting-recordings').getPublicUrl(path);
   const pin=getCurrentAuthPin();
   const{error:rpcError}=await sb.rpc('add_meeting_recording',{
