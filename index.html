@@ -845,7 +845,10 @@ body.dark .asst-chip{color:#a7e6d0;}
           <input type="password" id="pin-input" inputmode="numeric" maxlength="6" placeholder="&middot;&middot;&middot;&middot;" />
         </div>
         <div class="pin-actions"><button type="button" class="btn btn-primary" onclick="checkPin()">Unlock</button></div>
-        <button type="button" class="pin-back" onclick="openPinReset()">Forgot your PIN?</button>
+        <!-- Email PIN recovery is built but its Edge Function isn't deployed yet.
+             To enable it: deploy the pin-reset function (see PIN-RESET-SETUP.md),
+             then remove the `hidden` attribute below. -->
+        <button type="button" class="pin-back" onclick="openPinReset()" hidden>Forgot your PIN?</button>
         <button type="button" class="pin-back" onclick="showPinState('welcome')">&larr; Back</button>
       </div>
 
