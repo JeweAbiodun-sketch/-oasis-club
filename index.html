@@ -992,7 +992,7 @@ body.dark .asst-chip{color:#a7e6d0;}
 <script>
 /* Bump this string every time you publish changes to GitHub.
    This is what tells everyone's app that a newer version exists. */
-const APP_VERSION='2026-09-11';
+const APP_VERSION='2026-09-12';
 const STORE_KEY='oasis-club-data-v1';
 let DATA={members:[
   {
@@ -6695,6 +6695,18 @@ function renderWelfareLoanSection({embedded=false}={}){
   const availableBalance=totalReleased-totalExpenses-loans.filter(l=>l.status==='active').reduce((s,l)=>s+l.principal,0);
   const today=new Date().toISOString().slice(0,10);
   const canDisburse=isTreasurerSession();
+  const isPres=isPresidentNow();
+  const canRequestRelease=isTreasurerSession()||(typeof isFinancialSecretarySessionNow==='function'&&isFinancialSecretarySessionNow());
+  const releaseRequests=(DATA.welfareReleaseRequests||[]).slice().sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
+  const pendingReleases=releaseRequests.filter(r=>r.status==='pending');
+  const recentDecided=releaseRequests.filter(r=>r.status!=='pending').slice(0,3);
+  const releaseSection=(pendingReleases.length||recentDecided.length)?`
+    ${pendingReleases.length?`<div class="card-head" style="margin-top:16px;"><h2>&#127974;&#65039; Fund releases awaiting approval</h2><span class="badge badge-due">${pendingReleases.length} pending</span></div>
+      ${isPres?`<p class="cell-muted" style="margin:0 0 10px;">Approve to move the money into the Welfare Committee balance, or Reject with a reason.</p>`:`<p class="cell-muted" style="margin:0 0 10px;">Waiting for the President to approve.</p>`}
+      ${pendingReleases.map(r=>welfareReleaseRequestCard(r,isPres,canRequestRelease)).join('')}`:''}
+    ${recentDecided.length?`<div class="card-head" style="margin-top:16px;"><h2>&#128203; Recent release decisions</h2></div>
+      ${recentDecided.map(r=>welfareReleaseRequestCard(r,isPres,canRequestRelease)).join('')}`:''}
+  `:'';
   const sectionTitle=embedded?'2. Loan':'Welfare Committee loans';
   const sectionSub=embedded
     ?'Treasurer releases funds to the Welfare Committee, and the committee lends to members at an adjustable profit plus a monthly default fine after the due date.'
@@ -6716,6 +6728,7 @@ function renderWelfareLoanSection({embedded=false}={}){
       <div class="stat"><div class="label">Late fees accrued</div><div class="value red">${fmtMoney(loans.reduce((s,l)=>s+Number(l.lateFeeAccrued||0),0))}</div><div class="note">monthly default penalties</div></div>
       <div class="stat"><div class="label">Available balance</div><div class="value ${availableBalance<0?'red':'gold'}">${fmtMoney(availableBalance)}</div><div class="note">for new loans/expenses</div></div>
     </div>
+    ${releaseSection}
     <div class="card-head" style="margin-top:14px;"><h2>&#129500; Loans</h2></div>
     ${loanCards}
     ${purseCards}
@@ -7482,6 +7495,13 @@ async function submitReleaseFund(){
   if(!amount||!date){showToast('Amount and date are required.');return;}
   const pin=getCurrentAuthPin();
   if(!isTreasurerSession()){showToast('Only the Treasurer can disburse welfare funds.');return;}
+  // Forestall duplicate disbursements: don't allow a second request while one is
+  // still awaiting the President. The Treasurer can see the pending one on the
+  // Welfare Affair page and should wait for it to be approved or rejected.
+  if((DATA.welfareReleaseRequests||[]).some(r=>r.status==='pending')){
+    showToast('A release request is already awaiting the President’s approval. Please wait for it to be approved or rejected before sending another.');
+    return;
+  }
   const btn=document.querySelector('#modal-content .btn-primary');
   if(btn){btn.disabled=true;btn.textContent='Sending\u2026';}
   try{
