@@ -1566,7 +1566,8 @@ function rowsToWelfareLoans(rows){
     lateFeeMonthsCharged:Number(r.late_fee_months_charged||0),
     amountDue:Number(r.amount_due),amountRepaid:Number(r.amount_repaid||0),purpose:r.purpose,
     proposedBy:r.proposed_by,approver1:r.approver_1,approver2:r.approver_2,status:r.status||'proposed',
-    dueDate:r.due_date,disbursedDate:r.disbursed_date,createdAt:r.created_at
+    dueDate:r.due_date,disbursedDate:r.disbursed_date,createdAt:r.created_at,
+    rejectionReason:r.rejection_reason||'',rejectedBy:r.rejected_by||''
   }));
 }
 function rowsToLoanRepayments(rows){
@@ -6650,6 +6651,7 @@ function welfareReleaseRequestCard(r,isPres,canRequestRelease){
 function welfareLoanStatusInfo(loan,today){
   const totalDue=Number(loan.amountDue||0)+Number(loan.lateFeeAccrued||0);
   if(loan.status==='closed')return{label:'Repaid in full',cls:'badge-paid'};
+  if(loan.status==='rejected')return{label:'Rejected',cls:'badge-overdue'};
   if(loan.status==='proposed')return{label:'Awaiting 2nd approval',cls:'badge-due'};
   if(loan.status==='active'&&loan.dueDate&&loan.dueDate<today&&Number(loan.amountRepaid||0)<totalDue)return{label:'Overdue',cls:'badge-overdue'};
   return{label:'Active',cls:'badge-active'};
@@ -6670,9 +6672,11 @@ function welfareLoanCard(loan,myId,today){
         <div class="news-meta">Proposed by ${escHtml(proposer?proposer.name:'committee')} &middot; Profit ${loan.interestRate}% &middot; Late fine ${fmtMoney(Number(loan.lateFeePerMonth||0))}/month &middot; Total due ${fmtMoney(totalDue)}${loan.dueDate?' &middot; Due '+fmtDate(loan.dueDate):''}</div>
       </div>
       ${canApprove?`<button type="button" class="btn btn-primary" style="font-size:12px;padding:5px 12px;" onclick="approveWelfareLoan('${loan.id}')">Approve</button>`:''}
+      ${isWelfareCommitteeNow()&&loan.status==='proposed'?`<button type="button" class="btn" style="font-size:12px;padding:5px 12px;" onclick="openRejectWelfareLoan('${loan.id}')">Reject</button>`:''}
       ${isWelfareCommitteeNow()&&loan.status==='active'?`<button type="button" class="btn" style="font-size:12px;padding:5px 12px;" onclick="openRecordRepayment('${loan.id}')">Record repayment</button>`:''}
     </div>
     <div class="news-body">${escHtml(loan.purpose)}</div>
+    ${loan.status==='rejected'&&loan.rejectionReason?`<div class="cell-muted" style="margin-top:8px;font-size:12.5px;"><strong style="color:var(--ink);">Rejection reason:</strong> ${escHtml(loan.rejectionReason)}</div>`:''}
     ${loan.status!=='proposed'?`<div class="cell-muted" style="margin-top:8px;font-size:12.5px;">Repaid so far: <strong>${fmtMoney(loan.amountRepaid)}</strong> &middot; Late fees: <strong>${fmtMoney(Number(loan.lateFeeAccrued||0))}</strong> &middot; Outstanding: <strong>${fmtMoney(outstanding)}</strong></div>`:''}
     ${repayments.length?`<details style="margin-top:6px;"><summary style="cursor:pointer;font-size:12px;color:var(--ink-faint);">Repayment history (${repayments.length})</summary>
       <div style="margin-top:6px;">${repayments.map(r=>`<div class="welfare-member-row"><span style="flex:1;font-size:13px;">${fmtDate(r.paidDate)}</span><span class="welfare-paid">${fmtMoney(r.amount)}</span></div>`).join('')}</div>
@@ -7668,11 +7672,35 @@ async function submitProposeLoan(){
 async function approveWelfareLoan(id){
   const me=getCurrentMemberRecord();
   if(!me){showToast('You must be logged in to approve.');return;}
-  try{
-    const{error}=await sb.rpc('approve_welfare_loan',{p_committee_pin:me.pin,p_id:id});
-    if(error)throw error;
+  const{error}=await sb.rpc('approve_welfare_loan',{p_committee_pin:me.pin,p_id:id});
+  if(error){
+    showToast(welfareAlreadyHandled(error)?'This loan was already handled.':'Could not approve: '+(error.message||'unknown error'));
+  }else{
     showToast('Approval recorded.');
-  }catch(e){showToast('Could not approve: '+(e.message||'unknown error'));}
+  }
+  await refreshWelfareUi();
+}
+function openRejectWelfareLoan(id){
+  openModal(`<h3>Reject this loan proposal</h3>
+    <div class="field"><label>Reason (optional)</label>
+      <textarea id="loan-reject-reason" rows="3" placeholder="e.g. Member already has an outstanding loan"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn" onclick="closeModal()">Cancel</button>
+      <button type="button" class="btn btn-primary" onclick="rejectWelfareLoan('${id}',document.getElementById('loan-reject-reason').value)">Reject proposal</button>
+    </div>`);
+}
+async function rejectWelfareLoan(id,reason){
+  const me=getCurrentMemberRecord();
+  if(!me){showToast('You must be logged in to reject.');return;}
+  const{error}=await sb.rpc('reject_welfare_loan',{p_committee_pin:me.pin,p_id:id,p_reason:reason||null});
+  closeModal();
+  if(error){
+    showToast(/not found|not.*proposed|already/i.test(error.message||'')?'This loan was already handled.':'Could not reject: '+error.message);
+  }else{
+    showToast('Loan proposal rejected.');
+  }
+  await refreshWelfareUi();
 }
 
 function openRecordRepayment(loanId){
