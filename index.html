@@ -944,7 +944,7 @@ body.dark .asst-chip{color:#a7e6d0;}
   <button type="button" class="navlink" data-page="events"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>Event<span class="nav-dot hidden" id="dot-events"></span></button>
   <button type="button" class="navlink" data-page="news"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h16v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"/><path d="M8 8h8M8 12h5"/></svg>News &amp; notices<span class="nav-dot hidden" id="dot-news"></span></button>
   <button type="button" class="navlink" data-page="interactive"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Polls &amp; voting</button>
-  <button type="button" class="navlink" data-page="welfare"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>Welfare Affair</button>
+  <button type="button" class="navlink" data-page="welfare"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>Welfare Affair<span class="nav-dot hidden" id="dot-welfare"></span></button>
   <button type="button" class="navlink" data-page="pledges"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Pledges</button>
   <button type="button" class="navlink" id="nav-loans" data-page="loans"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="7" width="20" height="13" rx="2"/><path d="M2 10h20"/><circle cx="12" cy="14.5" r="2.2"/></svg>Welfare loans</button>
   <button type="button" class="navlink" id="nav-committees" data-page="committees"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="7" r="3"/><circle cx="17" cy="7" r="3"/><path d="M2 21v-1a6 6 0 016-6h2a6 6 0 016 6v1"/><path d="M15 14h2a6 6 0 016 6v1"/></svg>Committees</button>
@@ -992,7 +992,7 @@ body.dark .asst-chip{color:#a7e6d0;}
 <script>
 /* Bump this string every time you publish changes to GitHub.
    This is what tells everyone's app that a newer version exists. */
-const APP_VERSION='2026-09-12';
+const APP_VERSION='2026-09-12-2';
 const STORE_KEY='oasis-club-data-v1';
 let DATA={members:[
   {
@@ -4599,6 +4599,13 @@ function updateBadges(){
       ?(DATA.paymentSubmissions||[]).filter(p=>p.status==='pending').length:0;
     dp.textContent=pendingPayments||'';dp.classList.toggle('hidden',!pendingPayments);
   }
+  // Pending welfare fund releases -- shown to the President, who approves them.
+  const dw=document.getElementById('dot-welfare');
+  if(dw){
+    const pendingReleases=isPresidentNow()
+      ?(DATA.welfareReleaseRequests||[]).filter(r=>r.status==='pending').length:0;
+    dw.textContent=pendingReleases||'';dw.classList.toggle('hidden',!pendingReleases);
+  }
 }
 
 function markSeen(type){
@@ -7520,11 +7527,23 @@ async function submitReleaseFund(){
     showToast('Could not send request: '+(e.message||'unknown error'));
   }
 }
+// Refresh welfare data and re-render so an actioned request updates immediately
+// (removing its Approve/Reject buttons) instead of lingering and inviting a
+// second click that would hit an already-reviewed request.
+async function refreshWelfareUi(){
+  try{await fetchAllData();}catch(_){}
+  if(currentPage==='welfare'||currentPage==='loans')render();
+}
+function welfareAlreadyHandled(err){return /not found|already reviewed/i.test((err&&err.message)||'');}
 async function approveWelfareRelease(id){
   const pin=getCurrentAuthPin();
   const{error}=await sb.rpc('approve_welfare_release',{p_pin:pin,p_request_id:id});
-  if(error){showToast('Could not approve: '+error.message);return;}
-  showToast('Release approved — funds added to the Welfare Committee balance.');
+  if(error){
+    showToast(welfareAlreadyHandled(error)?'This request was already handled.':'Could not approve: '+error.message);
+  }else{
+    showToast('Release approved — funds added to the Welfare Committee balance.');
+  }
+  await refreshWelfareUi();
 }
 function openRejectWelfareRelease(id){
   openModal(`
@@ -7541,16 +7560,24 @@ function openRejectWelfareRelease(id){
 async function rejectWelfareRelease(id,reason){
   const pin=getCurrentAuthPin();
   const{error}=await sb.rpc('reject_welfare_release',{p_pin:pin,p_request_id:id,p_reason:reason||null});
-  if(error){showToast('Could not reject: '+error.message);return;}
-  showToast('Release request rejected.');
   closeModal();
+  if(error){
+    showToast(welfareAlreadyHandled(error)?'This request was already handled.':'Could not reject: '+error.message);
+  }else{
+    showToast('Release request rejected.');
+  }
+  await refreshWelfareUi();
 }
 async function withdrawWelfareRelease(id){
   if(!confirm('Withdraw this release request?'))return;
   const pin=getCurrentAuthPin();
   const{error}=await sb.rpc('withdraw_welfare_release',{p_officer_pin:pin,p_request_id:id});
-  if(error){showToast('Could not withdraw: '+error.message);return;}
-  showToast('Request withdrawn.');
+  if(error){
+    showToast(welfareAlreadyHandled(error)?'This request was already handled.':'Could not withdraw: '+error.message);
+  }else{
+    showToast('Request withdrawn.');
+  }
+  await refreshWelfareUi();
 }
 
 function openLogExpense(){
