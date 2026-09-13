@@ -992,7 +992,7 @@ body.dark .asst-chip{color:#a7e6d0;}
 <script>
 /* Bump this string every time you publish changes to GitHub.
    This is what tells everyone's app that a newer version exists. */
-const APP_VERSION='2026-09-13-2';
+const APP_VERSION='2026-09-13-3';
 const STORE_KEY='oasis-club-data-v1';
 let DATA={members:[
   {
@@ -1517,6 +1517,12 @@ function rowsToWelfareEvents(evRows,cRows){
     createdAt:e.created_at
   })).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
 }
+function rowsToWelfareDisbursements(rows){
+  return (rows||[]).map(r=>({
+    id:r.id,description:r.description||'',amount:Number(r.amount||0),
+    disbursedDate:r.disbursed_date||'',beneficiaryMemberId:r.beneficiary_member_id||'',createdAt:r.created_at
+  })).sort((a,b)=>(b.disbursedDate||'').localeCompare(a.disbursedDate||''));
+}
 function rowsToBirthdayComments(rows){
   return rows.map(r=>({
     id:r.id,
@@ -1708,6 +1714,11 @@ async function fetchAllData(){
       }
     }catch(_){}
     try{
+      const welfareDisbRes=await sb.from('welfare_disbursements').select('*').order('disbursed_date',{ascending:false});
+      if(!welfareDisbRes.error)DATA.welfareDisbursements=rowsToWelfareDisbursements(welfareDisbRes.data||[]);
+    }catch(_){}
+    try{
+      localStorage.setItem(WELFARE_DISBURSEMENTS_STORE,JSON.stringify(DATA.welfareDisbursements||[]));
       localStorage.setItem(EVENTS_STORE,JSON.stringify(DATA.events));
       localStorage.setItem(EVENT_MEMORIES_STORE,JSON.stringify(DATA.eventMemories));
       localStorage.setItem(NEWS_STORE,JSON.stringify(DATA.newsPosts));
@@ -1748,6 +1759,7 @@ async function fetchAllData(){
     if(!DATA.newsPosts||!DATA.newsPosts.length)try{DATA.newsPosts=JSON.parse(localStorage.getItem(NEWS_STORE)||'[]');}catch(_){}
     if(!DATA.recordings||!DATA.recordings.length)try{DATA.recordings=JSON.parse(localStorage.getItem(RECORDINGS_STORE)||'[]');}catch(_){}
     if(!DATA.welfareEvents||!DATA.welfareEvents.length)try{DATA.welfareEvents=JSON.parse(localStorage.getItem(WELFARE_EVENTS_STORE)||'[]');}catch(_){}
+    if(!DATA.welfareDisbursements||!DATA.welfareDisbursements.length)try{DATA.welfareDisbursements=JSON.parse(localStorage.getItem(WELFARE_DISBURSEMENTS_STORE)||'[]');}catch(_){}
     if(!DATA.birthdayComments||!DATA.birthdayComments.length)try{DATA.birthdayComments=JSON.parse(localStorage.getItem(BIRTHDAY_COMMENTS_STORE)||'[]');}catch(_){}
     if(!DATA.polls||!DATA.polls.length)try{DATA.polls=JSON.parse(localStorage.getItem(POLLS_STORE)||'[]');}catch(_){}
     if(!DATA.paymentSubmissions||!DATA.paymentSubmissions.length)try{DATA.paymentSubmissions=JSON.parse(localStorage.getItem(PAYMENT_SUBMISSIONS_STORE)||'[]');}catch(_){}
@@ -1773,6 +1785,7 @@ function subscribeToRealtime(){
     .on('postgres_changes',{event:'*',schema:'public',table:'meeting_recordings'},handleRealtimeChange)
     .on('postgres_changes',{event:'*',schema:'public',table:'welfare_events'},handleRealtimeChange)
     .on('postgres_changes',{event:'*',schema:'public',table:'welfare_contributions'},handleRealtimeChange)
+    .on('postgres_changes',{event:'*',schema:'public',table:'welfare_disbursements'},handleRealtimeChange)
     .on('postgres_changes',{event:'*',schema:'public',table:'transactions'},handleRealtimeChange)
     .on('postgres_changes',{event:'*',schema:'public',table:'club_meta'},handleRealtimeChange)
     .on('postgres_changes',{event:'*',schema:'public',table:'club_events'},handleRealtimeChange)
@@ -2292,7 +2305,7 @@ function pageOverview(){
   const welfareActivePrincipal=wloans.filter(l=>l.status==='active').reduce((s,l)=>s+Number(l.principal||0),0);
   const welfareAvailable=welfareReleased-welfareExpenses-welfareActivePrincipal;
   const welfareLoansOutstanding=wloans.filter(l=>l.status==='active').reduce((s,l)=>s+Math.max(0,(Number(l.amountDue||0)+Number(l.lateFeeAccrued||0))-Number(l.amountRepaid||0)),0);
-  const welfareContribCollected=(typeof loadWelfare==='function'?loadWelfare():[]).reduce((s,w)=>s+((w.contributions||[]).reduce((s2,c)=>s2+Number(c.amount||0),0)),0);
+  const wfBal=(typeof welfareFundBalance==='function')?welfareFundBalance():{contribIn:0,paidOut:0,balance:0};
 
   return `
   <div class="page-head">
@@ -2331,8 +2344,8 @@ function pageOverview(){
         <td style="text-align:right;font-weight:600;white-space:nowrap;">${fmtMoney(pledgesTotal)}</td>
       </tr>
       <tr>
-        <td class="cell-name">Welfare contributions<div class="cell-muted" style="font-weight:400;font-size:11.5px;">collected to date</div></td>
-        <td style="text-align:right;font-weight:600;white-space:nowrap;">${fmtMoney(welfareContribCollected)}</td>
+        <td class="cell-name">Welfare fund balance<div class="cell-muted" style="font-weight:400;font-size:11.5px;">${fmtMoney(wfBal.contribIn)} in &minus; ${fmtMoney(wfBal.paidOut)} paid out</div></td>
+        <td style="text-align:right;font-weight:600;white-space:nowrap;${wfBal.balance<0?'color:var(--red);':''}">${fmtMoney(wfBal.balance)}</td>
       </tr>
       <tr>
         <td class="cell-name">Welfare fund available<div class="cell-muted" style="font-weight:400;font-size:11.5px;">released &minus; expenses &minus; active loans</div></td>
@@ -6500,6 +6513,18 @@ function maybeNotifyBirthdayNotice(){
 /* ====================== WELFARE REGISTER ====================== */
 const WELFARE_STORE='oasis-welfare-v1';
 const WELFARE_EVENTS_STORE='oasis-welfare-events-v1';
+const WELFARE_DISBURSEMENTS_STORE='oasis-welfare-disbursements-v1';
+function loadWelfareDisbursements(){
+  if(Array.isArray(DATA.welfareDisbursements))return DATA.welfareDisbursements.slice();
+  try{const c=JSON.parse(localStorage.getItem(WELFARE_DISBURSEMENTS_STORE)||'[]');return Array.isArray(c)?c:[];}catch(_){return[];}
+}
+// Net welfare fund = total contributions received minus total disbursed out.
+function welfareFundBalance(){
+  const wev=(typeof loadWelfare==='function'?loadWelfare():[]);
+  const contribIn=wev.reduce((s,w)=>s+((w.contributions||[]).reduce((s2,c)=>s2+Number(c.amount||0),0)),0);
+  const paidOut=loadWelfareDisbursements().reduce((s,d)=>s+Number(d.amount||0),0);
+  return {contribIn,paidOut,balance:contribIn-paidOut};
+}
 // Welfare contributions now live in Supabase (welfare_events / welfare_contributions)
 // and sync across devices like everything else. loadWelfare() returns the synced
 // data from DATA; the localStorage cache and bundled seed are offline-only fallbacks.
@@ -6593,6 +6618,22 @@ function pageWelfare(){
     </div>
     ${welfare.length?welfare.map(welfareCard).join(''):emptyState('No welfare events recorded','Executive Officers can log bereavement, new baby, illness levies and other special contributions.')}
     ${welfareSummaryTable(allWelfare)}
+    ${(()=>{
+      const wb=welfareFundBalance();
+      const disb=loadWelfareDisbursements();
+      const isOfc=isOfficerSessionNow();
+      return `<div class="card" style="margin-top:8px;">
+        <div class="card-head"><h2>&#127974;&#65039; Welfare fund balance</h2><span class="badge ${wb.balance<0?'badge-overdue':'badge-paid'}">${fmtMoney(wb.balance)}</span></div>
+        <div class="stats" style="margin-bottom:10px;">
+          <div class="stat"><div class="label">Contributions in</div><div class="value teal" style="font-size:18px;">${fmtMoney(wb.contribIn)}</div></div>
+          <div class="stat"><div class="label">Disbursed out</div><div class="value red" style="font-size:18px;">${fmtMoney(wb.paidOut)}</div><div class="note">${disb.length} payout${disb.length===1?'':'s'}</div></div>
+          <div class="stat"><div class="label">Balance held</div><div class="value ${wb.balance<0?'red':'gold'}" style="font-size:18px;">${fmtMoney(wb.balance)}</div></div>
+        </div>
+        ${isOfc?`<div style="display:flex;justify-content:flex-end;margin-bottom:10px;"><button type="button" class="btn btn-primary" onclick="openWelfareDisbursement()">Record disbursement</button></div>`:''}
+        ${disb.length?`<div class="card-head" style="margin-top:4px;"><h2 style="font-size:14.5px;">Disbursements</h2></div>
+          <div class="card">${disb.map(welfareDisbursementRow).join('')}</div>`:'<p class="cell-muted" style="font-size:12.5px;">No welfare payouts recorded yet.</p>'}
+      </div>`;
+    })()}
     ${isTreasurerSession()?`<div class="card" style="margin-top:8px;">
       <div class="card-head"><h2>&#128202; Welfare spreadsheet</h2><span class="badge badge-active">Treasurer</span></div>
       <p class="cell-muted" style="margin:0 0 14px;">Download as CSV to see all events and member contributions. On upload, the data is replaced in full &mdash; keep a backup of the downloaded file before uploading.</p>
@@ -7859,6 +7900,52 @@ async function deleteWelfare(id){
   const{error}=await sb.rpc('officer_delete_welfare_event',{p_officer_pin:pin,p_id:id});
   if(error){showToast('Could not delete: '+error.message);return;}
   showToast('Welfare entry deleted.');
+}
+/* ---- Welfare fund disbursements (money paid out of the contribution fund) ---- */
+function welfareDisbursementRow(d){
+  const ben=d.beneficiaryMemberId?DATA.members.find(m=>m.id===d.beneficiaryMemberId):null;
+  const isOfc=isOfficerSessionNow();
+  return `<div class="welfare-member-row">
+    <span style="flex:1;font-size:13px;">${fmtDate(d.disbursedDate)} &middot; ${escHtml(d.description)}${ben?' <span class="cell-muted">('+escHtml(ben.name)+')</span>':''}</span>
+    <span style="color:var(--red);font-weight:600;white-space:nowrap;">&minus;${fmtMoney(d.amount)}</span>
+    ${isOfc?`<button type="button" class="icon-btn" style="margin-left:8px;" onclick="deleteWelfareDisbursement('${d.id}')" aria-label="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="14" height="14"><path d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2m2 0v14a1 1 0 01-1 1H6a1 1 0 01-1-1V6z"/></svg></button>`:''}
+  </div>`;
+}
+function openWelfareDisbursement(){
+  const active=DATA.members.filter(isActiveMember);
+  openModal(`<h3>Record Welfare Disbursement</h3>
+    <p class="cell-muted" style="margin-top:-6px;margin-bottom:14px;">Money paid out of the welfare fund &mdash; e.g. bereavement or support given to a member.</p>
+    <div class="field"><label>Description</label><input type="text" id="wd-desc" placeholder="e.g. Support for a member's father's burial"/></div>
+    <div class="field-row">
+      <div class="field"><label>Amount (&#8358;)</label><input type="number" id="wd-amount" min="0" placeholder="e.g. 20000"/></div>
+      <div class="field"><label>Date</label><input type="date" id="wd-date" value="${new Date().toISOString().slice(0,10)}"/></div>
+    </div>
+    <div class="field"><label>Beneficiary (optional)</label><select id="wd-member"><option value="">&mdash; none / general &mdash;</option>${active.map(m=>`<option value="${m.id}">${escHtml(m.name)}</option>`).join('')}</select></div>
+    <div class="modal-actions"><button type="button" class="btn" onclick="closeModal()">Cancel</button><button type="button" class="btn btn-primary" onclick="submitWelfareDisbursement()">Save</button></div>`);
+}
+async function submitWelfareDisbursement(){
+  const desc=(document.getElementById('wd-desc').value||'').trim();
+  const amount=document.getElementById('wd-amount').value;
+  const date=document.getElementById('wd-date').value;
+  const memberId=document.getElementById('wd-member').value||null;
+  if(!desc){showToast('Please add a description.');return;}
+  if(!amount||Number(amount)<=0){showToast('Enter a valid amount.');return;}
+  if(!date){showToast('Date is required.');return;}
+  const pin=getCurrentAuthPin();
+  const{error}=await sb.rpc('officer_add_welfare_disbursement',{p_officer_pin:pin,p_id:uid(),p_description:desc,p_amount:Number(amount),p_disbursed_date:date,p_beneficiary_member_id:memberId});
+  if(error){showToast('Could not save: '+error.message);return;}
+  closeModal();showToast('Disbursement recorded.');
+  try{await fetchAllData();}catch(_){}
+  if(currentPage==='welfare')render();
+}
+async function deleteWelfareDisbursement(id){
+  if(!confirm('Delete this welfare disbursement?'))return;
+  const pin=getCurrentAuthPin();
+  const{error}=await sb.rpc('officer_delete_welfare_disbursement',{p_officer_pin:pin,p_id:id});
+  if(error){showToast('Could not delete: '+error.message);return;}
+  showToast('Disbursement deleted.');
+  try{await fetchAllData();}catch(_){}
+  if(currentPage==='welfare')render();
 }
 
 /* ====================== FINES LOG ====================== */
