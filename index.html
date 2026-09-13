@@ -992,7 +992,7 @@ body.dark .asst-chip{color:#a7e6d0;}
 <script>
 /* Bump this string every time you publish changes to GitHub.
    This is what tells everyone's app that a newer version exists. */
-const APP_VERSION='2026-09-12-2';
+const APP_VERSION='2026-09-13';
 const STORE_KEY='oasis-club-data-v1';
 let DATA={members:[
   {
@@ -6622,6 +6622,16 @@ function welfareSummaryTable(allWelfare){
 }
 
 function canViewWelfareLoanSectionNow(){
+  // Read-only visibility for every logged-in member, for transparency. Every
+  // action inside stays gated to the relevant role (propose/approve/reject/
+  // disburse/record repayment), and each loan's personal PURPOSE is gated
+  // separately -- see canSeeWelfareLoanPurposeNow().
+  return isOfficerSessionNow()||!!getCurrentMemberId();
+}
+// Who may see an individual loan's PURPOSE (the borrower's personal reason).
+// Limited to the people who manage or oversee loans; other members can see the
+// loan and its amount/status, but not why it was taken.
+function canSeeWelfareLoanPurposeNow(){
   return isWelfareCommitteeNow()||isOfficerSessionNow()||isPresidentNow();
 }
 
@@ -6675,8 +6685,10 @@ function welfareLoanCard(loan,myId,today){
       ${isWelfareCommitteeNow()&&loan.status==='proposed'?`<button type="button" class="btn" style="font-size:12px;padding:5px 12px;" onclick="openRejectWelfareLoan('${loan.id}')">Reject</button>`:''}
       ${isWelfareCommitteeNow()&&loan.status==='active'?`<button type="button" class="btn" style="font-size:12px;padding:5px 12px;" onclick="openRecordRepayment('${loan.id}')">Record repayment</button>`:''}
     </div>
-    <div class="news-body">${escHtml(loan.purpose)}</div>
-    ${loan.status==='rejected'&&loan.rejectionReason?`<div class="cell-muted" style="margin-top:8px;font-size:12.5px;"><strong style="color:var(--ink);">Rejection reason:</strong> ${escHtml(loan.rejectionReason)}</div>`:''}
+    ${canSeeWelfareLoanPurposeNow()
+      ?`<div class="news-body">${escHtml(loan.purpose)}</div>`
+      :`<div class="news-body cell-muted" style="font-style:italic;">Purpose visible to the Welfare Committee</div>`}
+    ${loan.status==='rejected'&&loan.rejectionReason&&canSeeWelfareLoanPurposeNow()?`<div class="cell-muted" style="margin-top:8px;font-size:12.5px;"><strong style="color:var(--ink);">Rejection reason:</strong> ${escHtml(loan.rejectionReason)}</div>`:''}
     ${loan.status!=='proposed'?`<div class="cell-muted" style="margin-top:8px;font-size:12.5px;">Repaid so far: <strong>${fmtMoney(loan.amountRepaid)}</strong> &middot; Late fees: <strong>${fmtMoney(Number(loan.lateFeeAccrued||0))}</strong> &middot; Outstanding: <strong>${fmtMoney(outstanding)}</strong></div>`:''}
     ${repayments.length?`<details style="margin-top:6px;"><summary style="cursor:pointer;font-size:12px;color:var(--ink-faint);">Repayment history (${repayments.length})</summary>
       <div style="margin-top:6px;">${repayments.map(r=>`<div class="welfare-member-row"><span style="flex:1;font-size:13px;">${fmtDate(r.paidDate)}</span><span class="welfare-paid">${fmtMoney(r.amount)}</span></div>`).join('')}</div>
@@ -6726,7 +6738,7 @@ function renderWelfareLoanSection({embedded=false}={}){
   const purseCards=purse.length?`<div class="card-head" style="margin-top:14px;"><h2>&#128176; Purse activity</h2></div>
     <div class="card">${purse.map(welfarePurseEntryRow).join('')}</div>`:'';
   return `<section class="card" style="margin-top:14px;">
-    <div class="card-head"><h2>${sectionTitle}</h2><span class="badge badge-active">Committee access</span></div>
+    <div class="card-head"><h2>${sectionTitle}</h2><span class="badge badge-active">Visible to all members</span></div>
     <p class="cell-muted" style="margin:0 0 14px;">${sectionSub}</p>
     <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin-bottom:6px;">
       ${canDisburse?`<button type="button" class="btn" onclick="openReleaseFund()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M12 5v14M5 12h14"/></svg>Disburse fund</button>`:''}
