@@ -992,7 +992,7 @@ body.dark .asst-chip{color:#a7e6d0;}
 <script>
 /* Bump this string every time you publish changes to GitHub.
    This is what tells everyone's app that a newer version exists. */
-const APP_VERSION='2026-09-13';
+const APP_VERSION='2026-09-13-2';
 const STORE_KEY='oasis-club-data-v1';
 let DATA={members:[
   {
@@ -2278,6 +2278,22 @@ function pageOverview(){
   const recentMinutes=[...DATA.minutes].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,3);
   const agmWarning=getAgmWarning(DATA.meta.nextAgmDate);
 
+  // ---- Consolidated financial summary (matches the individual pages' math) ----
+  const activeMembers=DATA.members.filter(isActiveMember);
+  const duesCollected=activeMembers.reduce((s,m)=>s+Number(m.duesPaid||0),0);
+  const duesExpectedTotal=activeMembers.length*expected;
+  const duesOutstanding=Math.max(0,duesExpectedTotal-duesCollected);
+  const pledges=(DATA.pledges||[]);
+  const pledgesTotal=pledges.reduce((s,p)=>s+Number(p.amount||0),0);
+  const purse=(DATA.welfarePurse||[]);
+  const welfareReleased=purse.filter(p=>p.entryType==='release').reduce((s,p)=>s+Number(p.amount||0),0);
+  const welfareExpenses=purse.filter(p=>p.entryType==='expense').reduce((s,p)=>s+Number(p.amount||0),0);
+  const wloans=(DATA.welfareLoans||[]);
+  const welfareActivePrincipal=wloans.filter(l=>l.status==='active').reduce((s,l)=>s+Number(l.principal||0),0);
+  const welfareAvailable=welfareReleased-welfareExpenses-welfareActivePrincipal;
+  const welfareLoansOutstanding=wloans.filter(l=>l.status==='active').reduce((s,l)=>s+Math.max(0,(Number(l.amountDue||0)+Number(l.lateFeeAccrued||0))-Number(l.amountRepaid||0)),0);
+  const welfareContribCollected=(typeof loadWelfare==='function'?loadWelfare():[]).reduce((s,w)=>s+((w.contributions||[]).reduce((s2,c)=>s2+Number(c.amount||0),0)),0);
+
   return `
   <div class="page-head">
     <div><h1>Overview</h1><div class="sub">Club snapshot &middot; ${todayLong()}</div></div>
@@ -2297,6 +2313,36 @@ function pageOverview(){
     <div class="stat"><div class="label">Paid this year</div><div class="value teal">${paidThisMonth}</div><div class="note">of ${active} active members</div></div>
     <div class="stat"><div class="label">In arrears</div><div class="value ${overdue>0?'red':''}">${overdue}</div><div class="note">${overdue>0?'needs follow-up':'all clear'}</div></div>
     <div class="stat"><div class="label">Account balance</div><div class="value gold">${fmtMoney(balance)}</div><div class="note">running total to date</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h2>&#128176; Financial summary</h2><span class="meta">All club funds at a glance</span></div>
+    <table><tbody>
+      <tr>
+        <td class="cell-name">Account balance<div class="cell-muted" style="font-weight:400;font-size:11.5px;">income &minus; expenditure to date</div></td>
+        <td style="text-align:right;font-weight:600;white-space:nowrap;color:var(--gold-dark);">${fmtMoney(balance)}</td>
+      </tr>
+      <tr>
+        <td class="cell-name">Dues collected (this year)<div class="cell-muted" style="font-weight:400;font-size:11.5px;">of ${fmtMoney(duesExpectedTotal)} expected &middot; ${fmtMoney(duesOutstanding)} outstanding</div></td>
+        <td style="text-align:right;font-weight:600;white-space:nowrap;">${fmtMoney(duesCollected)}</td>
+      </tr>
+      <tr>
+        <td class="cell-name">Building pledges<div class="cell-muted" style="font-weight:400;font-size:11.5px;">${pledges.length} pledge${pledges.length===1?'':'s'} recorded</div></td>
+        <td style="text-align:right;font-weight:600;white-space:nowrap;">${fmtMoney(pledgesTotal)}</td>
+      </tr>
+      <tr>
+        <td class="cell-name">Welfare contributions<div class="cell-muted" style="font-weight:400;font-size:11.5px;">collected to date</div></td>
+        <td style="text-align:right;font-weight:600;white-space:nowrap;">${fmtMoney(welfareContribCollected)}</td>
+      </tr>
+      <tr>
+        <td class="cell-name">Welfare fund available<div class="cell-muted" style="font-weight:400;font-size:11.5px;">released &minus; expenses &minus; active loans</div></td>
+        <td style="text-align:right;font-weight:600;white-space:nowrap;${welfareAvailable<0?'color:var(--red);':''}">${fmtMoney(welfareAvailable)}</td>
+      </tr>
+      <tr>
+        <td class="cell-name">Welfare loans outstanding<div class="cell-muted" style="font-weight:400;font-size:11.5px;">owed by borrowers</div></td>
+        <td style="text-align:right;font-weight:600;white-space:nowrap;">${fmtMoney(welfareLoansOutstanding)}</td>
+      </tr>
+    </tbody></table>
   </div>
 
   <div class="card">
