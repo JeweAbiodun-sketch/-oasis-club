@@ -1415,9 +1415,9 @@ function escHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt
 function isActiveMember(m){return m.status!=='inactive'&&m.status!=='suspended'&&m.status!=='dismissed';}
 /* Members liable for the dues year being shown: active AND joined on/before that year's end.
    Year end = day before (financialYearStart + 1 year). Members with no joined date are kept. */
-function duesYearEnd(){
-  // Prefer the dues year label (e.g. "2025/2026" -> ends 30 Sep 2026), since that is what the Dues page shows.
-  const lm=String(DATA.meta.duesYearLabel||'').match(/(\d{4})\s*[\/\-]\s*(\d{4})/);
+function duesYearEnd(yearLabel){
+  // A dues year label like "2025/2026" ends on 30 Sep 2026. Defaults to the club's current dues year.
+  const lm=String(yearLabel||DATA.meta.duesYearLabel||'').match(/(\d{4})\s*[\/\-]\s*(\d{4})/);
   if(lm)return lm[2]+'-09-30';
   const start=String(DATA.meta.financialYearStart||'2025-10-01');
   const y=parseInt(start.slice(0,4),10), mo=parseInt(start.slice(5,7),10), d=parseInt(start.slice(8,10),10)||1;
@@ -1426,13 +1426,30 @@ function duesYearEnd(){
   e.setUTCDate(e.getUTCDate()-1);
   return e.toISOString().slice(0,10);
 }
-function isDuesMember(m){
+function isDuesMember(m,yearLabel){
   if(!isActiveMember(m))return false;
-  const end=duesYearEnd();
+  const end=duesYearEnd(yearLabel);
   const j=String(m.joined||'').slice(0,10);
   if(!end||!/^\d{4}-\d{2}-\d{2}$/.test(j))return true;
   return j<=end;
 }
+/* Per-year dues: amounts live in the dues_payments table (member_id + year_label). */
+let duesYearSel=null;
+function currentDuesYear(){return DATA.meta.duesYearLabel||fyLabelForDate(new Date().toISOString().slice(0,10));}
+function selectedDuesYear(){return duesYearSel||currentDuesYear();}
+function duesPaidFor(m,yearLabel){
+  const y=yearLabel||currentDuesYear();
+  if(!DATA.duesTableOk)return y===currentDuesYear()?Number(m.duesPaid||0):0;
+  const r=(DATA.duesPayments||[]).find(x=>x.memberId===m.id&&x.year===y);
+  return r?Number(r.amount||0):0;
+}
+function duesYearList(){
+  const set=new Set([currentDuesYear(),fyLabelForDate(new Date().toISOString().slice(0,10))]);
+  (DATA.duesPayments||[]).forEach(r=>set.add(r.year));
+  (DATA.transactions||[]).forEach(t=>{if(t.date)set.add(fyLabelForDate(t.date));});
+  return [...set].filter(Boolean).sort().reverse();
+}
+function setDuesYear(y){duesYearSel=y;render();}
 function fmtDate(d){if(!d)return'&mdash;';const dt=new Date(d+'T00:00:00');return dt.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});}
 function fmtDayMonth(d){if(!d)return'&mdash;';const dt=new Date(d+'T00:00:00');return dt.toLocaleDateString('en-GB',{day:'numeric',month:'long'});}
 function fmtRelativeTime(iso){
@@ -1662,7 +1679,7 @@ async function loadData(){
 async function fetchAllData(){
   try{
     const localBirthdayComments=loadBirthdayCommentsCache();
-    const[membersRes,minutesRes,txRes,metaRes,eventsRes,eventMemoriesRes,newsPostsRes,pollsRes,paymentSubmissionsRes,tasksRes,loansRes,repaymentsRes,purseRes,releaseRequestsRes,pledgesRes,committeesRes,committeeMembersRes,committeePlansRes,attendanceRes,qaCacheRes,recordingsRes,welfareEventsRes,welfareContribRes]=await Promise.all([
+    const[membersRes,minutesRes,txRes,metaRes,eventsRes,eventMemoriesRes,newsPostsRes,pollsRes,paymentSubmissionsRes,tasksRes,loansRes,repaymentsRes,purseRes,releaseRequestsRes,pledgesRes,committeesRes,committeeMembersRes,committeePlansRes,attendanceRes,qaCacheRes,recordingsRes,welfareEventsRes,welfareContribRes,duesPayRes]=await Promise.all([
       sb.from('members').select('*'),
       sb.from('minutes').select('*'),
       sb.from('transactions').select('*'),
@@ -1685,7 +1702,8 @@ async function fetchAllData(){
       sb.from('asst_qa_cache').select('*').order('last_used_at',{ascending:false}).limit(500),
       sb.from('meeting_recordings').select('*').order('meeting_date',{ascending:false}),
       sb.from('welfare_events').select('*'),
-      sb.from('welfare_contributions').select('*')
+      sb.from('welfare_contributions').select('*'),
+      sb.from('dues_payments').select('*')
     ]);
     if(membersRes.error||minutesRes.error||txRes.error||metaRes.error){
       throw membersRes.error||minutesRes.error||txRes.error||metaRes.error;
@@ -1715,6 +1733,10 @@ async function fetchAllData(){
       recordings:rowsToMeetingRecordings((recordingsRes&&recordingsRes.data)||[]),
       welfareEvents:rowsToWelfareEvents((welfareEventsRes&&welfareEventsRes.data)||[],(welfareContribRes&&welfareContribRes.data)||[])
     };
+    // Per-year dues. If the dues_payments table doesn't exist yet, fall back to the old single amount.
+    DATA.duesTableOk=!!(duesPayRes&&!duesPayRes.error);
+    DATA.duesPayments=DATA.duesTableOk?(duesPayRes.data||[]).map(r=>({memberId:r.member_id,year:r.year_label,amount:Number(r.amount||0)})):[];
+    if(DATA.duesTableOk){DATA.members.forEach(m=>{m.duesPaid=duesPaidFor(m,DATA.meta.duesYearLabel||currentDuesYear());});}
     try{
       const{error:lateFeeError}=await sb.rpc('apply_welfare_loan_late_fees');
       if(!lateFeeError){
@@ -1825,6 +1847,7 @@ function subscribeToRealtime(){
     .on('postgres_changes',{event:'*',schema:'public',table:'club_polls'},handleRealtimeChange)
     .on('postgres_changes',{event:'*',schema:'public',table:'payment_submissions'},handleRealtimeChange)
     .on('postgres_changes',{event:'*',schema:'public',table:'tasks'},handleRealtimeChange)
+    .on('postgres_changes',{event:'*',schema:'public',table:'dues_payments'},handleRealtimeChange)
     .subscribe(status=>{
       if(status==='SUBSCRIBED'){connectionStatus='connected';render();}
       else if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'||status==='CLOSED'){connectionStatus='offline';render();}
@@ -2790,16 +2813,20 @@ async function deleteMember(id){
 
 /* ============ DUES ============ */
 function pageDues(){
-  const active=DATA.members.filter(isDuesMember);
+  const yr=selectedDuesYear();
+  const active=DATA.members.filter(m=>isDuesMember(m,yr));
   const expected=Number(DATA.meta.annualDueAmount||50000);
   const totalExpected=active.length*expected;
-  const totalCollected=active.reduce((s,m)=>s+Number(m.duesPaid||0),0);
+  const totalCollected=active.reduce((s,m)=>s+duesPaidFor(m,yr),0);
   const canEdit=isOfficerSessionNow();
   const memberId=getCurrentMemberId();
   return `
   <div class="page-head">
-    <div><h1>Annual dues</h1><div class="sub">${DATA.meta.duesYearLabel||'Current financial year'} &middot; &#8358;${expected.toLocaleString('en-NG')} per member &middot; Article 5</div></div>
+    <div><h1>Annual dues</h1><div class="sub">${yr} &middot; &#8358;${expected.toLocaleString('en-NG')} per member &middot; Article 5</div></div>
     ${memberId?`<button type="button" class="btn btn-primary" onclick="navigate('profile')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M12 5v14M5 12h14"/></svg>Submit payment evidence</button>`:''}
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+    ${duesYearList().map(y=>`<button type="button" class="btn ${yr===y?'btn-primary':''}" style="padding:6px 14px;font-size:13px;" onclick="setDuesYear('${y}')">${y}</button>`).join('')}
   </div>
   <div class="stats">
     <div class="stat"><div class="label">Expected</div><div class="value">${fmtMoney(totalExpected)}</div><div class="note">${active.length} active members</div></div>
@@ -2810,11 +2837,11 @@ function pageDues(){
     ${active.length?`<table><thead><tr><th>Member</th><th style="text-align:right;">Paid</th><th style="text-align:right;">Expected</th><th>Status</th>${canEdit?'<th></th>':''}</tr></thead>
     <tbody>${active.slice().sort((a,b)=>{
       const order={paid:0,part:1,unpaid:2};
-      const sa=Number(a.duesPaid||0)>=expected?'paid':Number(a.duesPaid||0)>0?'part':'unpaid';
-      const sb=Number(b.duesPaid||0)>=expected?'paid':Number(b.duesPaid||0)>0?'part':'unpaid';
+      const sa=duesPaidFor(a,yr)>=expected?'paid':duesPaidFor(a,yr)>0?'part':'unpaid';
+      const sb=duesPaidFor(b,yr)>=expected?'paid':duesPaidFor(b,yr)>0?'part':'unpaid';
       return order[sa]-order[sb]||a.name.localeCompare(b.name);
     }).map(mem=>{
-      const paid=Number(mem.duesPaid||0);
+      const paid=duesPaidFor(mem,yr);
       const status=paid>=expected?'paid':paid>0?'part':'unpaid';
       const label=status==='paid'?'Paid':status==='part'?'Part payment':'Outstanding';
       const badgeClass=status==='paid'?'badge-paid':status==='part'?'badge-due':'badge-overdue';
@@ -2830,7 +2857,7 @@ function pageDues(){
   ${canEdit?`<div class="card" style="display:flex;align-items:center;gap:18px;flex-wrap:wrap;">
     <label style="margin:0;font-size:12.5px;">Annual due amount (&#8358;)</label>
     <input type="number" value="${expected}" style="max-width:140px;" onchange="updateDueAmount(this.value)"/>
-    <label style="margin:0 0 0 12px;font-size:12.5px;">Year label</label>
+    <label style="margin:0 0 0 12px;font-size:12.5px;">Current year (opens first)</label>
     <input type="text" value="${DATA.meta.duesYearLabel||''}" placeholder="e.g. 2025/2026" style="max-width:140px;" onchange="updateDuesYearLabel(this.value)"/>
   </div>`:''}
   ${isTreasurerSession()?`<div class="card" style="margin-top:4px;">
@@ -2852,13 +2879,22 @@ function pageDues(){
 async function editDuesPaid(memberId){
   const mem=DATA.members.find(m=>m.id===memberId);
   if(!mem)return;
-  const val=prompt(`Amount paid by ${mem.name} (\u20a6):`, mem.duesPaid||0);
+  const yr=selectedDuesYear();
+  const val=prompt(`Total paid by ${mem.name} for ${yr} (\u20a6):`, duesPaidFor(mem,yr)||0);
   if(val===null)return;
   const pin=getCurrentAuthPin();
   try{
-    const{error}=await sb.rpc('officer_set_dues_paid',{p_officer_pin:pin,p_member_id:memberId,p_amount:Number(val)||0});
-    if(error)throw error;
+    await saveDuesAmount(pin,mem.id,yr,Number(val)||0);
   }catch(e){showToast('Could not update dues: '+(e.message||'unknown error'));}
+}
+async function saveDuesAmount(pin,memberId,yr,amount){
+  if(!DATA.duesTableOk){
+    if(yr!==currentDuesYear())throw new Error('Per-year dues need the dues_payments table (run the SQL setup first).');
+    const{error}=await sb.rpc('officer_set_dues_paid',{p_officer_pin:pin,p_member_id:memberId,p_amount:amount});
+    if(error)throw error;return;
+  }
+  const{error}=await sb.rpc('officer_set_dues_year',{p_officer_pin:pin,p_member_id:memberId,p_year:yr,p_amount:amount});
+  if(error)throw error;
 }
 async function updateDueAmount(val){
   const pin=getCurrentAuthPin();
@@ -5595,10 +5631,10 @@ function readUploadedRows(file){
 /* ---- Dues ---- */
 function downloadDuesCSV(){
   const exp=Number(DATA.meta.annualDueAmount||50000);
-  const year=DATA.meta.duesYearLabel||'Current year';
+  const year=selectedDuesYear();
   const header=['Member ID','Member Name','Role','Status','Annual Due (₦)','Amount Paid (₦)','Outstanding (₦)','Notes'];
-  const rows=DATA.members.filter(isDuesMember).map(m=>{
-    const paid=Number(m.duesPaid||0);
+  const rows=DATA.members.filter(m=>isDuesMember(m,year)).map(m=>{
+    const paid=duesPaidFor(m,year);
     return[m.id,m.name,m.role||'Member',m.status,exp,paid,Math.max(0,exp-paid),''];
   });
   downloadCSVFile('oasis-dues-'+year.replace(/\//g,'-')+'.csv',header,rows);
@@ -5627,8 +5663,7 @@ async function handleDuesUpload(input){
     const mem=DATA.members.find(m=>m.id===id||m.id.toLowerCase()===id);
     if(!mem){errs.push('Row '+(i+1)+': member ID "'+id+'" not found');fail++;continue;}
     try{
-      const{error}=await sb.rpc('officer_set_dues_paid',{p_officer_pin:pin,p_member_id:mem.id,p_amount:amount});
-      if(error)throw error;
+      await saveDuesAmount(pin,mem.id,selectedDuesYear(),amount);
       ok++;
     }catch(e){errs.push('Row '+(i+1)+' ('+mem.name+'): '+(e.message||'error'));fail++;}
   }
