@@ -4005,6 +4005,9 @@ async function deletePoll(id){
   try{
     const{error}=await sb.rpc('delete_club_poll',{p_officer_pin:pin,p_id:id});
     if(error)throw error;
+    await fetchAllData();
+    render();
+    showToast('Poll deleted.');
   }catch(e){showToast('Could not delete: '+(e.message||'unknown error'));}
 }
 

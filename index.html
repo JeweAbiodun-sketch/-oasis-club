@@ -1413,6 +1413,26 @@ const MONTH_KEYS=['2025-10','2025-11','2025-12','2026-01','2026-02','2026-03','2
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
 function escHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function isActiveMember(m){return m.status!=='inactive'&&m.status!=='suspended'&&m.status!=='dismissed';}
+/* Members liable for the dues year being shown: active AND joined on/before that year's end.
+   Year end = day before (financialYearStart + 1 year). Members with no joined date are kept. */
+function duesYearEnd(){
+  // Prefer the dues year label (e.g. "2025/2026" -> ends 30 Sep 2026), since that is what the Dues page shows.
+  const lm=String(DATA.meta.duesYearLabel||'').match(/(\d{4})\s*[\/\-]\s*(\d{4})/);
+  if(lm)return lm[2]+'-09-30';
+  const start=String(DATA.meta.financialYearStart||'2025-10-01');
+  const y=parseInt(start.slice(0,4),10), mo=parseInt(start.slice(5,7),10), d=parseInt(start.slice(8,10),10)||1;
+  if(!y||!mo)return '';
+  const e=new Date(Date.UTC(y+1,mo-1,d));
+  e.setUTCDate(e.getUTCDate()-1);
+  return e.toISOString().slice(0,10);
+}
+function isDuesMember(m){
+  if(!isActiveMember(m))return false;
+  const end=duesYearEnd();
+  const j=String(m.joined||'').slice(0,10);
+  if(!end||!/^\d{4}-\d{2}-\d{2}$/.test(j))return true;
+  return j<=end;
+}
 function fmtDate(d){if(!d)return'&mdash;';const dt=new Date(d+'T00:00:00');return dt.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});}
 function fmtDayMonth(d){if(!d)return'&mdash;';const dt=new Date(d+'T00:00:00');return dt.toLocaleDateString('en-GB',{day:'numeric',month:'long'});}
 function fmtRelativeTime(iso){
@@ -2292,7 +2312,7 @@ function pageOverview(){
   const agmWarning=getAgmWarning(DATA.meta.nextAgmDate);
 
   // ---- Consolidated financial summary (matches the individual pages' math) ----
-  const activeMembers=DATA.members.filter(isActiveMember);
+  const activeMembers=DATA.members.filter(isDuesMember);
   const duesCollected=activeMembers.reduce((s,m)=>s+Number(m.duesPaid||0),0);
   const duesExpectedTotal=activeMembers.length*expected;
   const duesOutstanding=Math.max(0,duesExpectedTotal-duesCollected);
@@ -2770,7 +2790,7 @@ async function deleteMember(id){
 
 /* ============ DUES ============ */
 function pageDues(){
-  const active=DATA.members.filter(isActiveMember);
+  const active=DATA.members.filter(isDuesMember);
   const expected=Number(DATA.meta.annualDueAmount||50000);
   const totalExpected=active.length*expected;
   const totalCollected=active.reduce((s,m)=>s+Number(m.duesPaid||0),0);
@@ -5577,7 +5597,7 @@ function downloadDuesCSV(){
   const exp=Number(DATA.meta.annualDueAmount||50000);
   const year=DATA.meta.duesYearLabel||'Current year';
   const header=['Member ID','Member Name','Role','Status','Annual Due (₦)','Amount Paid (₦)','Outstanding (₦)','Notes'];
-  const rows=DATA.members.filter(isActiveMember).map(m=>{
+  const rows=DATA.members.filter(isDuesMember).map(m=>{
     const paid=Number(m.duesPaid||0);
     return[m.id,m.name,m.role||'Member',m.status,exp,paid,Math.max(0,exp-paid),''];
   });
