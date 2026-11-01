@@ -992,7 +992,7 @@ body.dark .asst-chip{color:#a7e6d0;}
 <script>
 /* Bump this string every time you publish changes to GitHub.
    This is what tells everyone's app that a newer version exists. */
-const APP_VERSION='2026-11-01-3';
+const APP_VERSION='2026-11-01-5';
 const STORE_KEY='oasis-club-data-v1';
 let DATA={members:[
   {
@@ -1415,11 +1415,11 @@ function escHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt
 function isActiveMember(m){return m.status!=='inactive'&&m.status!=='suspended'&&m.status!=='dismissed';}
 /* ---- Annual dues: oldest-year-first allocation ----
    members.dues_paid in the database = TOTAL ever paid by the member towards annual dues.
-   That total fills the member's oldest unpaid year first (30k/yr through 2024/25, 50k/yr from 2025/26),
+   That total fills the member's oldest unpaid year first (30k/yr through 2023/24, 50k/yr from 2024/25),
    starting from the financial year they joined (never before 2020/21).
    After loading, m.duesTotal = that total and m.duesPaid = the part that falls in the CURRENT year. */
 const DUES_FIRST_YEAR=2020;
-function duesRateForYear(y){return y<=2024?30000:50000;}
+function duesRateForYear(y){return y<=2023?30000:50000;}
 function fyStartOfDate(ds){const m=String(ds||'').match(/^(\d{4})-(\d{2})/);if(!m)return null;const y=+m[1],mo=+m[2];return mo>=10?y:y-1;}
 function currentDuesStart(){return fyStartOfDate(new Date().toISOString().slice(0,10));}
 function duesLabel(y){return y+'/'+(y+1);}
@@ -1433,6 +1433,17 @@ function isDuesMember(m,yearLabel){
   if(!isActiveMember(m))return false;
   const y=yearLabel?parseInt(yearLabel,10):currentDuesStart();
   return duesStartYear(m)<=y;
+}
+function duesNameKey(n){return String(n||'').toLowerCase().replace(/[^a-z]+/g,' ').trim().split(' ').sort().join(' ');}
+function duesMembersForYear(yearLabel){
+  const y=parseInt(yearLabel||currentDuesYear(),10);
+  const have=new Set((DATA.members||[]).map(m=>duesNameKey(m.name)));
+  const former=(DATA.formerDues||[]).filter(f=>!have.has(duesNameKey(f.name)));
+  return (DATA.members||[]).concat(former).filter(m=>{
+    if(duesStartYear(m)>y)return false;
+    if(!m.former&&isActiveMember(m))return true;
+    return (duesAllocation(m)[y]||0)>0; // former / archived: only the years they paid in
+  });
 }
 let duesYearSel=null;
 function currentDuesYear(){return duesLabel(currentDuesStart());}
@@ -1674,7 +1685,7 @@ async function loadData(){
 async function fetchAllData(){
   try{
     const localBirthdayComments=loadBirthdayCommentsCache();
-    const[membersRes,minutesRes,txRes,metaRes,eventsRes,eventMemoriesRes,newsPostsRes,pollsRes,paymentSubmissionsRes,tasksRes,loansRes,repaymentsRes,purseRes,releaseRequestsRes,pledgesRes,committeesRes,committeeMembersRes,committeePlansRes,attendanceRes,qaCacheRes,recordingsRes,welfareEventsRes,welfareContribRes]=await Promise.all([
+    const[membersRes,minutesRes,txRes,metaRes,eventsRes,eventMemoriesRes,newsPostsRes,pollsRes,paymentSubmissionsRes,tasksRes,loansRes,repaymentsRes,purseRes,releaseRequestsRes,pledgesRes,committeesRes,committeeMembersRes,committeePlansRes,attendanceRes,qaCacheRes,recordingsRes,welfareEventsRes,welfareContribRes,formerDuesRes]=await Promise.all([
       sb.from('members').select('*'),
       sb.from('minutes').select('*'),
       sb.from('transactions').select('*'),
@@ -1697,7 +1708,8 @@ async function fetchAllData(){
       sb.from('asst_qa_cache').select('*').order('last_used_at',{ascending:false}).limit(500),
       sb.from('meeting_recordings').select('*').order('meeting_date',{ascending:false}),
       sb.from('welfare_events').select('*'),
-      sb.from('welfare_contributions').select('*')
+      sb.from('welfare_contributions').select('*'),
+      sb.from('dues_former_members').select('*')
     ]);
     if(membersRes.error||minutesRes.error||txRes.error||metaRes.error){
       throw membersRes.error||minutesRes.error||txRes.error||metaRes.error;
@@ -1731,6 +1743,8 @@ async function fetchAllData(){
     DATA.meta.annualDueAmount=duesRateForYear(currentDuesStart());
     DATA.meta.duesYearLabel=duesLabel(currentDuesStart());
     DATA.members.forEach(m=>{m.duesTotal=Number(m.duesPaid||0);m.duesPaid=duesPaidFor(m,DATA.meta.duesYearLabel);});
+    // Former members (no longer with the club): kept only for dues history. Table may not exist yet.
+    DATA.formerDues=(formerDuesRes&&!formerDuesRes.error&&formerDuesRes.data||[]).map(r=>({id:'former:'+r.id,name:r.name,joined:r.joined||'',duesTotal:Number(r.total_paid||0),duesPaid:0,status:'former',former:true}));
     try{
       const{error:lateFeeError}=await sb.rpc('apply_welfare_loan_late_fees');
       if(!lateFeeError){
@@ -2807,7 +2821,7 @@ async function deleteMember(id){
 /* ============ DUES ============ */
 function pageDues(){
   const yr=selectedDuesYear();
-  const active=DATA.members.filter(m=>isDuesMember(m,yr));
+  const active=duesMembersForYear(yr);
   const expected=duesRateForYear(parseInt(yr,10));
   const totalExpected=active.length*expected;
   const totalCollected=active.reduce((s,m)=>s+duesPaidFor(m,yr),0);
@@ -2822,7 +2836,7 @@ function pageDues(){
     ${duesYearList().map(y=>`<button type="button" class="btn ${yr===y?'btn-primary':''}" style="padding:6px 14px;font-size:13px;" onclick="setDuesYear('${y}')">${y}</button>`).join('')}
   </div>
   <div class="stats">
-    <div class="stat"><div class="label">Expected</div><div class="value">${fmtMoney(totalExpected)}</div><div class="note">${active.length} active members</div></div>
+    <div class="stat"><div class="label">Expected</div><div class="value">${fmtMoney(totalExpected)}</div><div class="note">${active.length} member${active.length===1?'':'s'}</div></div>
     <div class="stat"><div class="label">Collected</div><div class="value teal">${fmtMoney(totalCollected)}</div><div class="note">${totalExpected?Math.round(totalCollected/totalExpected*100):0}% of expected</div></div>
     <div class="stat"><div class="label">Outstanding</div><div class="value ${totalExpected-totalCollected>0?'red':''}">${fmtMoney(Math.max(0,totalExpected-totalCollected))}</div><div class="note">across all members</div></div>
   </div>
@@ -2843,7 +2857,7 @@ function pageDues(){
         <td style="text-align:right;">${fmtMoney(paid)}</td>
         <td style="text-align:right;" class="cell-muted">${fmtMoney(expected)}</td>
         <td><span class="badge ${badgeClass}">${label}</span></td>
-        ${canEdit?`<td style="text-align:right;"><button class="icon-btn" onclick="editDuesPaid('${mem.id}')" aria-label="Record payment" title="Record payment"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button></td>`:''}
+        ${canEdit?(mem.former?'<td></td>':`<td style="text-align:right;"><button class="icon-btn" onclick="editDuesPaid('${mem.id}')" aria-label="Record payment" title="Record payment"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button></td>`):''}
       </tr>`;
     }).join('')}</tbody></table>`:emptyState('No active members','Add members on the Members page to start tracking dues.')}
   </div>
@@ -5619,7 +5633,7 @@ function downloadDuesCSV(){
   const year=selectedDuesYear();
   const exp=duesRateForYear(parseInt(year,10));
   const header=['Member ID','Member Name','Role','Status','Annual Due (₦)','Paid This Year (₦)','Outstanding (₦)','Total Paid To Date (₦)','Notes'];
-  const rows=DATA.members.filter(m=>isDuesMember(m,year)).map(m=>{
+  const rows=duesMembersForYear(year).filter(m=>!m.former).map(m=>{
     const paid=duesPaidFor(m,year);
     return[m.id,m.name,m.role||'Member',m.status,exp,paid,Math.max(0,exp-paid),Number(m.duesTotal||0),''];
   });
